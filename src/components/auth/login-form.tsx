@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import type { AppUser } from "@/hooks/use-current-user";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
@@ -63,18 +64,33 @@ export function LoginForm() {
       const userDoc = await getDoc(userDocRef);
 
       if (userDoc.exists()) {
-        const userData = userDoc.data();
+        const userData = userDoc.data() as AppUser;
         const userRole = userData.role || 'Sales'; 
 
         toast({
             title: "Login Successful",
-            description: `Welcome back! Redirecting...`,
+            description: `Welcome back, ${userData.name}! Redirecting...`,
         });
+        
+        // Redirect based on role
+        switch (userRole) {
+          case 'Admin':
+            router.push('/admin');
+            break;
+          case 'SPV':
+            router.push('/spv');
+            break;
+          case 'Sales':
+            router.push('/sales');
+            break;
+          default:
+            router.push('/sales');
+        }
 
-        const redirectPath = `/${userRole.toLowerCase()}`;
-        router.push(redirectPath);
       } else {
-        throw new Error("User data not found in Firestore.");
+        // This case should ideally not happen if user creation is handled correctly
+        await auth.signOut();
+        throw new Error("User data not found in Firestore. Please contact support.");
       }
     } catch (error: any) {
       console.error("Login Error:", error);
@@ -82,16 +98,12 @@ export function LoginForm() {
       if (error.code) {
         switch (error.code) {
           case AuthErrorCodes.INVALID_CREDENTIAL:
-            description = "Invalid email or password. Please check your credentials.";
-            break;
           case "auth/user-not-found":
-             description = "No user found with this email address.";
-             break;
           case "auth/wrong-password":
-            description = "Incorrect password. Please try again.";
+            description = "Invalid email or password. Please check your credentials and try again.";
             break;
           default:
-            description = `Error: ${error.message}`;
+            description = `An error occurred: ${error.message}`;
         }
       }
       toast({

@@ -97,7 +97,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // 2. Create user document in Firestore
+      // 2. ONLY if Auth creation is successful, create user document in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
       
       const userData: Omit<AppUser, 'uid' | 'avatar'> & { [key: string]: any } = {
@@ -111,6 +111,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         bankName: values.bankName,
         accountNumber: values.accountNumber,
         accountHolder: values.accountHolder,
+        createdAt: new Date().toISOString(),
       };
 
       if (values.supervisor) {
