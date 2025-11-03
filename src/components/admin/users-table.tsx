@@ -21,14 +21,14 @@ import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
-import type { User } from "@/hooks/use-current-user"
+import type { AppUser } from "@/hooks/use-current-user"
 
 
 export function UsersTable() {
     const firestore = useFirestore();
-    const { data: users, loading } = useCollection<User>(firestore ? collection(firestore, "users") : null);
+    const { data: users, loading } = useCollection<AppUser>(firestore ? collection(firestore, "users") : null);
     
-    const getBadgeVariant = (role: User['role']) => {
+    const getBadgeVariant = (role: AppUser['role']) => {
         switch (role) {
             case 'Admin': return 'default';
             case 'SPV': return 'secondary';

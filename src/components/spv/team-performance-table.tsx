@@ -22,11 +22,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection, query, where } from "firebase/firestore"
-import type { User, Sale } from "@/lib/mock-data";
+import type { Sale } from "@/lib/mock-data";
 import { useMemo } from "react"
+import type { AppUser } from "@/hooks/use-current-user"
 
 type TeamPerformanceData = {
-    id: string;
+    uid: string;
     name: string;
     avatar: string;
     email: string;
@@ -39,7 +40,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
     const firestore = useFirestore();
     const teamSalesCodes = spvTeams[spvCode] || [];
 
-    const { data: teamMembers, loading: membersLoading } = useCollection<User>(
+    const { data: teamMembers, loading: membersLoading } = useCollection<AppUser>(
         firestore && teamSalesCodes.length > 0 ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes)) : null
     );
 
@@ -54,7 +55,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
             const memberSales = sales.filter(s => s.salesCode === member.salesCode);
             const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
             return {
-                id: member.id,
+                uid: member.uid,
                 name: member.name,
                 avatar: member.avatar,
                 email: member.email,
@@ -85,7 +86,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
                 </TableHeader>
                 <TableBody>
                 {performanceData.map((data) => (
-                    <TableRow key={data.id}>
+                    <TableRow key={data.uid}>
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>

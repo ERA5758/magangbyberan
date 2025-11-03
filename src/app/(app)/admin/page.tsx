@@ -13,7 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { User, Project, Sale } from "@/lib/mock-data";
+import type { User } from '@/hooks/use-current-user';
+import type { Project, Sale } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();

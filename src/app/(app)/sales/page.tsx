@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { useCollection, useFirestore } from "@/firebase";
@@ -18,7 +18,9 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import type { Sale, User } from "@/lib/mock-data";
+import type { Sale } from "@/lib/mock-data";
+import type { AppUser } from "@/hooks/use-current-user";
+
 
 export default function SalesDashboard() {
   const { user, loading } = useCurrentUser();
@@ -30,7 +32,7 @@ export default function SalesDashboard() {
     user && firestore ? query(collection(firestore, "sales"), where("salesCode", "==", user.salesCode)) : null
   );
 
-  const { data: allSalespersons, loading: usersLoading } = useCollection<User>(
+  const { data: allSalespersons, loading: usersLoading } = useCollection<AppUser>(
     firestore ? query(collection(firestore, "users"), where("role", "==", "Sales")) : null
   );
   

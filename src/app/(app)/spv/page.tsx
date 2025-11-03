@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/card";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { useCollection, useFirestore, useDoc } from "@/firebase";
+import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { User, Sale } from "@/lib/mock-data";
+import type { Sale } from "@/lib/mock-data";
 import { spvTeams } from "@/lib/mock-data"; // still using mock for team structure
+import type { AppUser } from "@/hooks/use-current-user";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -26,7 +27,7 @@ export default function SpvDashboard() {
   
   const teamSalesCodes = spvCode ? spvTeams[spvCode] : [];
 
-  const { data: teamMembers, loading: teamLoading } = useCollection<User>(
+  const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(
     firestore && teamSalesCodes && teamSalesCodes.length > 0
       ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes))
       : null
