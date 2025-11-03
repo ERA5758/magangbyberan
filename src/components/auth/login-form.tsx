@@ -6,6 +6,9 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth, useFirestore } from "@/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +21,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { users } from "@/lib/mock-data";
 import { useToast } from "@/hooks/use-toast";
 
 const formSchema = z.object({
@@ -28,6 +30,8 @@ const formSchema = z.object({
 
 export function LoginForm() {
   const router = useRouter();
+  const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -39,34 +43,48 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
-    // Mock authentication
-    setTimeout(() => {
-      const user = users.find(u => u.email === values.email);
+    if (!auth || !firestore) {
+      toast({
+        variant: "destructive",
+        title: "Firebase not initialized",
+        description: "Firebase is not ready, please try again later.",
+      });
+      setIsLoading(false);
+      return;
+    }
 
-      if (user) {
-        // In a real app, you would verify the password and set an auth token.
-        // Here, we just store the role in localStorage for demo persistence.
-        localStorage.setItem('currentUserRole', user.role);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+
+      const userDocRef = doc(firestore, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        const userRole = userData.role || 'Sales'; 
 
         toast({
             title: "Login Successful",
-            description: `Welcome back, ${user.name}! Redirecting...`,
+            description: `Welcome back! Redirecting...`,
         });
 
-        const redirectPath = `/${user.role.toLowerCase()}`;
+        const redirectPath = `/${userRole.toLowerCase()}`;
         router.push(redirectPath);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Login Failed",
-          description: "Invalid email or password. Please try again.",
-        });
-        setIsLoading(false);
+        throw new Error("User data not found.");
       }
-    }, 1000);
+    } catch (error: any) {
+      console.error("Login Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: error.message || "Invalid email or password. Please try again.",
+      });
+      setIsLoading(false);
+    }
   }
 
   return (

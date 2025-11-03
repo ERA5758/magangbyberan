@@ -8,14 +8,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { sales } from "@/lib/mock-data"
-import { format } from "date-fns"
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { format } from "date-fns";
+import type { Sale } from "@/lib/mock-data";
 
 export function RecentSales({ salesCode }: { salesCode: string }) {
-    const mySales = sales
-        .filter(s => s.salesCode === salesCode)
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5); // Show top 5 recent sales
+    const firestore = useFirestore();
+
+    const { data: mySales, loading } = useCollection<Sale>(
+        firestore ? query(
+            collection(firestore, "sales"), 
+            where("salesCode", "==", salesCode),
+            orderBy("date", "desc"),
+            limit(5)
+        ) : null
+    );
+
+    if (loading) {
+        return <div>Loading recent sales...</div>
+    }
 
     return (
         <div className="rounded-md border">
@@ -28,7 +40,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {mySales.length > 0 ? mySales.map((sale) => (
+                {mySales && mySales.length > 0 ? mySales.map((sale) => (
                     <TableRow key={sale.id}>
                         <TableCell>
                             <div className="font-medium">{sale.projectName}</div>

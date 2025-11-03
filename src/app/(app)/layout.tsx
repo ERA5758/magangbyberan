@@ -22,11 +22,12 @@ import {
   Settings,
   UsersRound,
   LogOut,
-  User,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
 
 type NavItem = {
   href: string;
@@ -49,11 +50,18 @@ const bottomNavItems = [
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useCurrentUser();
+  const { user, loading } = useCurrentUser();
+  const auth = useAuth();
   const pathname = usePathname();
   const router = useRouter();
 
-  if (!user) {
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -67,9 +75,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUserRole');
-    router.push('/login');
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
   };
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(user.role));

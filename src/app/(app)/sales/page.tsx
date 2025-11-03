@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { sales, users } from "@/lib/mock-data";
-import { DollarSign, Hash, BarChart } from "lucide-react";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { DollarSign, Hash, BarChart, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw } from "lucide-react";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { RecentSales } from "@/components/sales/recent-sales";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
@@ -18,41 +18,60 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import type { Sale, User } from "@/lib/mock-data";
 
 export default function SalesDashboard() {
-  const { user } = useCurrentUser();
+  const { user, loading } = useCurrentUser();
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const firestore = useFirestore();
 
-  if (!user) return null;
+  const { data: mySales, loading: salesLoading } = useCollection<Sale>(
+    user && firestore ? query(collection(firestore, "sales"), where("salesCode", "==", user.salesCode)) : null
+  );
 
-  const mySales = sales.filter(s => s.salesCode === user.salesCode);
-  const totalMySales = mySales.reduce((acc, sale) => acc + sale.amount, 0);
-  const allSalesTotals = users
-    .filter(u => u.role === 'Sales')
-    .map(u => {
-      return sales
-        .filter(s => s.salesCode === u.salesCode)
-        .reduce((acc, sale) => acc + sale.amount, 0);
-    })
-    .sort((a, b) => b - a);
+  const { data: allSalespersons, loading: usersLoading } = useCollection<User>(
+    firestore ? query(collection(firestore, "users"), where("role", "==", "Sales")) : null
+  );
+  
+  const { data: allSales, loading: allSalesLoading } = useCollection<Sale>(
+    firestore ? collection(firestore, "sales") : null
+  );
 
-  const myRank = allSalesTotals.indexOf(totalMySales) + 1;
-
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
     toast({
       title: "Refreshing Data...",
-      description: "Fetching the latest sales information from Google Sheets.",
+      description: "Fetching the latest sales information.",
     });
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Data Refreshed",
-        description: "Your sales data is up to date.",
-      });
-    }, 2000);
+
+    // In a real app, you might re-fetch data here.
+    // with react-query or SWR, you'd invalidate queries.
+    // For this basic setup, we'll just simulate a delay.
+    await new Promise(res => setTimeout(res, 1500));
+
+    setIsRefreshing(false);
+    toast({
+      title: "Data Refreshed",
+      description: "Your sales data is up to date.",
+    });
   };
+
+  if (loading || salesLoading || usersLoading || allSalesLoading || !user) {
+    return <div>Loading...</div>;
+  }
+
+  const totalMySales = mySales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
+  
+  const allSalesTotals = allSalespersons?.map(u => {
+      return allSales
+        ?.filter(s => s.salesCode === u.salesCode)
+        .reduce((acc, sale) => acc + sale.amount, 0) || 0;
+    })
+    .sort((a, b) => b - a) || [];
+
+  const myRank = allSalesTotals.indexOf(totalMySales) + 1;
+
 
   return (
     <div className="space-y-8">
@@ -76,13 +95,13 @@ export default function SalesDashboard() {
         />
         <StatCard
           title="Company Rank"
-          value={`#${myRank}`}
+          value={myRank > 0 ? `#${myRank}`: 'N/A'}
           icon={BarChart}
-          description={`out of ${allSalesTotals.length} salespersons`}
+          description={allSalespersons ? `out of ${allSalespersons.length} salespersons` : ''}
         />
         <StatCard
           title="Deals Closed"
-          value={mySales.length.toString()}
+          value={mySales?.length.toString() || '0'}
           icon={Hash}
           description="Number of successful sales this month"
         />
@@ -104,7 +123,7 @@ export default function SalesDashboard() {
                 <CardDescription>Your sales trend over the past week.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PerformanceChart />
+                <PerformanceChart sales={mySales} />
             </CardContent>
         </Card>
       </div>

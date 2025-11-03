@@ -6,17 +6,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-
-const chartData = [
-  { day: "Mon", sales: 1250 },
-  { day: "Tue", sales: 1700 },
-  { day: "Wed", sales: 900 },
-  { day: "Thu", sales: 2200 },
-  { day: "Fri", sales: 1800 },
-  { day: "Sat", sales: 3100 },
-  { day: "Sun", sales: 2500 },
-]
+import { subDays, format, eachDayOfInterval, startOfDay } from 'date-fns';
+import type { Sale } from "@/lib/mock-data";
 
 const chartConfig = {
   sales: {
@@ -25,7 +16,26 @@ const chartConfig = {
   },
 }
 
-export function PerformanceChart() {
+type PerformanceChartProps = {
+  sales: Sale[] | null | undefined;
+}
+
+export function PerformanceChart({ sales }: PerformanceChartProps) {
+  const today = startOfDay(new Date());
+  const last7Days = eachDayOfInterval({
+    start: subDays(today, 6),
+    end: today,
+  });
+
+  const chartData = last7Days.map(day => {
+    const daySales = sales?.filter(sale => startOfDay(new Date(sale.date)).getTime() === day.getTime())
+                          .reduce((acc, sale) => acc + sale.amount, 0) || 0;
+    return {
+      day: format(day, 'EEE'),
+      sales: daySales,
+    };
+  });
+
   return (
     <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
       <BarChart accessibilityLayer data={chartData} margin={{ top: 20, right: 20, bottom: 0, left: 0 }}>

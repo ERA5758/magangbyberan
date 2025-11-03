@@ -17,9 +17,13 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
-import { spvTeams, users, sales } from "@/lib/mock-data"
+import { spvTeams } from "@/lib/mock-data"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
+import { useCollection, useFirestore } from "@/firebase"
+import { collection, query, where } from "firebase/firestore"
+import type { User, Sale } from "@/lib/mock-data";
+import { useMemo } from "react"
 
 type TeamPerformanceData = {
     id: string;
@@ -32,22 +36,38 @@ type TeamPerformanceData = {
 }
 
 export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
+    const firestore = useFirestore();
     const teamSalesCodes = spvTeams[spvCode] || [];
-    const teamMembers = users.filter(u => teamSalesCodes.includes(u.salesCode));
 
-    const performanceData: TeamPerformanceData[] = teamMembers.map(member => {
-        const memberSales = sales.filter(s => s.salesCode === member.salesCode);
-        const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
-        return {
-            id: member.id,
-            name: member.name,
-            avatar: member.avatar,
-            email: member.email,
-            totalSales,
-            salesCount: memberSales.length,
-            salesTarget: 10000, // Mock target
-        }
-    });
+    const { data: teamMembers, loading: membersLoading } = useCollection<User>(
+        firestore && teamSalesCodes.length > 0 ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes)) : null
+    );
+
+    const { data: sales, loading: salesLoading } = useCollection<Sale>(
+        firestore && teamSalesCodes.length > 0 ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes)) : null
+    );
+
+    const performanceData = useMemo(() => {
+        if (!teamMembers || !sales) return [];
+
+        return teamMembers.map(member => {
+            const memberSales = sales.filter(s => s.salesCode === member.salesCode);
+            const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
+            return {
+                id: member.id,
+                name: member.name,
+                avatar: member.avatar,
+                email: member.email,
+                totalSales,
+                salesCount: memberSales.length,
+                salesTarget: 10000, // Mock target
+            }
+        });
+    }, [teamMembers, sales]);
+
+    if (membersLoading || salesLoading) {
+        return <div>Loading team performance...</div>
+    }
 
     return (
         <div className="rounded-md border">

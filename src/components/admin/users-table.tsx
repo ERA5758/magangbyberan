@@ -18,10 +18,15 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
-import { users as mockUsers, type User } from "@/lib/mock-data"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useCollection, useFirestore } from "@/firebase"
+import { collection } from "firebase/firestore"
+import type { User } from "@/hooks/use-current-user"
+
 
 export function UsersTable() {
+    const firestore = useFirestore();
+    const { data: users, loading } = useCollection<User>(firestore ? collection(firestore, "users") : null);
     
     const getBadgeVariant = (role: User['role']) => {
         switch (role) {
@@ -31,6 +36,10 @@ export function UsersTable() {
             default: return 'outline';
         }
     };
+
+    if (loading) {
+        return <div>Loading users...</div>
+    }
 
     return (
         <div className="space-y-4">
@@ -53,8 +62,8 @@ export function UsersTable() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {mockUsers.map((user) => (
-                        <TableRow key={user.id}>
+                    {users && users.map((user) => (
+                        <TableRow key={user.uid}>
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>

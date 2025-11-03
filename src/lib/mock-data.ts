@@ -1,4 +1,4 @@
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+
 
 export type User = {
   id: string;
@@ -25,11 +25,11 @@ export type Sale = {
 };
 
 export const users: User[] = [
-  { id: 'usr_admin', name: 'Admin User', email: 'admin@beran.co', role: 'Admin', avatar: PlaceHolderImages.find(p => p.id === 'user1')?.imageUrl || '', salesCode: 'ADM01' },
-  { id: 'usr_spv', name: 'Supervisor', email: 'spv@beran.co', role: 'SPV', avatar: PlaceHolderImages.find(p => p.id === 'user2')?.imageUrl || '', salesCode: 'SPV01' },
-  { id: 'usr_sales1', name: 'Jane Doe', email: 'jane.d@beran.co', role: 'Sales', avatar: PlaceHolderImages.find(p => p.id === 'user3')?.imageUrl || '', salesCode: 'SLS01' },
-  { id: 'usr_sales2', name: 'John Smith', email: 'john.s@beran.co', role: 'Sales', avatar: PlaceHolderImages.find(p => p.id === 'user4')?.imageUrl || '', salesCode: 'SLS02' },
-  { id: 'usr_sales3', name: 'Sam Wilson', email: 'sam.w@beran.co', role: 'Sales', avatar: PlaceHolderImages.find(p => p.id === 'user5')?.imageUrl || '', salesCode: 'SLS03' },
+  { id: 'usr_admin', name: 'Admin User', email: 'admin@beran.co', role: 'Admin', avatar: '/placeholders/user1.jpg', salesCode: 'ADM01' },
+  { id: 'usr_spv', name: 'Supervisor', email: 'spv@beran.co', role: 'SPV', avatar: '/placeholders/user2.jpg', salesCode: 'SPV01' },
+  { id: 'usr_sales1', name: 'Jane Doe', email: 'jane.d@beran.co', role: 'Sales', avatar: '/placeholders/user3.jpg', salesCode: 'SLS01' },
+  { id: 'usr_sales2', name: 'John Smith', email: 'john.s@beran.co', role: 'Sales', avatar: '/placeholders/user4.jpg', salesCode: 'SLS02' },
+  { id: 'usr_sales3', name: 'Sam Wilson', email: 'sam.w@beran.co', role: 'Sales', avatar: '/placeholders/user5.jpg', salesCode: 'SLS03' },
 ];
 
 export const projects: Project[] = [

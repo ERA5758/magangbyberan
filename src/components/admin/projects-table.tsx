@@ -18,9 +18,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
-import { projects as mockProjects, type Project } from "@/lib/mock-data"
+import { useCollection, useFirestore } from "@/firebase"
+import { collection } from "firebase/firestore"
+import type { Project } from "@/lib/mock-data"
+
 
 export function ProjectsTable() {
+    const firestore = useFirestore();
+    const { data: projects, loading } = useCollection<Project>(firestore ? collection(firestore, "projects") : null);
     
     const getBadgeVariant = (status: Project['status']) => {
         switch (status) {
@@ -30,6 +35,10 @@ export function ProjectsTable() {
             default: return 'outline';
         }
     };
+
+    if (loading) {
+        return <div>Loading projects...</div>
+    }
 
     return (
         <div className="space-y-4">
@@ -52,7 +61,7 @@ export function ProjectsTable() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {mockProjects.map((project) => (
+                    {projects && projects.map((project) => (
                         <TableRow key={project.id}>
                             <TableCell className="font-medium">{project.name}</TableCell>
                             <TableCell>

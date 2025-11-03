@@ -1,6 +1,7 @@
+"use client";
+
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { spvTeams, users, sales } from "@/lib/mock-data";
 import { TeamPerformanceTable } from "@/components/spv/team-performance-table";
 import { UsersRound, DollarSign, Percent } from "lucide-react";
 import {
@@ -10,14 +11,38 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
-
-const SPV_CODE = 'SPV01'; // Mock current SPV
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCollection, useFirestore, useDoc } from "@/firebase";
+import { collection, query, where } from "firebase/firestore";
+import type { User, Sale } from "@/lib/mock-data";
+import { spvTeams } from "@/lib/mock-data"; // still using mock for team structure
 
 export default function SpvDashboard() {
-  const teamSalesCodes = spvTeams[SPV_CODE] || [];
-  const teamMembers = users.filter(u => teamSalesCodes.includes(u.salesCode));
-  const teamSales = sales.filter(s => teamSalesCodes.includes(s.salesCode));
-  const totalSalesAmount = teamSales.reduce((acc, sale) => acc + sale.amount, 0);
+  const { user, loading: userLoading } = useCurrentUser();
+  const firestore = useFirestore();
+
+  // Assuming user object has salesCode which is SPV's code
+  const spvCode = user?.salesCode;
+  
+  const teamSalesCodes = spvCode ? spvTeams[spvCode] : [];
+
+  const { data: teamMembers, loading: teamLoading } = useCollection<User>(
+    firestore && teamSalesCodes && teamSalesCodes.length > 0
+      ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes))
+      : null
+  );
+
+  const { data: teamSales, loading: salesLoading } = useCollection<Sale>(
+    firestore && teamSalesCodes && teamSalesCodes.length > 0
+      ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes))
+      : null
+  );
+
+  if (userLoading || teamLoading || salesLoading) {
+    return <div>Loading...</div>
+  }
+
+  const totalSalesAmount = teamSales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
   
   // Mock conversion rate
   const conversionRate = 35.5;
@@ -29,7 +54,7 @@ export default function SpvDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Team Members"
-          value={teamMembers.length.toString()}
+          value={teamMembers?.length.toString() || '0'}
           icon={UsersRound}
           description="Salespersons under your supervision"
         />
@@ -53,7 +78,7 @@ export default function SpvDashboard() {
                 <CardTitle>Team Performance</CardTitle>
             </CardHeader>
             <CardContent>
-                <TeamPerformanceTable spvCode={SPV_CODE} />
+                {spvCode && <TeamPerformanceTable spvCode={spvCode} />}
             </CardContent>
         </Card>
         <Card className="lg:col-span-2">
@@ -61,7 +86,7 @@ export default function SpvDashboard() {
                 <CardTitle>Weekly Sales Trend</CardTitle>
             </CardHeader>
             <CardContent>
-                <PerformanceChart />
+                <PerformanceChart sales={teamSales} />
             </CardContent>
         </Card>
       </div>

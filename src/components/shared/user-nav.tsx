@@ -4,12 +4,7 @@ import {
   LogOut,
   Settings,
   User as UserIcon,
-  Moon,
-  Sun,
-  Laptop,
-  Check
 } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,27 +17,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useAuth } from "@/firebase";
+import { signOut } from "firebase/auth";
 
 export function UserNav() {
-  const { user, setUserRole } = useCurrentUser();
+  const { user } = useCurrentUser();
+  const auth = useAuth();
   const router = useRouter();
 
   if (!user) {
     return null;
   }
   
-  const handleLogout = () => {
-    localStorage.removeItem('currentUserRole');
-    router.push('/login');
+  const handleLogout = async () => {
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
   };
-
-  const roles = ['Admin', 'SPV', 'Sales'];
 
   return (
     <DropdownMenu>
@@ -73,26 +67,6 @@ export function UserNav() {
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>
-        </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuGroup>
-            <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
-                    <UserIcon className="mr-2 h-4 w-4" />
-                    <span>Switch Role</span>
-                </DropdownMenuSubTrigger>
-                <DropdownMenuPortal>
-                    <DropdownMenuSubContent>
-                        {roles.map(role => (
-                            <DropdownMenuItem key={role} onClick={() => setUserRole(role as 'Admin' | 'SPV' | 'Sales')}>
-                                {user.role === role && <Check className="mr-2 h-4 w-4" />}
-                                {user.role !== role && <div className="mr-2 h-4 w-4" />}
-                                <span>{role}</span>
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuSubContent>
-                </DropdownMenuPortal>
-            </DropdownMenuSub>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
