@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react";
 import {
   Table,
   TableBody,
@@ -16,17 +17,27 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
 import type { AppUser } from "@/hooks/use-current-user"
+import { AddUserForm } from "./add-user-form";
 
 
 export function UsersTable() {
     const firestore = useFirestore();
     const { data: users, loading } = useCollection<AppUser>(firestore ? collection(firestore, "users") : null);
+    const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     
     const getBadgeVariant = (role: AppUser['role']) => {
         switch (role) {
@@ -44,10 +55,23 @@ export function UsersTable() {
     return (
         <div className="space-y-4">
             <div className="flex justify-end">
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add User
-                </Button>
+                <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add User
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] md:max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                        <DialogTitle>Tambah Pengguna Baru</DialogTitle>
+                        <DialogDescription>
+                            Isi formulir di bawah ini untuk membuat akun pengguna baru.
+                        </DialogDescription>
+                        </DialogHeader>
+                        <AddUserForm onSuccess={() => setIsAddUserOpen(false)} />
+                    </DialogContent>
+                </Dialog>
             </div>
             <div className="rounded-md border">
                 <Table>

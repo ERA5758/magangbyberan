@@ -12,6 +12,7 @@ export type AppUser = {
   role: 'Admin' | 'SPV' | 'Sales';
   avatar: string;
   salesCode: string;
+  [key: string]: any; // Allow other properties
 };
 
 export const useCurrentUser = () => {
@@ -33,6 +34,7 @@ export const useCurrentUser = () => {
             role: data.role || 'Sales',
             avatar: authUser.photoURL || data.avatar || '/placeholders/user1.jpg',
             salesCode: data.salesCode || '',
+            ...data
           });
         } else {
           setAppUser(null);
