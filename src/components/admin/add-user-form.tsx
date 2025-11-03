@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useAuth, useFirestore, useCollection } from '@/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 import { doc, setDoc, collection, query, where } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -117,8 +117,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         userData.supervisorId = values.supervisor;
       }
       
-      // In a real app, you might want to link project to user
-      // For now, we'll just store it as an example
       if (values.project) {
         userData.projectId = values.project;
       }
@@ -135,10 +133,26 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
 
     } catch (error: any) {
       console.error('Error creating user:', error);
+       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+      if (error.code) {
+        switch (error.code) {
+          case AuthErrorCodes.EMAIL_EXISTS:
+            description = 'Alamat email ini sudah digunakan oleh akun lain.';
+            break;
+          case AuthErrorCodes.WEAK_PASSWORD:
+            description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
+            break;
+          case AuthErrorCodes.INVALID_EMAIL:
+            description = 'Format alamat email tidak valid.';
+            break;
+          default:
+            description = `Terjadi galat: ${error.message}`;
+        }
+      }
       toast({
         variant: 'destructive',
         title: 'Gagal Membuat Pengguna',
-        description: error.message || 'Terjadi kesalahan. Silakan coba lagi.',
+        description: description,
       });
     } finally {
       setIsLoading(false);

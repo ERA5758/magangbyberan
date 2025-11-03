@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, AuthErrorCodes } from "firebase/auth";
 import { useAuth, useFirestore } from "@/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
@@ -74,16 +74,33 @@ export function LoginForm() {
         const redirectPath = `/${userRole.toLowerCase()}`;
         router.push(redirectPath);
       } else {
-        throw new Error("User data not found.");
+        throw new Error("User data not found in Firestore.");
       }
     } catch (error: any) {
       console.error("Login Error:", error);
+      let description = "An unexpected error occurred. Please try again.";
+      if (error.code) {
+        switch (error.code) {
+          case AuthErrorCodes.INVALID_CREDENTIAL:
+            description = "Invalid email or password. Please check your credentials.";
+            break;
+          case "auth/user-not-found":
+             description = "No user found with this email address.";
+             break;
+          case "auth/wrong-password":
+            description = "Incorrect password. Please try again.";
+            break;
+          default:
+            description = `Error: ${error.message}`;
+        }
+      }
       toast({
         variant: "destructive",
         title: "Login Failed",
-        description: error.message || "Invalid email or password. Please try again.",
+        description: description,
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   }
 
