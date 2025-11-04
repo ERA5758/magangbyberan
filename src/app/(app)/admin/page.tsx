@@ -13,11 +13,15 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import type { AppUser } from '@/hooks/use-current-user';
 import type { Project } from "@/lib/mock-data";
 import type { Sale } from "@/lib/mock-data";
 import { useMemo } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -30,56 +34,68 @@ export default function AdminDashboard() {
   const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsCollection);
   const { data: sales, loading: salesLoading } = useCollection<Sale>(salesCollection);
 
-
-  if (usersLoading || projectsLoading || salesLoading) {
-    return <div>Loading Dashboard...</div>
-  }
-
   const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
+  const isLoading = usersLoading || projectsLoading || salesLoading;
 
   return (
-    <div className="space-y-8">
-      <PageHeader title="Admin Dashboard" description="Manage users, projects, and view overall performance." />
+    <div className="space-y-6">
+      <PageHeader title="Admin Dashboard" description="Welcome back! Here's an overview of your platform." />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Users"
-          value={users?.length.toString() || '0'}
+          value={isLoading ? <Skeleton className="h-6 w-20" /> : users?.length.toString() || '0'}
           icon={Users}
-          description="All users in the system"
+          description="Number of registered users"
         />
         <StatCard
           title="Total Projects"
-          value={projects?.length.toString() || '0'}
+          value={isLoading ? <Skeleton className="h-6 w-16" /> : projects?.length.toString() || '0'}
           icon={Briefcase}
-          description="All projects being tracked"
+          description="All active and completed projects"
         />
         <StatCard
           title="Total Sales"
-          value={`$${totalSales.toLocaleString()}`}
+          value={isLoading ? <Skeleton className="h-6 w-28" /> : `$${totalSales.toLocaleString()}`}
           icon={DollarSign}
           description="Total revenue from all projects"
         />
       </div>
 
-      <div className="grid gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>User Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <UsersTable />
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>View, add, or manage users.</CardDescription>
+                </div>
+                <Button asChild size="sm">
+                    <Link href="/admin/users">View All</Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <UsersTable />
+            </CardContent>
+            </Card>
+        </div>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Project Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectsTable />
-          </CardContent>
-        </Card>
+        <div className="lg:col-span-1">
+            <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Projects</CardTitle>
+                    <CardDescription>Manage all company projects.</CardDescription>
+                </div>
+                 <Button asChild size="sm">
+                    <Link href="/admin/projects">View All</Link>
+                </Button>
+            </CardHeader>
+            <CardContent>
+                <ProjectsTable />
+            </CardContent>
+            </Card>
+        </div>
       </div>
     </div>
   );
