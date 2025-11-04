@@ -22,6 +22,7 @@ import {
   Settings,
   UsersRound,
   LogOut,
+  ClipboardList,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
@@ -43,6 +44,7 @@ const navItems: NavItem[] = [
   { href: '/sales', label: 'Dashboard', icon: LayoutDashboard, roles: ['Sales'] },
   { href: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
   { href: '/admin/projects', label: 'Projects', icon: Briefcase, roles: ['Admin'] },
+  { href: '/admin/reports', label: 'Reports', icon: ClipboardList, roles: ['Admin'] },
   { href: '/spv/team', label: 'My Team', icon: UsersRound, roles: ['SPV'] },
 ];
 
