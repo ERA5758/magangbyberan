@@ -67,7 +67,7 @@ export function LoginForm() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data() as AppUser;
-        const userRole = userData.role || 'Sales'; 
+        const userRole = userData.role; 
 
         toast({
             title: "Login Successful",
@@ -86,7 +86,14 @@ export function LoginForm() {
             router.push('/sales');
             break;
           default:
-            router.push('/sales');
+             // Default redirect if role is not defined, though it shouldn't happen with correct data.
+            toast({
+              variant: "destructive",
+              title: "Role not found",
+              description: "User role is not defined. Please contact support.",
+            });
+            await auth.signOut();
+            router.push('/login');
         }
 
       } else {
