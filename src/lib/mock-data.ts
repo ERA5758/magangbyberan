@@ -24,10 +24,18 @@ export type Sale = {
 };
 
 export type Report = {
-  id: string;
-  salesCode: string;
-  createdAt: string;
-  amount?: number;
+  id: string; // Document ID from Firestore
+  createdAt: string; // Timestamp
+  name_alias?: string;
+  customId?: string; // The "ID" field
+  referral_by?: string;
+  transaksi?: string;
+  jumlah_transaksi?: number;
+  input_laporan?: string;
+  cek_digit?: string;
+  team_leader?: string;
+  salesCode?: string; // Kept for compatibility with other components
+  amount?: number; // Kept for compatibility
   [key: string]: any; // Allow other properties
 }
 
