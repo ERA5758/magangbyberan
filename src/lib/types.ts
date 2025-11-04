@@ -1,4 +1,6 @@
 
+import { Timestamp } from "firebase/firestore";
+
 export type AppUser = {
   id: string;
   uid: string;
@@ -28,16 +30,16 @@ export type Sale = {
 
 export type Report = {
   id: string; 
-  createdAt: string; 
-  name_alias?: string;
-  customId?: string;
-  referral_by?: string;
-  transaksi?: string;
-  jumlah_transaksi?: number;
-  input_laporan?: string;
-  cek_digit?: string;
-  team_leader?: string;
-  salesCode?: string; 
-  amount?: number; 
+  "ID UNIK": string;
+  Tanggal: Timestamp;
+  name_alias: string;
+  ID: string;
+  "REFERRAL BY": string;
+  TRANSAKSI: string;
+  "Jumlah Transaksi": number;
+  "Input Laporan": Timestamp;
+  "cek digit": number;
+  "TEAM LEADER": string;
+  lastSyncTimestamp?: Timestamp;
   [key: string]: any;
 }

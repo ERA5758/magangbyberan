@@ -4,7 +4,7 @@
 import { useMemo } from "react";
 import { useFirestore } from "@/firebase";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { collectionGroup, query } from "firebase/firestore";
+import { collectionGroup, query, Timestamp } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
@@ -23,31 +23,30 @@ import {
 import type { Report } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const isISODateString = (value: unknown): value is string => {
-  if (typeof value !== 'string') return false;
-  const d = new Date(value);
-  return !isNaN(d.getTime()) && d.toISOString() === value;
+const isFirestoreTimestamp = (value: any): value is Timestamp => {
+  return value && typeof value.toDate === 'function';
 };
 
 const formatValue = (value: any): string => {
-  if (isISODateString(value)) {
-    try {
-      return new Date(value).toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch (e) {
-      // ignore
+    if (isFirestoreTimestamp(value)) {
+        try {
+            return value.toDate().toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return 'Invalid Date';
+        }
     }
-  }
-  if (typeof value === 'number') {
-    return value.toLocaleString('id-ID');
-  }
-  if (typeof value === 'object' && value !== null) {
-    return JSON.stringify(value);
-  }
-  return String(value);
+    if (typeof value === 'number') {
+        return value.toLocaleString('id-ID');
+    }
+    if (typeof value === 'object' && value !== null) {
+        // Avoid showing complex objects like lastSyncTimestamp
+        return '[object]';
+    }
+    return String(value);
 };
 
 
@@ -67,12 +66,29 @@ function AllReportsTable() {
     const headerSet = new Set<string>();
     reports.forEach(report => {
       Object.keys(report).forEach(key => {
-        if(key !== 'id') { // Exclude firestore document id from headers
+        // Exclude firestore document id and internal fields from headers
+        if(key !== 'id' && key !== 'lastSyncTimestamp') { 
             headerSet.add(key);
         }
       });
     });
-    return Array.from(headerSet);
+    
+    // Define a preferred order
+    const preferredOrder = [
+        'ID UNIK', 'Tanggal', 'name_alias', 'ID', 'REFERRAL BY', 
+        'TRANSAKSI', 'Jumlah Transaksi', 'Input Laporan', 'cek digit', 'TEAM LEADER'
+    ];
+
+    return Array.from(headerSet).sort((a, b) => {
+        const indexA = preferredOrder.indexOf(a);
+        const indexB = preferredOrder.indexOf(b);
+        if (indexA !== -1 && indexB !== -1) {
+            return indexA - indexB;
+        }
+        if (indexA !== -1) return -1;
+        if (indexB !== -1) return 1;
+        return a.localeCompare(b);
+    });
   }, [reports]);
 
   if (loading) {
