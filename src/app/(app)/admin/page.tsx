@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -55,8 +56,8 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <Card className="lg:col-span-2">
+      <div className="grid gap-4">
+        <Card>
           <CardHeader>
             <CardTitle>User Management</CardTitle>
           </CardHeader>
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
         
-        <Card className="lg:col-span-2">
+        <Card>
           <CardHeader>
             <CardTitle>Project Management</CardTitle>
           </CardHeader>

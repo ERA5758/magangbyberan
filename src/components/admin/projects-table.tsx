@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -21,11 +22,13 @@ import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
 import type { Project } from "@/lib/mock-data"
+import { useRouter } from "next/navigation"
 
 
 export function ProjectsTable() {
     const firestore = useFirestore();
     const { data: projects, loading } = useCollection<Project>(firestore ? collection(firestore, "projects") : null);
+    const router = useRouter();
     
     const getBadgeVariant = (status: Project['status']) => {
         switch (status) {
@@ -34,6 +37,10 @@ export function ProjectsTable() {
             case 'On Hold': return 'destructive';
             default: return 'outline';
         }
+    };
+
+    const handleRowClick = (projectId: string) => {
+        router.push(`/admin/projects/${projectId}`);
     };
 
     if (loading) {
@@ -62,7 +69,7 @@ export function ProjectsTable() {
                     </TableHeader>
                     <TableBody>
                     {projects && projects.map((project) => (
-                        <TableRow key={project.id}>
+                        <TableRow key={project.id} onClick={() => handleRowClick(project.id)} className="cursor-pointer">
                             <TableCell className="font-medium">{project.name}</TableCell>
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
@@ -70,7 +77,7 @@ export function ProjectsTable() {
                             <TableCell className="hidden md:table-cell">{project.assignedSalesCodes.join(', ')}</TableCell>
                             <TableCell>
                                 <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
+                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Toggle menu</span>

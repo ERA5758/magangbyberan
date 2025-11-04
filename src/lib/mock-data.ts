@@ -1,5 +1,4 @@
 
-
 export type User = {
   id: string;
   name: string;
@@ -23,6 +22,14 @@ export type Sale = {
   amount: number;
   date: string;
 };
+
+export type Report = {
+  id: string;
+  salesCode: string;
+  createdAt: string;
+  amount?: number;
+  [key: string]: any; // Allow other properties
+}
 
 export const users: User[] = [
   { id: 'usr_admin', name: 'Admin User', email: 'admin@beran.co', role: 'Admin', avatar: '/placeholders/user1.jpg', salesCode: 'ADM01' },
