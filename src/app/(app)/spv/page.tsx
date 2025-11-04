@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PageHeader } from "@/components/shared/page-header";
@@ -17,6 +18,7 @@ import { collection, query, where } from "firebase/firestore";
 import type { Sale } from "@/lib/mock-data";
 import { spvTeams } from "@/lib/mock-data"; // still using mock for team structure
 import type { AppUser } from "@/hooks/use-current-user";
+import { useMemo } from "react";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -27,17 +29,19 @@ export default function SpvDashboard() {
   
   const teamSalesCodes = spvCode ? spvTeams[spvCode] : [];
 
-  const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(
+  const teamMembersQuery = useMemo(() => 
     firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
       ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes))
       : null
-  );
+  , [firestore, teamSalesCodes, user]);
+  const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(teamMembersQuery);
 
-  const { data: teamSales, loading: salesLoading } = useCollection<Sale>(
+  const teamSalesQuery = useMemo(() => 
     firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
       ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes))
       : null
-  );
+  , [firestore, teamSalesCodes, user]);
+  const { data: teamSales, loading: salesLoading } = useCollection<Sale>(teamSalesQuery);
 
   if (userLoading || teamLoading || salesLoading || !user) {
     return <div>Loading...</div>

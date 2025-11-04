@@ -23,11 +23,15 @@ import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
 import type { Project } from "@/lib/mock-data"
 import { useRouter } from "next/navigation"
+import { useMemo } from "react"
 
 
 export function ProjectsTable() {
     const firestore = useFirestore();
-    const { data: projects, loading } = useCollection<Project>(firestore ? collection(firestore, "projects") : null);
+
+    const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+    const { data: projects, loading } = useCollection<Project>(projectsQuery);
+    
     const router = useRouter();
     
     const getBadgeVariant = (status: Project['status']) => {

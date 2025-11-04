@@ -13,10 +13,14 @@ import { useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import type { Report } from "@/lib/mock-data";
 import { format } from "date-fns";
+import { useMemo } from "react";
 
 export function ProjectReportsTable({ projectId }: { projectId: string }) {
     const firestore = useFirestore();
-    const reportsCollectionRef = firestore ? collection(firestore, "projects", projectId, "reports") : null;
+    
+    const reportsCollectionRef = useMemo(() => 
+        firestore ? collection(firestore, "projects", projectId, "reports") : null
+    , [firestore, projectId]);
     const { data: reports, loading } = useCollection<Report>(reportsCollectionRef);
 
     if (loading) {

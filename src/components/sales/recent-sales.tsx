@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -12,18 +13,20 @@ import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
 import type { Sale } from "@/lib/mock-data";
+import { useMemo } from "react";
 
 export function RecentSales({ salesCode }: { salesCode: string }) {
     const firestore = useFirestore();
 
-    const { data: mySales, loading } = useCollection<Sale>(
+    const mySalesQuery = useMemo(() => 
         firestore ? query(
             collection(firestore, "sales"), 
             where("salesCode", "==", salesCode),
             orderBy("date", "desc"),
             limit(5)
         ) : null
-    );
+    , [firestore, salesCode]);
+    const { data: mySales, loading } = useCollection<Sale>(mySalesQuery);
 
     if (loading) {
         return <div>Loading recent sales...</div>

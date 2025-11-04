@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore, useCollection } from '@/firebase';
 import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
@@ -58,12 +58,15 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  const { data: supervisors } = useCollection<AppUser>(
+  const supervisorsQuery = useMemo(() => 
     firestore ? query(collection(firestore, 'users'), where('role', '==', 'SPV')) : null
-  );
-  const { data: projects } = useCollection<Project>(
+  , [firestore]);
+  const { data: supervisors } = useCollection<AppUser>(supervisorsQuery);
+  
+  const projectsQuery = useMemo(() => 
     firestore ? collection(firestore, 'projects') : null
-  );
+  , [firestore]);
+  const { data: projects } = useCollection<Project>(projectsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

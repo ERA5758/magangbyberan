@@ -17,13 +17,19 @@ import {
 import type { AppUser } from '@/hooks/use-current-user';
 import type { Project } from "@/lib/mock-data";
 import type { Sale } from "@/lib/mock-data";
+import { useMemo } from "react";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
 
-  const { data: users, loading: usersLoading } = useCollection<AppUser>(firestore ? collection(firestore, "users") : null);
-  const { data: projects, loading: projectsLoading } = useCollection<Project>(firestore ? collection(firestore, "projects") : null);
-  const { data: sales, loading: salesLoading } = useCollection<Sale>(firestore ? collection(firestore, "sales") : null);
+  const usersCollection = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
+  const projectsCollection = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+  const salesCollection = useMemo(() => firestore ? collection(firestore, "sales") : null, [firestore]);
+
+  const { data: users, loading: usersLoading } = useCollection<AppUser>(usersCollection);
+  const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsCollection);
+  const { data: sales, loading: salesLoading } = useCollection<Sale>(salesCollection);
+
 
   if (usersLoading || projectsLoading || salesLoading) {
     return <div>Loading Dashboard...</div>

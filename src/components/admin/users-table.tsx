@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -36,7 +37,8 @@ import { AddUserForm } from "./add-user-form";
 
 export function UsersTable() {
     const firestore = useFirestore();
-    const { data: users, loading } = useCollection<AppUser>(firestore ? collection(firestore, "users") : null);
+    const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
+    const { data: users, loading } = useCollection<AppUser>(usersQuery);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     
     const getBadgeVariant = (role: AppUser['role']) => {

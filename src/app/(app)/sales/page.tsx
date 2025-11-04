@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { useCollection, useFirestore } from "@/firebase";
@@ -28,17 +29,20 @@ export default function SalesDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const firestore = useFirestore();
 
-  const { data: mySales, loading: salesLoading } = useCollection<Sale>(
+  const mySalesQuery = useMemo(() => 
     user && firestore ? query(collection(firestore, "sales"), where("salesCode", "==", user.salesCode)) : null
-  );
+  , [user, firestore]);
+  const { data: mySales, loading: salesLoading } = useCollection<Sale>(mySalesQuery);
 
-  const { data: allSalespersons, loading: usersLoading } = useCollection<AppUser>(
+  const allSalespersonsQuery = useMemo(() => 
     firestore ? query(collection(firestore, "users"), where("role", "==", "Sales")) : null
-  );
+  , [firestore]);
+  const { data: allSalespersons, loading: usersLoading } = useCollection<AppUser>(allSalespersonsQuery);
   
-  const { data: allSales, loading: allSalesLoading } = useCollection<Sale>(
+  const allSalesQuery = useMemo(() => 
     firestore ? collection(firestore, "sales") : null
-  );
+  , [firestore]);
+  const { data: allSales, loading: allSalesLoading } = useCollection<Sale>(allSalesQuery);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
