@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Report } from "@/lib/mock-data";
+import type { Report } from "@/lib/types";
 import { format } from "date-fns";
 
 function AllReportsTable() {

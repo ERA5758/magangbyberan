@@ -1,3 +1,4 @@
+
 "use client"
 
 import { Bar, BarChart, CartesianGrid, XAxis } from "recharts"
@@ -7,7 +8,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { subDays, format, eachDayOfInterval, startOfDay } from 'date-fns';
-import type { Sale } from "@/lib/mock-data";
+import type { Sale } from "@/lib/types";
 
 const chartConfig = {
   sales: {

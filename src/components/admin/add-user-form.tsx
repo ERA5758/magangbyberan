@@ -28,8 +28,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import type { AppUser } from '@/hooks/use-current-user';
-import type { Project } from '@/lib/mock-data';
+import type { AppUser, Project } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nama harus diisi.'),
@@ -105,7 +104,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       // 2. ONLY if Auth creation is successful, create user document in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
       
-      const userData: Omit<AppUser, 'uid' | 'avatar'> & { [key: string]: any } = {
+      const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
         name: values.name,
         email: values.email,
         role: values.role,

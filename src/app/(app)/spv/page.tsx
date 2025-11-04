@@ -15,32 +15,27 @@ import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { Sale } from "@/lib/mock-data";
-import { spvTeams } from "@/lib/mock-data"; // still using mock for team structure
-import type { AppUser } from "@/hooks/use-current-user";
+import type { Sale, AppUser } from "@/lib/types";
 import { useMemo } from "react";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
   const firestore = useFirestore();
 
-  // Assuming user object has salesCode which is SPV's code
-  const spvCode = user?.salesCode;
-  
-  const teamSalesCodes = spvCode ? spvTeams[spvCode] : [];
-
   const teamMembersQuery = useMemo(() => 
-    firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
-      ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes))
+    firestore && user
+      ? query(collection(firestore, "users"), where("supervisorId", "==", user.uid))
       : null
-  , [firestore, teamSalesCodes, user]);
+  , [firestore, user]);
   const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(teamMembersQuery);
 
+  const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode) || [], [teamMembers]);
+
   const teamSalesQuery = useMemo(() => 
-    firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
+    firestore && teamSalesCodes && teamSalesCodes.length > 0
       ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes))
       : null
-  , [firestore, teamSalesCodes, user]);
+  , [firestore, teamSalesCodes]);
   const { data: teamSales, loading: salesLoading } = useCollection<Sale>(teamSalesQuery);
 
   if (userLoading || teamLoading || salesLoading || !user) {
@@ -83,7 +78,7 @@ export default function SpvDashboard() {
                 <CardTitle>Team Performance</CardTitle>
             </CardHeader>
             <CardContent>
-                {spvCode && <TeamPerformanceTable spvCode={spvCode} />}
+                {user.uid && <TeamPerformanceTable supervisorId={user.uid} />}
             </CardContent>
         </Card>
         <Card className="lg:col-span-2">

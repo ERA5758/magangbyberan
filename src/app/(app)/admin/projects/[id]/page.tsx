@@ -7,7 +7,7 @@ import { doc } from 'firebase/firestore';
 import { PageHeader } from '@/components/shared/page-header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProjectReportsTable } from '@/components/admin/project-reports-table';
-import type { Project } from '@/lib/mock-data';
+import type { Project } from '@/lib/types';
 import { useMemo } from 'react';
 
 export default function ProjectDetailPage() {

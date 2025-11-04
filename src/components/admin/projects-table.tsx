@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
-import type { Project } from "@/lib/mock-data"
+import type { Project } from "@/lib/types"
 import { useRouter } from "next/navigation"
 import { useMemo } from "react"
 

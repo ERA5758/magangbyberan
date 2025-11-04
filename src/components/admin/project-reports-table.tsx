@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
-import type { Report } from "@/lib/mock-data";
+import type { Report } from "@/lib/types";
 import { format } from "date-fns";
 import { useMemo } from "react";
 

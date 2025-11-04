@@ -15,9 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import type { AppUser } from '@/hooks/use-current-user';
-import type { Project } from "@/lib/mock-data";
-import type { Sale } from "@/lib/mock-data";
+import type { AppUser, Project, Sale } from '@/lib/types';
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";

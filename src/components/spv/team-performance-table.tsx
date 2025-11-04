@@ -18,14 +18,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
-import { spvTeams } from "@/lib/mock-data"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection, query, where } from "firebase/firestore"
-import type { Sale } from "@/lib/mock-data";
+import type { Sale, AppUser } from "@/lib/types";
 import { useMemo } from "react"
-import type { AppUser } from "@/hooks/use-current-user"
 
 type TeamPerformanceData = {
     id: string;
@@ -37,23 +35,30 @@ type TeamPerformanceData = {
     salesTarget: number;
 }
 
-export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
+export function TeamPerformanceTable({ supervisorId }: { supervisorId: string }) {
     const firestore = useFirestore();
-    const teamSalesCodes = spvTeams[spvCode] || [];
 
-    const { data: teamMembers, loading: membersLoading } = useCollection<AppUser>(
-        firestore && teamSalesCodes.length > 0 ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes)) : null
-    );
+    const teamMembersQuery = useMemo(() => 
+        firestore && supervisorId
+            ? query(collection(firestore, "users"), where("supervisorId", "==", supervisorId))
+            : null
+    , [firestore, supervisorId]);
+    const { data: teamMembers, loading: membersLoading } = useCollection<AppUser>(teamMembersQuery);
+    
+    const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode) || [], [teamMembers]);
 
-    const { data: sales, loading: salesLoading } = useCollection<Sale>(
-        firestore && teamSalesCodes.length > 0 ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes)) : null
-    );
+    const salesQuery = useMemo(() => 
+        firestore && teamSalesCodes.length > 0 
+            ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes)) 
+            : null
+    , [firestore, teamSalesCodes]);
+    const { data: sales, loading: salesLoading } = useCollection<Sale>(salesQuery);
 
     const performanceData = useMemo(() => {
-        if (!teamMembers || !sales) return [];
+        if (!teamMembers) return [];
 
         return teamMembers.map(member => {
-            const memberSales = sales.filter(s => s.salesCode === member.salesCode);
+            const memberSales = sales?.filter(s => s.salesCode === member.salesCode) || [];
             const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
             return {
                 id: member.id,
@@ -62,7 +67,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
                 email: member.email,
                 totalSales,
                 salesCount: memberSales.length,
-                salesTarget: 10000, // Mock target
+                salesTarget: 10000, // Mock target, can be moved to user/project data
             }
         });
     }, [teamMembers, sales]);

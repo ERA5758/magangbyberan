@@ -12,7 +12,7 @@ import {
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { format } from "date-fns";
-import type { Sale } from "@/lib/mock-data";
+import type { Sale } from "@/lib/types";
 import { useMemo } from "react";
 
 export function RecentSales({ salesCode }: { salesCode: string }) {

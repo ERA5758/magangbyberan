@@ -19,8 +19,7 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import type { Sale } from "@/lib/mock-data";
-import type { AppUser } from "@/hooks/use-current-user";
+import type { Sale, AppUser } from "@/lib/types";
 
 
 export default function SalesDashboard() {
