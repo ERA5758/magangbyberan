@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -27,7 +28,7 @@ import { useMemo } from "react"
 import type { AppUser } from "@/hooks/use-current-user"
 
 type TeamPerformanceData = {
-    uid: string;
+    id: string;
     name: string;
     avatar: string;
     email: string;
@@ -55,7 +56,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
             const memberSales = sales.filter(s => s.salesCode === member.salesCode);
             const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
             return {
-                uid: member.uid,
+                id: member.id,
                 name: member.name,
                 avatar: member.avatar,
                 email: member.email,
@@ -86,7 +87,7 @@ export function TeamPerformanceTable({ spvCode }: { spvCode: string }) {
                 </TableHeader>
                 <TableBody>
                 {performanceData.map((data) => (
-                    <TableRow key={data.uid}>
+                    <TableRow key={data.id}>
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>

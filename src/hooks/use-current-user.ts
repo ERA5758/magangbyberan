@@ -1,3 +1,4 @@
+
 "use client"
 import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
@@ -5,6 +6,7 @@ import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from "firebase/firestore";
 
 export type AppUser = {
+  id: string;
   uid: string;
   name: string;
   email: string | null;
@@ -38,6 +40,7 @@ export const useCurrentUser = () => {
         if (doc.exists()) {
           const data = doc.data();
           setAppUser({
+            id: doc.id,
             uid: authUser.uid,
             name: data.name || 'No Name',
             email: authUser.email,

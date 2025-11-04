@@ -89,7 +89,7 @@ export function UsersTable() {
                     </TableHeader>
                     <TableBody>
                     {users && users.map((user) => (
-                        <TableRow key={user.uid}>
+                        <TableRow key={user.id}>
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>
