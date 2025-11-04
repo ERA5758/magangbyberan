@@ -13,21 +13,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { User } from '@/hooks/use-current-user';
-import type { Project, Sale } from "@/lib/mock-data";
+import type { AppUser } from '@/hooks/use-current-user';
+import type { Project } from "@/lib/mock-data";
+import type { Sale } from "@/lib/mock-data";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
 
-  const { data: users, loading: usersLoading } = useCollection<User>(firestore ? collection(firestore, "users") : null);
+  const { data: users, loading: usersLoading } = useCollection<AppUser>(firestore ? collection(firestore, "users") : null);
   const { data: projects, loading: projectsLoading } = useCollection<Project>(firestore ? collection(firestore, "projects") : null);
   const { data: sales, loading: salesLoading } = useCollection<Sale>(firestore ? collection(firestore, "sales") : null);
-
-  const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
 
   if (usersLoading || projectsLoading || salesLoading) {
     return <div>Loading Dashboard...</div>
   }
+
+  const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
 
   return (
     <div className="space-y-8">

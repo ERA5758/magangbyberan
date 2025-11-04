@@ -28,18 +28,18 @@ export default function SpvDashboard() {
   const teamSalesCodes = spvCode ? spvTeams[spvCode] : [];
 
   const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(
-    firestore && teamSalesCodes && teamSalesCodes.length > 0
+    firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
       ? query(collection(firestore, "users"), where("salesCode", "in", teamSalesCodes))
       : null
   );
 
   const { data: teamSales, loading: salesLoading } = useCollection<Sale>(
-    firestore && teamSalesCodes && teamSalesCodes.length > 0
+    firestore && teamSalesCodes && teamSalesCodes.length > 0 && user
       ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes))
       : null
   );
 
-  if (userLoading || teamLoading || salesLoading) {
+  if (userLoading || teamLoading || salesLoading || !user) {
     return <div>Loading...</div>
   }
 

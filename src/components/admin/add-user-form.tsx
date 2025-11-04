@@ -130,7 +130,9 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       });
       
       form.reset();
-      onSuccess?.();
+      if (onSuccess) {
+        onSuccess();
+      }
 
     } catch (error: any) {
       console.error('Error creating user:', error);
@@ -231,7 +233,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Pilih supervisor...</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={supervisors?.length === 0}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!supervisors || supervisors.length === 0}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih supervisor..." />
@@ -331,7 +333,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Pilih Proyek</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={projects?.length === 0}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!projects || projects.length === 0}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih proyek..." />

@@ -72,7 +72,7 @@ export default function SalesDashboard() {
     })
     .sort((a, b) => b - a) || [];
 
-  const myRank = allSalesTotals.indexOf(totalMySales) + 1;
+  const myRank = totalMySales > 0 ? allSalesTotals.indexOf(totalMySales) + 1 : 0;
 
 
   return (
