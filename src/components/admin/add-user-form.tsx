@@ -1,10 +1,11 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore, useCollection } from '@/firebase';
 import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 import { doc, setDoc, collection, query, where } from 'firebase/firestore';
@@ -55,6 +56,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { data: supervisors } = useCollection<AppUser>(
     firestore ? query(collection(firestore, 'users'), where('role', '==', 'SPV')) : null
@@ -199,7 +201,18 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               <FormItem>
                 <FormLabel>Kata Sandi</FormLabel>
                 <FormControl>
-                  <Input type="password" placeholder="••••••••" {...field} />
+                  <div className="relative">
+                    <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute inset-y-0 right-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
