@@ -62,26 +62,27 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router]);
 
-  if (loading || !user) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-                <Skeleton className="h-12 w-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="h-4 w-[250px]" />
-                    <Skeleton className="h-4 w-[200px]" />
-                </div>
-            </div>
-        </div>
-    );
-  }
-
   const handleLogout = async () => {
     if (auth) {
       await signOut(auth);
       router.push('/login');
     }
   };
+
+  if (loading || !user) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                <AppLogo />
+                <div className="space-y-2 text-center mt-4">
+                    <p className="text-muted-foreground">Loading your dashboard...</p>
+                    <Skeleton className="h-4 w-[250px] mx-auto" />
+                    <Skeleton className="h-4 w-[200px] mx-auto" />
+                </div>
+            </div>
+        </div>
+    );
+  }
 
   const filteredNavItems = navItems.filter(item => user.role && item.roles.includes(user.role));
   const filteredBottomNavItems = bottomNavItems.filter(item => user.role && item.roles.includes(user.role));

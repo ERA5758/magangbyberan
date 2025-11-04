@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from "firebase/firestore";
-import type { User as AuthUser } from 'firebase/auth';
 
 export type AppUser = {
   uid: string;
@@ -16,13 +15,24 @@ export type AppUser = {
 };
 
 export const useCurrentUser = () => {
-  const { user: authUser } = useUser();
+  const { user: authUser, loading: authLoading } = useUser();
   const firestore = useFirestore();
   const [appUser, setAppUser] = useState<AppUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [userLoading, setUserLoading] = useState(true);
 
   useEffect(() => {
-    if (authUser && firestore) {
+    if (authLoading) {
+      setUserLoading(true);
+      return;
+    }
+
+    if (!authUser) {
+      setAppUser(null);
+      setUserLoading(false);
+      return;
+    }
+    
+    if (firestore) {
       const userDocRef = doc(firestore, "users", authUser.uid);
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
@@ -32,21 +42,24 @@ export const useCurrentUser = () => {
             name: data.name || 'No Name',
             email: authUser.email,
             role: data.role || 'Sales',
-            avatar: authUser.photoURL || data.avatar || '/placeholders/user1.jpg',
+            avatar: authUser.photoURL || data.avatar || `https://i.pravatar.cc/150?u=${authUser.uid}`,
             salesCode: data.salesCode || '',
             ...data
           });
         } else {
-          setAppUser(null);
+          // This might happen if user exists in Auth but not in Firestore
+          setAppUser(null); 
         }
-        setLoading(false);
+        setUserLoading(false);
+      }, (error) => {
+        console.error("Error fetching user data from Firestore:", error);
+        setAppUser(null);
+        setUserLoading(false);
       });
-      return () => unsubscribe();
-    } else if (!authUser) {
-      setLoading(false);
-      setAppUser(null);
-    }
-  }, [authUser, firestore]);
 
-  return { user: appUser, loading };
+      return () => unsubscribe();
+    }
+  }, [authUser, firestore, authLoading]);
+
+  return { user: appUser, loading: userLoading };
 };
