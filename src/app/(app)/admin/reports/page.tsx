@@ -2,7 +2,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useCollection, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { collectionGroup, query } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -29,7 +30,7 @@ function AllReportsTable() {
       firestore ? query(collectionGroup(firestore, "reports")) : null
   , [firestore]);
 
-  const { data: reports, loading } = useCollection<Report>(reportsQuery);
+  const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
 
   if (loading) {
     return <div>Loading all reports...</div>;
