@@ -165,7 +165,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const segment = useSelectedLayoutSegment();
-  const isAppRoute = segment !== 'login' && segment !== 'settings';
+  const isAuthRoute = segment === 'login';
+  const showAppLayout = !isAuthRoute;
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -179,7 +180,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider>
           <FirebaseClientProvider>
-            {isAppRoute || segment === 'settings' ? <AppLayout>{children}</AppLayout> : children}
+            {showAppLayout ? <AppLayout>{children}</AppLayout> : children}
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
