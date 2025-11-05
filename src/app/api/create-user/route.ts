@@ -1,4 +1,3 @@
-
 import 'dotenv/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeAdminApp } from '@/lib/firebase-admin';
