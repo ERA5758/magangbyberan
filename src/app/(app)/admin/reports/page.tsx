@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format, parse } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -45,18 +45,16 @@ const formatValue = (value: any): string => {
 
     if (typeof value === 'string') {
         try {
-            let parsedDate = parse(value, 'M/d/yyyy', new Date());
+            // This will handle ISO strings, and some other common formats.
+            const parsedDate = new Date(value);
+            // Check if the parsed date is valid before formatting
             if (!isNaN(parsedDate.getTime())) {
-                return format(parsedDate, 'dd/MM/yyyy');
+                // A simple check to avoid formatting random strings as dates
+                // e.g., "Approved" doesn't contain numbers that look like a date part
+                if (/\d/.test(value)) {
+                    return format(parsedDate, 'dd/MM/yyyy');
+                }
             }
-             parsedDate = parse(value, 'd/M/yyyy', new Date());
-            if (!isNaN(parsedDate.getTime())) {
-                return format(parsedDate, 'dd/MM/yyyy');
-            }
-             parsedDate = new Date(value);
-             if (!isNaN(parsedDate.getTime()) && /\d/.test(value)) {
-                 return format(parsedDate, 'dd/MM/yyyy');
-             }
         } catch (e) {
             // Not a date string, return original string
         }
@@ -77,21 +75,19 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
 
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
-    // Simple, reliable query on the root 'reports' collection
     return query(collection(firestore, 'reports'), where('projectId', '==', projectId));
   }, [firestore, projectId]);
 
   const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
   
-  // We get headers from the project document itself for consistency
   const { data: projectData, loading: projectLoading } = useCollectionOnce<Project>(
       useMemo(() => firestore ? query(collection(firestore, 'projects'), where('id', '==', projectId)) : null, [firestore, projectId])
   );
   
+  const project = useMemo(() => projectData?.[0], [projectData]);
   const headers = useMemo(() => {
-      const project = projectData?.[0];
       return project?.reportHeaders || [];
-  }, [projectData]);
+  }, [project]);
 
 
   if (loading || projectLoading) {
@@ -108,8 +104,8 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       return <p className="text-center text-muted-foreground py-8">No reports found for this project.</p>;
   }
 
-  // If headers are not configured on the project, we can create them dynamically from the first report as a fallback
-  const dynamicHeaders = headers.length > 0 ? headers : Object.keys(reports[0]).filter(key => key !== 'id' && key !== 'projectId');
+  // If headers are not configured on the project, create them dynamically
+  const dynamicHeaders = headers.length > 0 ? headers : Object.keys(reports[0] || {}).filter(key => key !== 'id' && key !== 'projectId');
 
   return (
     <div className="rounded-md border">
