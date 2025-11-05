@@ -21,7 +21,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { useFirestore } from "@/firebase"
-import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
+import { useCollection } from "@/firebase/firestore/use-collection"
 import { collection, deleteDoc, doc } from "firebase/firestore"
 import type { Project } from "@/lib/types"
 import { useRouter } from "next/navigation"
@@ -59,7 +59,7 @@ export function ProjectsTable() {
     const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
 
     const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
-    const { data: projects, loading, error, setData: setProjects } = useCollectionOnce<Project>(projectsQuery);
+    const { data: projects, loading, error } = useCollection<Project>(projectsQuery);
     
     const router = useRouter();
     
@@ -95,10 +95,6 @@ export function ProjectsTable() {
                 title: "Project Deleted",
                 description: `Project "${projectToDelete.name}" has been successfully deleted.`,
             });
-             // Manually remove the deleted project from the local state
-            if (projects) {
-                setProjects(projects.filter(p => p.id !== projectToDelete.id));
-            }
         } catch (e) {
             console.error("Error deleting project:", e);
             toast({
@@ -139,8 +135,6 @@ export function ProjectsTable() {
                             </DialogDescription>
                         </DialogHeader>
                         <AddProjectForm onSuccess={() => {
-                            // Manually refetching might be needed if useCollectionOnce doesn't update
-                            // For now, let's assume parent re-render or manual state update will handle it.
                             setIsAddProjectOpen(false);
                         }} />
                     </DialogContent>
