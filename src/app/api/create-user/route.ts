@@ -1,6 +1,6 @@
 
-import { NextRequest, NextResponse } from 'next/server';
 import 'dotenv/config'; // Ensure environment variables are loaded
+import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
 

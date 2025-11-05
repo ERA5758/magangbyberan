@@ -7,44 +7,48 @@ import admin from 'firebase-admin';
 function initializeFirebaseAdmin() {
   // Check if the app is already initialized to prevent errors.
   if (admin.apps.length === 0) {
-    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+    const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
 
-    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
-        console.warn("Firebase Admin SDK not initialized. Missing required environment variables.");
-        return; // Exit if essential variables are missing.
+    if (!serviceAccountKeyBase64) {
+      console.warn(
+        'Firebase Admin SDK not initialized. Missing required environment variable: FIREBASE_SERVICE_ACCOUNT_KEY_BASE64.'
+      );
+      return; // Exit if the essential variable is missing.
     }
-    
+
     try {
-      // The private key from environment variables often has escaped newlines.
-      // We need to replace them with actual newlines for the SDK to parse it correctly.
-      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+      // Decode the Base64 encoded service account key.
+      const serviceAccountJson = Buffer.from(
+        serviceAccountKeyBase64,
+        'base64'
+      ).toString('utf-8');
+      const serviceAccount = JSON.parse(serviceAccountJson);
 
       admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: formattedPrivateKey,
-        }),
+        credential: admin.credential.cert(serviceAccount),
       });
-       console.log("Firebase Admin SDK initialized successfully.");
+      console.log('Firebase Admin SDK initialized successfully.');
     } catch (error: any) {
       // Log a more descriptive error to help with debugging.
-      console.error("Firebase admin initialization error:", error.message);
-      throw new Error("Could not initialize Firebase Admin SDK. Please check server logs for details.");
+      console.error('Firebase admin initialization error:', error.message);
+      throw new Error(
+        'Could not initialize Firebase Admin SDK. Please check server logs for details.'
+      );
     }
   }
 }
 
-
 // This is a getter function to ensure the SDK is initialized before returning services.
 export function getFirebaseAdmin() {
   initializeFirebaseAdmin();
-  
+
   // After attempting initialization, if there are still no apps, it means it failed.
   if (admin.apps.length === 0) {
-    throw new Error("Firebase Admin SDK is not initialized. API Route cannot function.");
+    throw new Error(
+      'Firebase Admin SDK is not initialized. API Route cannot function.'
+    );
   }
-  
+
   // Return the initialized services.
   return {
     auth: admin.auth(),
