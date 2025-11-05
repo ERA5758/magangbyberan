@@ -1,10 +1,7 @@
+// This file is intentionally left blank for security reasons.
+// Service account credentials should be handled via environment variables.
+// The content was moved to .env under GOOGLE_APPLICATION_CREDENTIALS_JSON.
 
-import type { ServiceAccount } from 'firebase-admin';
-
-const serviceAccount: ServiceAccount = {
-  "projectId": "poetic-standard-469412-i0",
-  "privateKey": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCqi2XjxV2c88Q7\nGD7AMLCkJ0f2xE7H6fun5K+bX5XOt5Ny0/+yX7zfy0JE4d4zMALvBCbQCkQq1uHo\nxKzmSuqwKKv/gv3mZv6oAYXXlAlBr10uzdktCZaE6BCCkhT3kaUjqe6xtgDUujgk\n72Ip68/UbI6iSaJ7qQrQHsFkxM7eSaBuAMI4pnuVX6AwX3AfMnbSqcTSJQ+Q3Re9\n48lRbnGvJPwS4woCHYuR201deUSRUmpTWkjn0SDMg0RPLf3xXX8ZafZOvs/KqpF6\nTfUNkJDPWE6GiAc7G1RfkVfZVQoMlWhi7ILdLnDq4hK/2SOli9mR7flSs59TPJ0G\nJkQ/ltO1AgMBAAECggEALW/TNxJrxPerJcVpXoH6ZdmzUhruFFQSAKKsaJxYSMlf\nBt5Vhvv70bIRF1IIBaI6fdygzJeXnsQ+TuorWHXIPiOv43TOWXbCTReOxadCqhXj\nISelv1qJGCLN10O9Q1Ix6aUKG52ubf6pG6oNgLa7WdCMVc+BcynP4C/5fXPz24PZ\n2pyRrgiAJEmp/qZ/QGHM583G7qQaAK3+Fc6m2K0jJ/BCAlPUbZkEBCCGZo75gIwG\n4n/1njhyx9zXx3mNdxBavVMpjcaMA6oIInJEhU696tHim4Le9/m/yUszbO/YrKYY\n6EJYzK0usbpMwOmqBtqs2/FaV68BOYDBmCdHKgQKRwKBgQDTF6kQNmuk0OoEd9Tv\nKcz3wzLk1nLXWfasBnFuJGtRwPeby96QdqAzysqngn6hTDdiv58HbztYgWmlhMI1\nSwmR4DJ+UJAHUm66aQulgIL92iZUUisrfUrhHZ+wzobk5XAwKjMiISi/LroiR11I\nsBwtw4D/2Jf9TSh1/SpTlMw6OwKBgQDO03Og/gqR9pzLdkNaJMKdnSFItJCKJaS0\nC6cKZH/gPw9BJGG0XljgrcXm/RV7fhZ0xtoFgm/PBLyn6bYkLGdxt+UYDEGn3cl/\nKen/JxPJjLJ1ZpRJflzak+VAuyi7CCdrBN6S2uKj36qpu3livXodSxGXbTNZeGsB\nutT+e0FazwKBgGoTeLSZ9EvVY9Os+AbbBZH3uEqAbSNEpQ1bC4Mir/9cLdFPiF8m\nDWkZXe8BR2r8ptRroJmWzsax+YnghctMEtoIRLdu+oGDbfsksGKRisHP7vTueZ0Y\nEBnBzi6GCglaNp8thZZ//T7dV1HEdN8DCJYCqX9nszDppgxslOl9W4djAoGBAJNl\n2vgXVI0lxiSyidmKbTBKtVfNZ10s6q5tx4P+j6vPBR4VwZP70Td+YJX4NAEooPRk\nayiWBvzwkUrRor8w7h/7QMfcpEXwKBP6WQtAXDe9j8lfa7rc1WvpDu8M80An1X/N\nnpnmaLMFSelg9GdMReTuhQD4ECppSUmYTwd16+O9AoGAQkVrWbb+xzLZPk8gnpty\niZF7l9wcFp9iuKFjGmIdq18np7zASYDpz2gblds8KolNMYnS3pX3JW2OVN1xNG/E\nDkgSIRpQV0lxjT0wrz1MzqVG0ZJxLCb+l9qYfUKmZ/k3rDJCGLj8TKmoKTTMlrbZ\nMOJvnFIlo+naBFfdswb28Jg=\n-----END PRIVATE KEY-----\n",
-  "clientEmail": "firebase-adminsdk-fbsvc@poetic-standard-469412-i0.iam.gserviceaccount.com"
-};
+const serviceAccount = {};
 
 export default serviceAccount;

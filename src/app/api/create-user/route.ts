@@ -1,23 +1,37 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import admin from 'firebase-admin';
-import serviceAccount from '@/lib/serviceAccountKey';
 import type { AppUser } from '@/lib/types';
+import 'dotenv/config';
 
-// Inisialisasi Firebase Admin SDK di dalam route handler
-// untuk memastikan kredensial selalu dimuat dengan benar.
-if (!admin.apps.length) {
+// Function to initialize Firebase Admin SDK
+function initializeAdminApp() {
+  if (admin.apps.length > 0) {
+    return admin.app();
+  }
+
   try {
-    admin.initializeApp({
+    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (!serviceAccountString) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set in .env file');
+    }
+    const serviceAccount = JSON.parse(serviceAccountString);
+
+    return admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (error: any) {
     console.error('Firebase Admin Initialization Error:', error.stack);
+    // Throw an error that can be caught by the route handler
+    throw new Error('Firebase Admin SDK service account credentials are not set or are invalid.');
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
+    // Initialize on each request to ensure fresh credentials
+    initializeAdminApp();
+
     const db = admin.firestore();
     const auth = admin.auth();
     
@@ -92,9 +106,8 @@ export async function POST(req: NextRequest) {
 
   } catch (error: any) {
     console.error('API Error creating user:', error);
-    // Provide more specific error messages from Firebase Auth
     let errorMessage = 'An unexpected error occurred.';
-     if (error.message && error.message.includes('service account')) {
+    if (error.message && error.message.includes('service account')) {
         errorMessage = 'Firebase Admin SDK service account credentials are not set or are invalid.';
     } else if (error.code) {
         switch (error.code) {
