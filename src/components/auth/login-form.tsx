@@ -68,12 +68,15 @@ export function LoginForm() {
       if (userDoc.exists()) {
         const userData = userDoc.data() as AppUser;
 
-        if (userData.status === 'Non Aktif') {
+        if (userData.status === 'Non Aktif' || userData.status === 'Menunggu Persetujuan') {
           await auth.signOut();
+          const reason = userData.status === 'Non Aktif' 
+            ? "Akun Anda tidak aktif. Harap hubungi administrator."
+            : "Akun Anda sedang menunggu persetujuan dari Admin.";
           toast({
             variant: "destructive",
             title: "Login Gagal",
-            description: "Akun Anda tidak aktif. Harap hubungi administrator.",
+            description: reason,
           });
           setIsLoading(false);
           return;
@@ -190,3 +193,5 @@ export function LoginForm() {
     </Card>
   );
 }
+
+    

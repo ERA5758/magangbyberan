@@ -5,10 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useMemo } from 'react';
-import { Loader2 } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { useAuth, useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
-import { collection, addDoc } from 'firebase/firestore';
+import { collection, doc, setDoc } from 'firebase/firestore';
+import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -35,6 +36,7 @@ const projectAssignmentSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(1, 'Nama harus diisi.'),
   email: z.string().email('Format email tidak valid.'),
+  password: z.string().min(6, 'Kata sandi minimal 6 karakter.'),
   nik: z.string().min(1, 'NIK harus diisi.'),
   address: z.string().min(1, 'Alamat harus diisi.'),
   phone: z.string().min(1, 'No. HP harus diisi.'),
@@ -51,8 +53,10 @@ type AddSalesFormProps = {
 
 export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
   const firestore = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const projectsQuery = useMemo(() => 
     firestore ? collection(firestore, 'projects') : null
@@ -64,6 +68,7 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
     defaultValues: {
       name: '',
       email: '',
+      password: '',
       nik: '',
       address: '',
       phone: '',
@@ -94,7 +99,7 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!firestore) {
+    if (!firestore || !auth) {
       toast({
         variant: 'destructive',
         title: 'Firebase tidak terinisialisasi',
@@ -127,9 +132,12 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
         return;
       }
       
-      const usersCollection = collection(firestore, 'users');
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
 
-      await addDoc(usersCollection, {
+      const userDocRef = doc(firestore, 'users', user.uid);
+
+      await setDoc(userDocRef, {
         name: values.name,
         email: values.email,
         role: 'Sales',
@@ -157,10 +165,28 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
 
     } catch (error: any) {
       console.error('Error creating user:', error);
+      let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+      if (error.code) {
+        switch (error.code) {
+          case AuthErrorCodes.EMAIL_EXISTS:
+            description = 'Alamat email ini sudah digunakan oleh akun lain.';
+            break;
+          case AuthErrorCodes.WEAK_PASSWORD:
+            description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
+            break;
+          case AuthErrorCodes.INVALID_EMAIL:
+            description = 'Format alamat email tidak valid.';
+            break;
+          default:
+            description = error.message;
+        }
+      } else {
+        description = error.message || description;
+      }
       toast({
         variant: 'destructive',
         title: 'Gagal Menambahkan Sales',
-        description: error.message || 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.',
+        description: description,
       });
     } finally {
       setIsLoading(false);
@@ -192,6 +218,30 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
                 <FormLabel>Email</FormLabel>
                 <FormControl>
                   <Input type="email" placeholder="email@example.com" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+           <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Kata Sandi</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute inset-y-0 right-0 h-full px-3"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -333,3 +383,5 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
     </Form>
   );
 }
+
+    
