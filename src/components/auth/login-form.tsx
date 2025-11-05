@@ -129,6 +129,7 @@ export function LoginForm() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
+        <p className="text-sm text-muted-foreground pt-2">Bangun Karier, Mulai Dari Magang</p>
         <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
       </CardHeader>
       <CardContent>
