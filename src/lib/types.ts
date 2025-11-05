@@ -1,6 +1,11 @@
 
 import { Timestamp } from "firebase/firestore";
 
+export type ProjectAssignment = {
+  projectId: string;
+  salesCode: string;
+}
+
 export type AppUser = {
   id: string;
   uid: string;
@@ -8,8 +13,8 @@ export type AppUser = {
   email: string | null;
   role: 'Admin' | 'SPV' | 'Sales';
   avatar: string;
-  salesCode: string;
   supervisorId?: string;
+  projectAssignments?: ProjectAssignment[];
   [key: string]: any; 
 };
 
@@ -35,3 +40,4 @@ export type Report = {
   projectId: string; // To link back to the project
   [key: string]: any;
 };
+

@@ -1,9 +1,10 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
@@ -29,6 +30,15 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
+import { Checkbox } from '../ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+const projectAssignmentSchema = z.object({
+  projectId: z.string(),
+  projectName: z.string(),
+  assigned: z.boolean(),
+  salesCode: z.string(),
+});
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nama harus diisi.'),
@@ -42,8 +52,7 @@ const formSchema = z.object({
   bankName: z.string().min(1, 'Nama Bank harus diisi.'),
   accountNumber: z.string().min(1, 'Nomor Rekening harus diisi.'),
   accountHolder: z.string().min(1, 'Nama Rekening harus diisi.'),
-  project: z.string().optional(),
-  salesCode: z.string().min(1, 'Kode Sales harus diisi.'),
+  projectAssignments: z.array(projectAssignmentSchema),
 });
 
 type AddUserFormProps = {
@@ -65,7 +74,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const projectsQuery = useMemo(() => 
     firestore ? collection(firestore, 'projects') : null
   , [firestore]);
-  const { data: projects } = useCollectionOnce<Project>(projectsQuery);
+  const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -80,24 +89,26 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       bankName: '',
       accountNumber: '',
       accountHolder: '',
-      salesCode: '',
+      projectAssignments: [],
     },
   });
 
-  const selectedProjectId = form.watch('project');
+  const { fields, replace } = useFieldArray({
+    control: form.control,
+    name: "projectAssignments",
+  });
 
-  useEffect(() => {
-    if (selectedProjectId && projects) {
-      const selectedProject = projects.find(p => p.id === selectedProjectId);
-      if (selectedProject) {
-        // Simple unique code generation, can be improved
-        const uniquePart = Math.random().toString(36).substring(2, 6).toUpperCase();
-        form.setValue('salesCode', `${selectedProject.name.toLowerCase()}-${uniquePart}`);
-      }
-    } else {
-        form.setValue('salesCode', '');
+  useMemo(() => {
+    if (projects) {
+      const assignments = projects.map(p => ({
+        projectId: p.id,
+        projectName: p.name,
+        assigned: false,
+        salesCode: ''
+      }));
+      replace(assignments);
     }
-  }, [selectedProjectId, projects, form]);
+  }, [projects, replace]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -112,6 +123,28 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       return;
     }
 
+    const assignedProjects = values.projectAssignments
+        .filter(p => p.assigned)
+        .map(p => {
+            if (!p.salesCode) {
+                throw new Error(`Sales code for project ${p.projectName} is required.`);
+            }
+            return {
+                projectId: p.projectId,
+                salesCode: p.salesCode,
+            }
+        });
+
+    if (values.role === 'Sales' && assignedProjects.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: 'Project Assignment Required',
+            description: 'Please assign at least one project to a Sales user.',
+        });
+        setIsLoading(false);
+        return;
+    }
+
     try {
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -124,7 +157,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         name: values.name,
         email: values.email,
         role: values.role,
-        salesCode: values.salesCode,
         nik: values.nik,
         address: values.address,
         phone: values.phone,
@@ -132,16 +164,13 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         accountNumber: values.accountNumber,
         accountHolder: values.accountHolder,
         createdAt: new Date().toISOString(),
+        projectAssignments: values.role === 'Sales' ? assignedProjects : [],
       };
 
       if (values.supervisor) {
         userData.supervisorId = values.supervisor;
       }
       
-      if (values.project) {
-        userData.projectId = values.project;
-      }
-
       await setDoc(userDocRef, userData);
 
       toast({
@@ -181,6 +210,8 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       setIsLoading(false);
     }
   }
+  
+  const role = form.watch('role');
 
   return (
     <Form {...form}>
@@ -358,42 +389,55 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               </FormItem>
             )}
           />
-           <FormField
-            control={form.control}
-            name="project"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pilih Proyek</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!projects || projects.length === 0}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih proyek..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {projects?.map(proj => (
-                         <SelectItem key={proj.id} value={proj.id}>{proj.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="salesCode"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Kode Sales</FormLabel>
-                <FormControl>
-                  <Input placeholder="Pilih proyek untuk generate kode" {...field} disabled={!selectedProjectId} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
+        
+        {role === 'Sales' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Project Assignments</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {projectsLoading ? <p>Loading projects...</p> : 
+                fields.map((item, index) => {
+                  const isChecked = form.watch(`projectAssignments.${index}.assigned`);
+                  return (
+                  <div key={item.id} className="flex items-center space-x-4 p-2 rounded-md border">
+                    <FormField
+                      control={form.control}
+                      name={`projectAssignments.${index}.assigned`}
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal w-32">
+                           {item.projectName}
+                          </FormLabel>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name={`projectAssignments.${index}.salesCode`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input placeholder="Enter Sales Code" {...field} disabled={!isChecked} />
+                          </FormControl>
+                           <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )})
+              }
+            </CardContent>
+          </Card>
+        )}
+
 
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>
@@ -405,3 +449,4 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
+

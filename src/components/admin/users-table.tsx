@@ -89,7 +89,7 @@ export function UsersTable() {
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead className="hidden md:table-cell">Sales Code</TableHead>
+                        <TableHead className="hidden md:table-cell">Projects</TableHead>
                         <TableHead>
                         <span className="sr-only">Actions</span>
                         </TableHead>
@@ -114,7 +114,13 @@ export function UsersTable() {
                             <TableCell>
                                 <Badge variant={getBadgeVariant(user.role)}>{user.role}</Badge>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">{user.salesCode}</TableCell>
+                            <TableCell className="hidden md:table-cell">
+                                <div className="flex flex-wrap gap-1">
+                                    {user.projectAssignments && user.projectAssignments.map((pa: any) => (
+                                        <Badge key={pa.projectId} variant="outline">{pa.salesCode}</Badge>
+                                    ))}
+                                </div>
+                            </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>

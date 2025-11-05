@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@/firebase';
 import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from "firebase/firestore";
+import type { ProjectAssignment } from '@/lib/types';
+
 
 export type AppUser = {
   id: string;
@@ -12,7 +14,8 @@ export type AppUser = {
   email: string | null;
   role: 'Admin' | 'SPV' | 'Sales';
   avatar: string;
-  salesCode: string;
+  projectAssignments?: ProjectAssignment[];
+  salesCode?: string; // for backward compatibility if needed, but should be deprecated
   [key: string]: any; // Allow other properties
 };
 
@@ -39,6 +42,11 @@ export const useCurrentUser = () => {
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           const data = doc.data();
+          // Find a primary sales code if multiple exist
+          const primarySalesCode = data.projectAssignments && data.projectAssignments.length > 0 
+            ? data.projectAssignments[0].salesCode 
+            : data.salesCode || '';
+
           setAppUser({
             id: doc.id,
             uid: authUser.uid,
@@ -46,7 +54,7 @@ export const useCurrentUser = () => {
             email: authUser.email,
             role: data.role || 'Sales',
             avatar: authUser.photoURL || data.avatar || `https://i.pravatar.cc/150?u=${authUser.uid}`,
-            salesCode: data.salesCode || '',
+            salesCode: primarySalesCode, // For components expecting a single sales code
             ...data
           });
         } else {
@@ -66,3 +74,4 @@ export const useCurrentUser = () => {
 
   return { user: appUser, loading: userLoading };
 };
+
