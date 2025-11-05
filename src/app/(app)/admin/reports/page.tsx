@@ -199,25 +199,33 @@ function FilteredReportsTable({ project }: { project: Project }) {
   
   useEffect(() => {
     isMountedRef.current = true;
+    // Reset state when project changes
     setReports([]);
     setLoading(true);
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
+    setSelectedMonth("all");
     fetchReports("first");
     
     return () => {
       isMountedRef.current = false;
     };
-  }, [project, firestore, selectedMonth]);
+  }, [project, firestore]);
+  
+  useEffect(() => {
+    // Re-fetch when month changes, but not on initial render if project is the same
+    if (!loading) {
+      setPage(1);
+      setLastVisible(null);
+      setFirstVisible(null);
+      fetchReports("first");
+    }
+  }, [selectedMonth]);
 
 
   const handleMonthChange = (month: string) => {
     setSelectedMonth(month);
-    // Reset pagination
-    setPage(1);
-    setLastVisible(null);
-    setFirstVisible(null);
   };
   
   const handleNextPage = () => {
@@ -487,5 +495,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    
