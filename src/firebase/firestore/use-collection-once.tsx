@@ -11,6 +11,7 @@ export function useCollectionOnce<T>(q: Query | CollectionReference | null) {
   useEffect(() => {
     if (!q) {
       setLoading(false);
+      setData([]); // Return empty array instead of null
       return;
     }
 
@@ -27,6 +28,7 @@ export function useCollectionOnce<T>(q: Query | CollectionReference | null) {
       } catch (e) {
         if (isMounted) {
           setError(e as Error);
+          setData([]); // Return empty array on error
         }
       } finally {
         if (isMounted) {
