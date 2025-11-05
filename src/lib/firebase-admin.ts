@@ -1,5 +1,6 @@
 
 import admin from 'firebase-admin';
+import 'dotenv/config';
 
 // This function initializes the Firebase Admin SDK.
 // It's designed to be idempotent, meaning it will only initialize the app once,

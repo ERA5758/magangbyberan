@@ -22,7 +22,14 @@ async function parseCSV(file: File): Promise<any[]> {
 
 
 export async function POST(req: NextRequest) {
-    const { auth, db } = getFirebaseAdmin();
+    let auth, db;
+    try {
+        ({ auth, db } = getFirebaseAdmin());
+    } catch (error: any) {
+        console.error('API Error during Firebase Admin init:', error);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
     let idToken;
 
     try {
