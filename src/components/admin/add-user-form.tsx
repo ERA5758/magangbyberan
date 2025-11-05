@@ -50,6 +50,7 @@ const formSchema = z.object({
   bankName: z.string().min(1, 'Nama Bank harus diisi.'),
   accountNumber: z.string().min(1, 'Nomor Rekening harus diisi.'),
   accountHolder: z.string().min(1, 'Nama Rekening harus diisi.'),
+  ktpPhoto: z.any().optional(),
   projectAssignments: z.array(projectAssignmentSchema),
   supervisorId: z.string().optional(),
 });
@@ -155,30 +156,35 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           return;
       }
       
+      // Note: KTP photo upload logic needs to be implemented.
+      // This would involve uploading the file to Firebase Storage and getting a URL.
+      // For now, we are just collecting the file input.
+      const { ktpPhoto, ...restOfValues } = values;
+
       const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
-        name: values.name,
-        email: values.email,
-        role: values.role,
+        name: restOfValues.name,
+        email: restOfValues.email,
+        role: restOfValues.role,
         status: 'Aktif', // Admin creates active users directly
-        nik: values.nik,
-        address: values.address,
-        phone: values.phone,
-        bankName: values.bankName,
-        accountNumber: values.accountNumber,
-        accountHolder: values.accountHolder,
+        nik: restOfValues.nik,
+        address: restOfValues.address,
+        phone: restOfValues.phone,
+        bankName: restOfValues.bankName,
+        accountNumber: restOfValues.accountNumber,
+        accountHolder: restOfValues.accountHolder,
         createdAt: new Date().toISOString(),
-        projectAssignments: values.role === 'Sales' ? assignedProjects : [],
+        projectAssignments: restOfValues.role === 'Sales' ? assignedProjects : [],
       };
       
-      if (values.role === 'Sales') {
-        userData.supervisorId = values.supervisorId;
+      if (restOfValues.role === 'Sales') {
+        userData.supervisorId = restOfValues.supervisorId;
       }
       
       const response = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            password: values.password,
+            password: restOfValues.password,
             ...userData
         }),
       });
@@ -364,6 +370,23 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               </FormItem>
             )}
           />
+           <FormField
+              control={form.control}
+              name="ktpPhoto"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Foto KTP</FormLabel>
+                  <FormControl>
+                    <Input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => field.onChange(e.target.files)}
+                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           <FormField
             control={form.control}
             name="bankName"
