@@ -16,6 +16,8 @@ import {
   orderBy,
   endBefore,
   limitToLast,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -101,7 +103,7 @@ const formatValue = (value: any, key?: string): string => {
 
 const PAGE_SIZE = 50;
 
-function FilteredReportsTable({ projectId }: { projectId: string }) {
+function FilteredReportsTable({ project }: { project: Project }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +115,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [page, setPage] = useState(1);
   const isMountedRef = useRef(true);
-  
+
   const fetchReports = async (
     currentProjectId: string,
     direction: "next" | "prev" | "first"
@@ -133,7 +135,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         reportsQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       } else if (direction === "prev" && firstVisible) {
         reportsQuery = query(baseQuery, endBefore(firstVisible), limitToLast(PAGE_SIZE));
-      } else { 
+      } else {
         reportsQuery = query(baseQuery, limit(PAGE_SIZE));
       }
 
@@ -167,7 +169,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       }
     }
   };
-
+  
   useEffect(() => {
     isMountedRef.current = true;
     setReports([]);
@@ -175,40 +177,34 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
-    fetchReports(projectId, "first");
+    fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "first");
     
     return () => {
       isMountedRef.current = false;
     };
-  }, [projectId, firestore]);
-
+  }, [project, firestore]);
 
   const handleNextPage = () => {
     if (lastVisible) {
       setPage(page + 1);
-      fetchReports(projectId, "next");
+      fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "next");
     }
   };
 
   const handlePrevPage = () => {
     if (firstVisible && page > 1) {
       setPage(page - 1);
-      fetchReports(projectId, "prev");
+      fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "prev");
     }
   };
 
   const handleRowClick = (report: Report) => {
     setSelectedReport(report);
   };
-
-  const headers = [
-    'Merchant Name',
-    'Octo Register Date',
-    'Period untuk Claim',
-    'Refferal Code',
-    'STATUS_PROCESS',
-    'TL'
-  ];
+  
+  const headers = project.reportHeaders && project.reportHeaders.length > 0 
+    ? project.reportHeaders 
+    : Object.keys(reports[0] || {}).filter(k => !['id', 'projectId', 'lastSyncTimestamp'].includes(k));
 
   if (loading && reports.length === 0) {
     return (
@@ -226,6 +222,14 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         No reports found for this project.
       </p>
     );
+  }
+  
+  if (!project.reportHeaders || project.reportHeaders.length === 0) {
+    return (
+       <p className="text-center text-muted-foreground py-8">
+        Report headers are not configured for this project. Please configure them in the project settings.
+      </p>
+    )
   }
 
   return (
@@ -425,7 +429,7 @@ export default function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <FilteredReportsTable
-                  projectId={formatNameToId(project.name)}
+                  project={project}
                 />
               </CardContent>
             </Card>
@@ -435,5 +439,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    
