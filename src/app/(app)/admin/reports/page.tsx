@@ -217,9 +217,9 @@ export default function ReportsPage() {
           <TabsContent key={project.id} value={project.id}>
             <Card>
               <CardHeader>
-                <CardTitle>Reports for {project.name || project.id}</CardTitle>
+                <CardTitle>Reports for {project.name}</CardTitle>
                 <CardDescription>
-                  Displaying reports for BANK: {project.id.toUpperCase().replace(/_/g, ' ')}
+                  Displaying reports for {project.name}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -232,4 +232,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
