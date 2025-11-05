@@ -32,5 +32,6 @@ export type Sale = {
 // Report type is intentionally kept loose because the structure is dynamic
 export type Report = {
   id: string;
+  projectId: string; // To link back to the project
   [key: string]: any;
 };

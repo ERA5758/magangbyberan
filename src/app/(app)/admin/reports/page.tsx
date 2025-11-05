@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import { useFirestore } from "@/firebase";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { collection, collectionGroup, query, where, Timestamp } from "firebase/firestore";
+import { collection, query, where, Timestamp } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
@@ -45,7 +45,6 @@ const formatValue = (value: any): string => {
 
     if (typeof value === 'string') {
         try {
-            // Handles M/d/yyyy and d/M/yyyy
             let parsedDate = parse(value, 'M/d/yyyy', new Date());
             if (!isNaN(parsedDate.getTime())) {
                 return format(parsedDate, 'dd/MM/yyyy');
@@ -54,7 +53,6 @@ const formatValue = (value: any): string => {
             if (!isNaN(parsedDate.getTime())) {
                 return format(parsedDate, 'dd/MM/yyyy');
             }
-             // Handles ISO strings
              parsedDate = new Date(value);
              if (!isNaN(parsedDate.getTime()) && /\d/.test(value)) {
                  return format(parsedDate, 'dd/MM/yyyy');
@@ -77,32 +75,24 @@ const formatValue = (value: any): string => {
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
 
+  // New simplified query based on user's suggestion
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
-    const bankName = projectId.toUpperCase().replace(/_/g, ' ');
-    return query(collectionGroup(firestore, 'reports'), where('BANK', '==', bankName));
+    return query(collection(firestore, 'reports'), where('projectId', '==', projectId));
   }, [firestore, projectId]);
-  
+
   const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
-
+  const { data: projectData, loading: projectLoading } = useCollectionOnce<Project>(
+      useMemo(() => firestore ? query(collection(firestore, 'projects'), where('id', '==', projectId)) : null, [firestore, projectId])
+  );
+  
   const headers = useMemo(() => {
-    if (!reports || reports.length === 0) return [];
-    const headerSet = new Set<string>();
-    reports.forEach(report => {
-      Object.keys(report).forEach(key => {
-        if (key !== 'id' && key !== 'lastSyncTimestamp') {
-          headerSet.add(key);
-        }
-      });
-    });
-    const sortedHeaders = Array.from(headerSet).sort();
-    
-    const preferredOrder = ["ID UNIK", "BANK"];
-    return [...preferredOrder.filter(h => sortedHeaders.includes(h)), ...sortedHeaders.filter(h => !preferredOrder.includes(h))];
+      const project = projectData?.[0];
+      return project?.reportHeaders || [];
+  }, [projectData]);
 
-  }, [reports]);
 
-  if (loading) {
+  if (loading || projectLoading) {
     return (
       <div className="space-y-2 mt-4">
         <Skeleton className="h-8 w-full" />
@@ -110,6 +100,10 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         <Skeleton className="h-8 w-full" />
       </div>
     );
+  }
+  
+  if (headers.length === 0) {
+      return <p className="text-center text-muted-foreground py-8">No report headers configured for this project.</p>;
   }
 
   return (
@@ -191,7 +185,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground py-8">
-              There are no projects in the database. Please add a project first from the Admin > Projects page.
+              There are no projects in the database. Please add a project first.
             </p>
           </CardContent>
         </Card>
