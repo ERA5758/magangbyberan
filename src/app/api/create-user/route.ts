@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeAdminApp } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
-import 'dotenv/config'
+import 'dotenv/config';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,8 +20,19 @@ export async function POST(req: NextRequest) {
     if (!nikQuery.empty) {
         return NextResponse.json({ error: `NIK_EXISTS: NIK ${userData.nik} sudah terdaftar.` }, { status: 409 });
     }
+
+    // 2. Check for duplicate email in Auth
+    try {
+      await admin.auth().getUserByEmail(userData.email);
+      return NextResponse.json({ error: 'EMAIL_EXISTS: Email ini sudah digunakan oleh akun lain.' }, { status: 409 });
+    } catch (error: any) {
+      if (error.code !== 'auth/user-not-found') {
+        throw error; // Re-throw other auth errors
+      }
+      // If user is not found, we can proceed.
+    }
     
-    // 2. Check for duplicate sales codes if the user is a Sales role
+    // 3. Check for duplicate sales codes if the user is a Sales role
     if (userData.role === 'Sales' && userData.projectAssignments && userData.projectAssignments.length > 0) {
         const salesUsersSnapshot = await db.collection('users').where('role', '==', 'Sales').get();
         const existingSalesCodes = new Set<string>();
@@ -49,12 +60,21 @@ export async function POST(req: NextRequest) {
       disabled: userData.status !== 'Aktif',
     });
 
+    // Set custom claims if needed (e.g., role)
+    await admin.auth().setCustomUserClaims(userRecord.uid, { role: userData.role });
+
     // Save user data to Firestore
     const userDocRef = db.collection('users').doc(userRecord.uid);
-    await userDocRef.set({
+    const dataToSave: Omit<AppUser, 'id'> = {
         ...userData,
         uid: userRecord.uid,
-    });
+    };
+
+    if (userData.role !== 'Sales') {
+      delete dataToSave.supervisorId;
+    }
+
+    await userDocRef.set(dataToSave);
 
     return NextResponse.json({ uid: userRecord.uid }, { status: 201 });
 
@@ -79,5 +99,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
-
-    
