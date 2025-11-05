@@ -36,19 +36,22 @@ const formatValue = (value: any): string => {
         return formatDate(value.toDate());
     }
      if (typeof value === 'string') {
-        // Attempt to parse "M/d/yyyy" or "d/M/yyyy" formats
-        try {
-            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+        // Attempt to parse "M/d/yyyy" or "d/M/yyyy" formats, which are common in CSV/Excel imports.
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+            try {
+                // First, try M/d/yyyy (e.g., 9/15/2025)
                 let parsedDate = parse(value, 'M/d/yyyy', new Date());
-                if(isNaN(parsedDate.getTime())) {
+                // If invalid, try d/M/yyyy (e.g., 15/9/2025)
+                if (isNaN(parsedDate.getTime())) {
                     parsedDate = parse(value, 'd/M/yyyy', new Date());
                 }
+                // If we have a valid date, format it
                  if(!isNaN(parsedDate.getTime())) {
                     return formatDate(parsedDate);
                 }
+            } catch(e) {
+                 // Ignore parsing errors, return original string below
             }
-        } catch(e) {
-             // Not a date string, return original string below
         }
     }
     if (typeof value === 'number') {
