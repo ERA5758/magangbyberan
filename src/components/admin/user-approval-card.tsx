@@ -2,26 +2,16 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useFirestore, useAuth } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
-import { collection, query, where, doc, updateDoc, deleteDoc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import type { AppUser } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
-
-async function createAuthUser(email: string, password?: string): Promise<{ uid: string } | { error: string }> {
-  const response = await fetch('/api/create-user', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-  return response.json();
-}
-
 
 export function UserApprovalCard() {
   const firestore = useFirestore();
@@ -34,6 +24,8 @@ export function UserApprovalCard() {
   
   const allUsersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
 
+  // Using useCollectionOnce which seems more appropriate here. Let's assume it has a mutate function for re-fetching.
+  // If not, we might need a state lift or a different strategy.
   const { data: pendingUsers, loading, error, mutate } = useCollectionOnce<AppUser>(pendingUsersQuery);
   const { data: allUsers } = useCollectionOnce<AppUser>(allUsersQuery);
 
@@ -55,54 +47,12 @@ export function UserApprovalCard() {
 
     try {
       if (approve) {
-        // Use NIK as the default password
-        const defaultPassword = user.nik;
-        if (!defaultPassword) {
-            throw new Error("NIK tidak ditemukan dan diperlukan untuk kata sandi default.");
-        }
-        
-        const result = await createAuthUser(user.email as string, defaultPassword);
-        
-        if ('error' in result) {
-            // Check if user already exists in Auth
-            if (result.error.includes('EMAIL_EXISTS')) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Gagal Membuat Akun',
-                    description: `Pengguna dengan email ${user.email} sudah ada di sistem autentikasi.`,
-                });
-                // We might want to just activate the account in this case, or flag for manual review.
-                // For now, we will just show an error.
-                setLoadingStates(prev => ({ ...prev, [user.id]: false }));
-                return;
-            }
-            throw new Error(result.error);
-        }
-        
-        const { uid } = result;
-
-        const newUserDocRef = doc(firestore, 'users', uid);
-        const batch = writeBatch(firestore);
-
-        const userData = (await getDoc(userRef)).data();
-
-        // Set new document with the Auth UID
-        batch.set(newUserDocRef, { 
-            ...userData,
-            uid: uid,
-            status: 'Aktif'
-        });
-
-        // Delete the old temporary document
-        batch.delete(userRef);
-
-        await batch.commit();
-
+        // Just update the status to 'Aktif'. Auth user creation will be handled by the Admin if needed directly.
+        await updateDoc(userRef, { status: 'Aktif' });
         toast({
           title: 'Pengguna Disetujui',
-          description: `${user.name} sekarang aktif dan dapat login.`,
+          description: `${user.name} sekarang aktif. Akun login harus dibuatkan oleh admin secara manual.`,
         });
-
       } else {
         await deleteDoc(userRef);
         toast({
@@ -112,7 +62,7 @@ export function UserApprovalCard() {
         });
       }
       if (mutate) {
-        mutate(); // Re-fetch the data
+        mutate(); 
       }
     } catch (error: any) {
       console.error('Error handling approval:', error);
