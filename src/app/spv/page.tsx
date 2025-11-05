@@ -15,8 +15,9 @@ import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import type { Sale, AppUser } from "@/lib/types";
+import type { Sale, AppUser, Project, Report } from "@/lib/types";
 import { useMemo } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -29,22 +30,54 @@ export default function SpvDashboard() {
   , [firestore, user]);
   const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(teamMembersQuery);
 
-  const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode).filter(Boolean) || [], [teamMembers]);
+  const teamSalesCodes = useMemo(() => {
+    if (!teamMembers) return [];
+    return teamMembers.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode) || []);
+  }, [teamMembers]);
 
-  const teamSalesQuery = useMemo(() => 
+  const teamReportsQuery = useMemo(() => 
     firestore && teamSalesCodes && teamSalesCodes.length > 0
-      ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes))
+      ? query(collection(firestore, "reports"), where("Sales Code", "in", teamSalesCodes))
       : null
   , [firestore, teamSalesCodes]);
-  const { data: teamSales, loading: salesLoading } = useCollection<Sale>(teamSalesQuery);
+  const { data: teamReports, loading: reportsLoading } = useCollection<Report>(teamReportsQuery);
 
-  if (userLoading || teamLoading || salesLoading || !user) {
+  const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+  const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
+
+  const loading = userLoading || teamLoading || reportsLoading || projectsLoading;
+
+  const { totalCommission, teamSalesForChart } = useMemo(() => {
+    if (!teamReports || !projects) {
+      return { totalCommission: 0, teamSalesForChart: [] };
+    }
+
+    let totalCommission = 0;
+    const teamSalesForChart: Sale[] = [];
+
+    teamReports.forEach(report => {
+      const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
+      if (project && project.feeSpv) {
+        totalCommission += project.feeSpv;
+      }
+      // Create a Sale-like object for the chart
+      teamSalesForChart.push({
+        id: report.id,
+        amount: project?.feeSpv || 0,
+        date: report.createdAt, // Assuming createdAt is available and is a timestamp
+        salesCode: report["Sales Code"],
+        projectName: project?.name || report.projectId,
+      });
+    });
+
+    return { totalCommission, teamSalesForChart };
+  }, [teamReports, projects]);
+
+  if (loading || !user) {
     return <div>Memuat...</div>
   }
-
-  const totalSalesAmount = teamSales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
   
-  const conversionRate = 35.5;
+  const conversionRate = 35.5; // Placeholder
 
   return (
     <div className="space-y-8">
@@ -58,10 +91,10 @@ export default function SpvDashboard() {
           description="Tenaga penjualan di bawah supervisi Anda"
         />
         <StatCard
-          title="Penjualan Tim (Bulan)"
-          value={`$${totalSalesAmount.toLocaleString()}`}
+          title="Total Komisi Tim (Bulan)"
+          value={formatCurrency(totalCommission)}
           icon={DollarSign}
-          description="Total pendapatan yang dihasilkan tim Anda bulan ini"
+          description="Total komisi yang dihasilkan tim Anda bulan ini"
         />
         <StatCard
           title="Tingkat Konversi"
@@ -85,7 +118,7 @@ export default function SpvDashboard() {
                 <CardTitle>Tren Penjualan Mingguan</CardTitle>
             </CardHeader>
             <CardContent>
-                <PerformanceChart sales={teamSales} />
+                <PerformanceChart sales={teamSalesForChart} />
             </CardContent>
         </Card>
       </div>
