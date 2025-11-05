@@ -31,7 +31,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 
 const projectAssignmentSchema = z.object({
   projectId: z.string(),
@@ -45,7 +45,7 @@ const formSchema = z.object({
   email: z.string().email('Format email tidak valid.'),
   password: z.string().min(6, 'Kata sandi minimal 6 karakter.'),
   role: z.enum(['Admin', 'SPV', 'Sales']),
-  supervisor: z.string().optional(),
+  supervisorId: z.string().optional(),
   nik: z.string().min(1, 'NIK harus diisi.'),
   address: z.string().min(1, 'Alamat harus diisi.'),
   phone: z.string().min(1, 'No. HP harus diisi.'),
@@ -122,30 +122,32 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       setIsLoading(false);
       return;
     }
-
-    const assignedProjects = values.projectAssignments
-        .filter(p => p.assigned)
-        .map(p => {
-            if (!p.salesCode) {
-                throw new Error(`Sales code for project ${p.projectName} is required.`);
-            }
-            return {
-                projectId: p.projectId,
-                salesCode: p.salesCode,
-            }
-        });
-
-    if (values.role === 'Sales' && assignedProjects.length === 0) {
-        toast({
-            variant: 'destructive',
-            title: 'Project Assignment Required',
-            description: 'Please assign at least one project to a Sales user.',
-        });
-        setIsLoading(false);
-        return;
-    }
-
+    
     try {
+        const assignedProjects = values.projectAssignments
+            .filter(p => p.assigned)
+            .map(p => {
+                if (!p.salesCode) {
+                    // This is now a form-level error, handled by Zod if we make salesCode required when assigned is true.
+                    // For now, let's throw to prevent submission.
+                    throw new Error(`Sales code for project ${p.projectName} is required.`);
+                }
+                return {
+                    projectId: p.projectId,
+                    salesCode: p.salesCode,
+                }
+            });
+
+        if (values.role === 'Sales' && assignedProjects.length === 0) {
+            toast({
+                variant: 'destructive',
+                title: 'Project Assignment Required',
+                description: 'Please assign at least one project and provide a sales code.',
+            });
+            setIsLoading(false);
+            return;
+        }
+
       // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
@@ -167,8 +169,8 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         projectAssignments: values.role === 'Sales' ? assignedProjects : [],
       };
 
-      if (values.supervisor) {
-        userData.supervisorId = values.supervisor;
+      if (values.supervisorId) {
+        userData.supervisorId = values.supervisorId;
       }
       
       await setDoc(userDocRef, userData);
@@ -198,8 +200,10 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             description = 'Format alamat email tidak valid.';
             break;
           default:
-            description = `Terjadi galat: ${error.message}`;
+            description = error.message || `Terjadi galat: ${error.message}`;
         }
+      } else {
+        description = error.message || description;
       }
       toast({
         variant: 'destructive',
@@ -291,10 +295,10 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           />
            <FormField
             control={form.control}
-            name="supervisor"
+            name="supervisorId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Pilih supervisor...</FormLabel>
+                <FormLabel>Pilih supervisor</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!supervisors || supervisors.length === 0}>
                   <FormControl>
                     <SelectTrigger>
@@ -303,7 +307,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
                   </FormControl>
                   <SelectContent>
                     {supervisors?.map(spv => (
-                         <SelectItem key={spv.uid} value={spv.uid}>{spv.name}</SelectItem>
+                         <SelectItem key={spv.id} value={spv.id}>{spv.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -395,25 +399,26 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           <Card>
             <CardHeader>
               <CardTitle>Project Assignments</CardTitle>
+              <CardDescription>Select projects and assign a unique sales code for each.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {projectsLoading ? <p>Loading projects...</p> : 
                 fields.map((item, index) => {
                   const isChecked = form.watch(`projectAssignments.${index}.assigned`);
                   return (
-                  <div key={item.id} className="flex items-center space-x-4 p-2 rounded-md border">
+                  <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 p-3 rounded-md border">
                     <FormField
                       control={form.control}
                       name={`projectAssignments.${index}.assigned`}
                       render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormItem className="flex flex-row items-center space-x-3 space-y-0">
                           <FormControl>
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={field.onChange}
                             />
                           </FormControl>
-                          <FormLabel className="font-normal w-32">
+                          <FormLabel className="font-normal w-32 sm:w-40 whitespace-nowrap overflow-hidden text-ellipsis">
                            {item.projectName}
                           </FormLabel>
                         </FormItem>
@@ -423,7 +428,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
                       control={form.control}
                       name={`projectAssignments.${index}.salesCode`}
                       render={({ field }) => (
-                        <FormItem className="flex-1">
+                        <FormItem className="flex-1 w-full">
                           <FormControl>
                             <Input placeholder="Enter Sales Code" {...field} disabled={!isChecked} />
                           </FormControl>
@@ -449,4 +454,3 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
-

@@ -89,7 +89,7 @@ export function UsersTable() {
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
-                        <TableHead className="hidden md:table-cell">Projects</TableHead>
+                        <TableHead className="hidden md:table-cell">Projects & Sales Codes</TableHead>
                         <TableHead>
                         <span className="sr-only">Actions</span>
                         </TableHead>
@@ -116,7 +116,7 @@ export function UsersTable() {
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
                                 <div className="flex flex-wrap gap-1">
-                                    {user.projectAssignments && user.projectAssignments.map((pa: any) => (
+                                    {user.projectAssignments && user.projectAssignments.map((pa) => (
                                         <Badge key={pa.projectId} variant="outline">{pa.salesCode}</Badge>
                                     ))}
                                 </div>
