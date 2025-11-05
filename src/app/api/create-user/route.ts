@@ -1,46 +1,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import admin from 'firebase-admin';
+import { db, auth } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
 import 'dotenv/config';
 
-// Function to initialize Firebase Admin SDK
-function initializeAdminApp() {
-  if (admin.apps.length > 0) {
-    return admin.app();
-  }
-
-  // The SDK will automatically use GOOGLE_APPLICATION_CREDENTIALS environment variable
-  // if it's set. For environments like Vercel or Cloud Run, you set the env var directly.
-  // For local dev, you can point GOOGLE_APPLICATION_CREDENTIALS to the path of your JSON file.
-  // Parsing the JSON from an env var can be error-prone, so this is a more robust method.
-  
-  const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-  
-  if (!serviceAccountString) {
-      console.error('Firebase Admin SDK service account credentials are not set.');
-      // It's better to throw an error that the calling function can catch
-      throw new Error('Firebase Admin SDK service account credentials are not set.');
-  }
-
-  try {
-    const serviceAccount = JSON.parse(serviceAccountString);
-    return admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-    });
-  } catch (error: any) {
-    console.error('Failed to parse or initialize Firebase Admin SDK credentials:', error);
-    throw new Error('Firebase Admin SDK credentials are not valid.');
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
-    initializeAdminApp();
-
-    const db = admin.firestore();
-    const auth = admin.auth();
-    
     const { password, ...userData } = await req.json();
 
     if (!password || !userData.email) {
@@ -110,25 +75,33 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ uid: userRecord.uid }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: any)
+ {
     console.error('API Error creating user:', error);
     let errorMessage = 'An unexpected error occurred.';
-    if (error.message && error.message.includes('credentials')) {
-        errorMessage = error.message;
-    } else if (error.code) {
+    let statusCode = 500;
+
+    if (error.code) {
         switch (error.code) {
             case 'auth/email-already-exists':
                 errorMessage = 'EMAIL_EXISTS: Email ini sudah digunakan oleh akun lain.';
+                statusCode = 409;
                 break;
             case 'auth/invalid-password':
                 errorMessage = 'WEAK_PASSWORD: Kata sandi harus minimal 6 karakter.';
+                statusCode = 400;
                 break;
             default:
                 errorMessage = error.message;
         }
     } else if (error.message) {
-        errorMessage = error.message;
+        if (error.message.includes('credential')) {
+             errorMessage = 'Kesalahan konfigurasi server: Kredensial Firebase tidak valid.';
+        } else {
+             errorMessage = error.message;
+        }
     }
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
+    
+    return NextResponse.json({ error: errorMessage }, { status: statusCode });
   }
 }

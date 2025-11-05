@@ -1,6 +1,24 @@
 
-// This file is intentionally left blank.
-// The Firebase Admin SDK initialization logic has been moved directly into the
-// API route handler (`src/app/api/create-user/route.ts`) to prevent
-// potential module caching issues in the Next.js server environment.
-// This ensures that credentials are correctly loaded for each API request.
+import admin from 'firebase-admin';
+
+if (!admin.apps.length) {
+  const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  if (!serviceAccountString) {
+    throw new Error('The GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable is not set.');
+  }
+  
+  try {
+    const serviceAccount = JSON.parse(serviceAccountString);
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (e: any) {
+    console.error('Failed to parse or initialize Firebase Admin SDK credentials:', e);
+    throw new Error('The service account credentials are not valid.');
+  }
+}
+
+const auth = admin.auth();
+const db = admin.firestore();
+
+export { auth, db };
