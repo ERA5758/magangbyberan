@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useFirestore } from "@/firebase";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { collection, query, where, Timestamp } from "firebase/firestore";
+import { collection, query, where, Timestamp, getDocs } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
@@ -70,27 +70,53 @@ const formatValue = (value: any): string => {
     return String(value);
 };
 
+
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
-
-  const reportsQuery = useMemo(() => {
-    if (!firestore || !projectId) return null;
-    return query(collection(firestore, 'reports'), where('projectId', '==', projectId));
+  const [reports, setReports] = useState<Report[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    if (!firestore || !projectId) {
+        setLoading(false);
+        return;
+    }
+    
+    const fetchReports = async () => {
+      setLoading(true);
+      try {
+        const reportsQuery = query(
+          collection(firestore, 'reports'),
+          where('projectId', '==', projectId)
+        );
+        const snapshot = await getDocs(reportsQuery);
+        const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Report[];
+        setReports(reportsData);
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+        setReports([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchReports();
   }, [firestore, projectId]);
-
-  const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
   
-  const { data: projectData, loading: projectLoading } = useCollectionOnce<Project>(
-      useMemo(() => firestore ? query(collection(firestore, 'projects'), where('id', '==', projectId)) : null, [firestore, projectId])
-  );
-  
-  const project = useMemo(() => projectData?.[0], [projectData]);
   const headers = useMemo(() => {
-      return project?.reportHeaders || [];
-  }, [project]);
+      if (reports.length === 0) return [];
+      const allHeaders = new Set<string>();
+      reports.forEach(report => {
+          Object.keys(report).forEach(key => {
+              if (key !== 'id' && key !== 'projectId') {
+                  allHeaders.add(key);
+              }
+          });
+      });
+      return Array.from(allHeaders).sort();
+  }, [reports]);
 
-
-  if (loading || projectLoading) {
+  if (loading) {
     return (
       <div className="space-y-2 mt-4">
         <Skeleton className="h-8 w-full" />
@@ -100,19 +126,16 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     );
   }
   
-  if (!reports || reports.length === 0) {
+  if (reports.length === 0) {
       return <p className="text-center text-muted-foreground py-8">No reports found for this project.</p>;
   }
-
-  // If headers are not configured on the project, create them dynamically
-  const dynamicHeaders = headers.length > 0 ? headers : Object.keys(reports[0] || {}).filter(key => key !== 'id' && key !== 'projectId');
 
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            {dynamicHeaders.map(header => (
+            {headers.map(header => (
               <TableHead key={header} className="capitalize whitespace-nowrap">{header.replace(/_/g, ' ')}</TableHead>
             ))}
           </TableRow>
@@ -120,7 +143,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         <TableBody>
           {reports.map((report) => (
             <TableRow key={report.id}>
-              {dynamicHeaders.map(header => (
+              {headers.map(header => (
                 <TableCell key={`${report.id}-${header}`}>
                   {formatValue(report[header])}
                 </TableCell>
