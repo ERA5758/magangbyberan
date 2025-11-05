@@ -3,7 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
@@ -83,6 +83,22 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       salesCode: '',
     },
   });
+
+  const selectedProjectId = form.watch('project');
+
+  useEffect(() => {
+    if (selectedProjectId && projects) {
+      const selectedProject = projects.find(p => p.id === selectedProjectId);
+      if (selectedProject) {
+        // Simple unique code generation, can be improved
+        const uniquePart = Math.random().toString(36).substring(2, 6).toUpperCase();
+        form.setValue('salesCode', `${selectedProject.name.toLowerCase()}-${uniquePart}`);
+      }
+    } else {
+        form.setValue('salesCode', '');
+    }
+  }, [selectedProjectId, projects, form]);
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -371,7 +387,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               <FormItem>
                 <FormLabel>Kode Sales</FormLabel>
                 <FormControl>
-                  <Input placeholder="Contoh: SLS04" {...field} />
+                  <Input placeholder="Pilih proyek untuk generate kode" {...field} disabled={!selectedProjectId} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
