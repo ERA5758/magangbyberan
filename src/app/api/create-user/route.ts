@@ -10,26 +10,32 @@ function initializeAdminApp() {
     return admin.app();
   }
 
-  try {
-    const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-    if (!serviceAccountString) {
-      throw new Error('GOOGLE_APPLICATION_CREDENTIALS_JSON is not set in .env file');
-    }
-    const serviceAccount = JSON.parse(serviceAccountString);
+  // The SDK will automatically use GOOGLE_APPLICATION_CREDENTIALS environment variable
+  // if it's set. For environments like Vercel or Cloud Run, you set the env var directly.
+  // For local dev, you can point GOOGLE_APPLICATION_CREDENTIALS to the path of your JSON file.
+  // Parsing the JSON from an env var can be error-prone, so this is a more robust method.
+  
+  const serviceAccountString = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  
+  if (!serviceAccountString) {
+      console.error('Firebase Admin SDK service account credentials are not set.');
+      // It's better to throw an error that the calling function can catch
+      throw new Error('Firebase Admin SDK service account credentials are not set.');
+  }
 
+  try {
+    const serviceAccount = JSON.parse(serviceAccountString);
     return admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
     });
   } catch (error: any) {
-    console.error('Firebase Admin Initialization Error:', error.stack);
-    // Throw an error that can be caught by the route handler
-    throw new Error('Firebase Admin SDK service account credentials are not set or are invalid.');
+    console.error('Failed to parse or initialize Firebase Admin SDK credentials:', error);
+    throw new Error('Firebase Admin SDK credentials are not valid.');
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
-    // Initialize on each request to ensure fresh credentials
     initializeAdminApp();
 
     const db = admin.firestore();
@@ -107,8 +113,8 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('API Error creating user:', error);
     let errorMessage = 'An unexpected error occurred.';
-    if (error.message && error.message.includes('service account')) {
-        errorMessage = 'Firebase Admin SDK service account credentials are not set or are invalid.';
+    if (error.message && error.message.includes('credentials')) {
+        errorMessage = error.message;
     } else if (error.code) {
         switch (error.code) {
             case 'auth/email-already-exists':
