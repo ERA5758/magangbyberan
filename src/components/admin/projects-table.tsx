@@ -48,6 +48,15 @@ import { AddProjectForm } from "./add-project-form"
 import { EditProjectForm } from "./edit-project-form"
 import { useToast } from "@/hooks/use-toast"
 
+const formatCurrency = (value?: number) => {
+    if (value === undefined || value === null) return 'N/A';
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+    }).format(value);
+}
 
 export function ProjectsTable() {
     const firestore = useFirestore();
@@ -147,6 +156,8 @@ export function ProjectsTable() {
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Nama Proyek</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Fee SPV</TableHead>
+                        <TableHead>Fee Sales</TableHead>
                         <TableHead className="hidden lg:table-cell">Header Laporan</TableHead>
                         <TableHead>
                         <span className="sr-only">Aksi</span>
@@ -161,16 +172,18 @@ export function ProjectsTable() {
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
                             </TableCell>
+                            <TableCell>{formatCurrency(project.feeSpv)}</TableCell>
+                            <TableCell>{formatCurrency(project.feeSales)}</TableCell>
                             <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                     {project.reportHeaders && project.reportHeaders.length > 0 ? (
-                                        project.reportHeaders.slice(0, 5).map(header => (
+                                        project.reportHeaders.slice(0, 3).map(header => (
                                             <Badge key={header} variant="outline" className="text-xs">{header}</Badge>
                                         ))
                                     ) : (
                                          <span className="text-muted-foreground text-xs">Belum Dikonfigurasi</span>
                                     )}
-                                    {project.reportHeaders && project.reportHeaders.length > 5 && (
+                                    {project.reportHeaders && project.reportHeaders.length > 3 && (
                                         <Badge variant="outline" className="text-xs">...</Badge>
                                     )}
                                 </div>

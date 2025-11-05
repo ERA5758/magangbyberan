@@ -34,6 +34,8 @@ const formSchema = z.object({
   name: z.string().min(1, 'Nama proyek harus diisi.'),
   status: z.enum(['Aktif', 'Non Aktif']),
   reportHeaders: z.string().optional(),
+  feeSpv: z.coerce.number().optional(),
+  feeSales: z.coerce.number().optional(),
 });
 
 type AddProjectFormProps = {
@@ -51,6 +53,8 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       name: '',
       status: 'Aktif',
       reportHeaders: '',
+      feeSpv: 0,
+      feeSales: 0,
     },
   });
 
@@ -78,6 +82,8 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         status: values.status,
         assignedSalesCodes: [],
         reportHeaders: headers,
+        feeSpv: values.feeSpv || 0,
+        feeSales: values.feeSales || 0,
         createdAt: serverTimestamp(),
       });
 
@@ -104,7 +110,7 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
         <FormField
           control={form.control}
           name="name"
@@ -139,6 +145,34 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
             </FormItem>
           )}
         />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="feeSpv"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fee SPV</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="feeSales"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fee Sales</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="0" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        </div>
         <FormField
           control={form.control}
           name="reportHeaders"

@@ -25,6 +25,8 @@ export type Project = {
   status: 'Aktif' | 'Non Aktif';
   assignedSalesCodes: string[];
   reportHeaders?: string[];
+  feeSpv?: number;
+  feeSales?: number;
 };
 
 export type Sale = {
