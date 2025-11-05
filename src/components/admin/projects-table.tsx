@@ -159,47 +159,17 @@ export function ProjectsTable() {
                         <TableHead>Fee SPV</TableHead>
                         <TableHead>Fee Sales</TableHead>
                         <TableHead className="hidden lg:table-cell">Header Laporan</TableHead>
+                        <TableHead>
+                            <span className="sr-only">Aksi</span>
+                        </TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
                     {projects && projects.map((project, index) => (
-                        <TableRow key={project.id}>
+                        <TableRow key={project.id} onClick={() => handleRowClick(project.id)} className="cursor-pointer">
                             <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                                <div className="flex items-center justify-between group">
-                                    <span 
-                                        onClick={() => handleRowClick(project.id)} 
-                                        className="font-medium cursor-pointer hover:underline"
-                                    >
-                                        {project.name}
-                                    </span>
-                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    <span className="sr-only">Buka menu</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={(e) => handleRowClick(project.id)}>
-                                                    Lihat Detail
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
-                                                    Ubah Proyek
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
-                                                    onClick={(e) => handleDeleteClick(e, project)}
-                                                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                                >
-                                                    Hapus Proyek
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
+                            <TableCell className="font-medium">
+                                {project.name}
                             </TableCell>
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
@@ -219,6 +189,29 @@ export function ProjectsTable() {
                                         <Badge variant="outline" className="text-xs">...</Badge>
                                     )}
                                 </div>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                            <span className="sr-only">Buka menu</span>
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
+                                            Ubah Proyek
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem 
+                                            onClick={(e) => handleDeleteClick(e, project)}
+                                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                        >
+                                            Hapus Proyek
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -262,5 +255,3 @@ export function ProjectsTable() {
         </div>
     )
 }
-
-    
