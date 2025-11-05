@@ -18,6 +18,7 @@ export type Project = {
   name: string;
   status: 'Active' | 'Completed' | 'On Hold';
   assignedSalesCodes: string[];
+  reportHeaders?: string[];
 };
 
 export type Sale = {

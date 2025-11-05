@@ -66,6 +66,7 @@ export function ProjectsTable() {
                         <TableHead>Project Name</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="hidden md:table-cell">Assigned Sales</TableHead>
+                        <TableHead className="hidden lg:table-cell">Report Headers</TableHead>
                         <TableHead>
                         <span className="sr-only">Actions</span>
                         </TableHead>
@@ -79,6 +80,13 @@ export function ProjectsTable() {
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">{project.assignedSalesCodes.join(', ')}</TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                                <div className="flex flex-wrap gap-1 max-w-xs">
+                                    {project.reportHeaders?.map(header => (
+                                        <Badge key={header} variant="outline" className="text-xs">{header}</Badge>
+                                    )) || <span className="text-muted-foreground text-xs">Not Configured</span>}
+                                </div>
+                            </TableCell>
                             <TableCell>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -89,7 +97,8 @@ export function ProjectsTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
+                                    <DropdownMenuItem>Edit Headers</DropdownMenuItem>
+                                    <DropdownMenuItem>Edit Project</DropdownMenuItem>
                                     <DropdownMenuItem>Assign Sales</DropdownMenuItem>
                                     <DropdownMenuItem>Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
