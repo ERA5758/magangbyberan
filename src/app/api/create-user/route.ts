@@ -1,7 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import 'dotenv/config'; // Ensure environment variables are loaded
-import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
