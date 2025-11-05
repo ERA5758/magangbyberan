@@ -365,7 +365,7 @@ const formatNameToId = (name: string) => {
 export default function ReportsPage() {
   const firestore = useFirestore();
   const projectsQuery = useMemo(
-    () => (firestore ? query(collection(firestore, "projects")) : null),
+    () => (firestore ? query(collection(firestore, "projects"), where("status", "==", "Aktif")) : null),
     [firestore]
   );
   const { data: projects, loading } = useCollectionOnce<Project>(projectsQuery);
@@ -413,11 +413,11 @@ export default function ReportsPage() {
         />
         <Card>
           <CardHeader>
-            <CardTitle>No Projects Found</CardTitle>
+            <CardTitle>No Active Projects Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground py-8">
-              There are no projects in the database. Please add a project first.
+              There are no active projects to display reports for.
             </p>
           </CardContent>
         </Card>
