@@ -49,11 +49,6 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: '',
-      status: 'Aktif',
-      reportHeaders: '',
-    },
   });
   
   useEffect(() => {
@@ -64,7 +59,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
             reportHeaders: project.reportHeaders ? project.reportHeaders.join(', ') : '',
         });
     }
-  }, [project, form])
+  }, [project, form]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -133,7 +128,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a status" />
