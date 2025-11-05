@@ -24,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, parse as dateFnsParse } from 'date-fns';
 import { useRouter } from 'next/navigation';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
@@ -46,12 +46,20 @@ const formatValue = (value: any): string => {
 
     if (typeof value === 'string') {
         try {
+            // ISO format check
             if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
                 return format(parseISO(value), 'dd-MM-yyyy');
             }
+            // M/d/yyyy or d/M/yyyy format check
             const dateWithSlashes = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
             if (dateWithSlashes) {
-                const d = new Date(value);
+                // Try parsing M/d/yyyy first
+                let d = dateFnsParse(value, 'M/d/yyyy', new Date());
+                if (!isNaN(d.getTime())) {
+                    return format(d, 'dd-MM-yyyy');
+                }
+                 // Then try d/M/yyyy
+                d = dateFnsParse(value, 'd/M/yyyy', new Date());
                 if (!isNaN(d.getTime())) {
                     return format(d, 'dd-MM-yyyy');
                 }
@@ -233,7 +241,7 @@ export default function ReportsPage() {
         <TabsList>
           {projects.map((project) => (
             <TabsTrigger key={project.id} value={formatNameToId(project.name)}>
-              {project.name.toUpperCase()}
+              {project.name.toUpperCase().replace(/_/g, ' ')}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -241,9 +249,9 @@ export default function ReportsPage() {
           <TabsContent key={project.id} value={formatNameToId(project.name)}>
             <Card>
               <CardHeader>
-                <CardTitle>Reports for {project.name.toUpperCase()}</CardTitle>
+                <CardTitle>Reports for {project.name.toUpperCase().replace(/_/g, ' ')}</CardTitle>
                 <CardDescription>
-                  Displaying reports for {project.name.toUpperCase()}
+                  Displaying reports for {project.name.toUpperCase().replace(/_/g, ' ')}
                 </CardDescription>
               </CardHeader>
               <CardContent>
