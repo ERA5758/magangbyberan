@@ -1,9 +1,9 @@
 
 "use client"
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@/firebase';
 import { useFirestore } from '@/firebase';
-import { doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot, getDoc } from "firebase/firestore";
 import type { ProjectAssignment } from '@/lib/types';
 
 
@@ -26,6 +26,33 @@ export const useCurrentUser = () => {
   const [appUser, setAppUser] = useState<AppUser | null>(null);
   const [userLoading, setUserLoading] = useState(true);
 
+  const fetchAppUser = useCallback(async () => {
+    if (firestore && authUser) {
+      const userDocRef = doc(firestore, "users", authUser.uid);
+      const docSnap = await getDoc(userDocRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const primarySalesCode = data.projectAssignments && data.projectAssignments.length > 0 
+          ? data.projectAssignments[0].salesCode 
+          : data.salesCode || '';
+
+        setAppUser({
+          id: docSnap.id,
+          uid: authUser.uid,
+          name: data.name || 'No Name',
+          email: authUser.email,
+          role: data.role || 'Sales',
+          status: data.status || 'Aktif',
+          avatar: authUser.photoURL || data.avatar || `https://i.pravatar.cc/150?u=${authUser.uid}`,
+          salesCode: primarySalesCode,
+          ...data
+        });
+      } else {
+        setAppUser(null);
+      }
+    }
+  }, [firestore, authUser]);
+
   useEffect(() => {
     if (authLoading) {
       setUserLoading(true);
@@ -43,7 +70,6 @@ export const useCurrentUser = () => {
       const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if (doc.exists()) {
           const data = doc.data();
-          // Find a primary sales code if multiple exist
           const primarySalesCode = data.projectAssignments && data.projectAssignments.length > 0 
             ? data.projectAssignments[0].salesCode 
             : data.salesCode || '';
@@ -56,11 +82,10 @@ export const useCurrentUser = () => {
             role: data.role || 'Sales',
             status: data.status || 'Aktif',
             avatar: authUser.photoURL || data.avatar || `https://i.pravatar.cc/150?u=${authUser.uid}`,
-            salesCode: primarySalesCode, // For components expecting a single sales code
+            salesCode: primarySalesCode,
             ...data
           });
         } else {
-          // This might happen if user exists in Auth but not in Firestore
           setAppUser(null); 
         }
         setUserLoading(false);
@@ -74,5 +99,5 @@ export const useCurrentUser = () => {
     }
   }, [authUser, firestore, authLoading]);
 
-  return { user: appUser, loading: userLoading };
+  return { user: appUser, loading: userLoading, mutate: fetchAppUser };
 };
