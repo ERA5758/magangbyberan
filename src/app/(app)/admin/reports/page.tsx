@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -30,6 +29,7 @@ export default function ReportsPage() {
 
   const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
 
+  // While loading, show a clear loading state.
   if (projectsLoading) {
     return (
       <div className="space-y-8">
@@ -52,6 +52,7 @@ export default function ReportsPage() {
     );
   }
 
+  // After loading, if there are no projects, show the empty state message.
   if (!projects || projects.length === 0) {
     return (
         <div className="space-y-8">
@@ -65,14 +66,15 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                     <p className="text-center text-muted-foreground py-8">
-                        No projects found. Add projects in the 'Projects' page to see reports here.
+                        No projects found in Firestore.
                     </p>
                 </CardContent>
             </Card>
         </div>
     )
   }
-
+  
+  // If we have projects, render the tabs.
   const defaultTab = projects[0]?.id;
 
   return (
@@ -106,4 +108,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
