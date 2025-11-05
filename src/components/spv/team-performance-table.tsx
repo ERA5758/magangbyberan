@@ -11,13 +11,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -26,7 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, User, Mail, Landmark, CreditCard, Phone, Home, Loader2 } from "lucide-react"
+import { User, Mail, Landmark, Phone, Home, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { useFirestore } from "@/firebase"
@@ -163,9 +156,6 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                         <TableHead>Status</TableHead>
                         <TableHead>Jumlah Laporan</TableHead>
                         <TableHead>Total Pendapatan</TableHead>
-                        <TableHead>
-                        <span className="sr-only">Aksi</span>
-                        </TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -189,21 +179,6 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                             </TableCell>
                             <TableCell className="text-center">{data.salesCount}</TableCell>
                             <TableCell>{formatCurrency(data.totalIncome)}</TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Buka menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={() => handleRowClick(data)}>Lihat Detail</DropdownMenuItem>
-                                    <DropdownMenuItem>Kirim Pesan</DropdownMenuItem>
-                                </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
