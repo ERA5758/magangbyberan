@@ -11,9 +11,10 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { Project } from "@/lib/types";
+import type { Project, Report } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -23,7 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -44,14 +45,20 @@ const formatValue = (value: any): string => {
 
     if (typeof value === 'string') {
         try {
-            const parsedDate1 = Date.parse(value);
-            if (!isNaN(parsedDate1)) {
-                 const dateObj = new Date(parsedDate1);
-                 // Check if it's a valid date object before formatting
-                 if (!isNaN(dateObj.getTime())) {
-                    return format(dateObj, 'dd/MM/yyyy');
-                 }
+            // Handles M/d/yyyy and d/M/yyyy
+            let parsedDate = parse(value, 'M/d/yyyy', new Date());
+            if (!isNaN(parsedDate.getTime())) {
+                return format(parsedDate, 'dd/MM/yyyy');
             }
+             parsedDate = parse(value, 'd/M/yyyy', new Date());
+            if (!isNaN(parsedDate.getTime())) {
+                return format(parsedDate, 'dd/MM/yyyy');
+            }
+             // Handles ISO strings
+             parsedDate = new Date(value);
+             if (!isNaN(parsedDate.getTime()) && /\d/.test(value)) {
+                 return format(parsedDate, 'dd/MM/yyyy');
+             }
         } catch (e) {
             // Not a date string, return original string
         }
@@ -72,12 +79,11 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
 
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
-    // This is the key: Use collectionGroup and filter by a field that identifies the project.
-    // Based on the data structure, filtering by the "BANK" field is the correct approach.
-    return query(collectionGroup(firestore, 'reports'), where('BANK', '==', projectId.toUpperCase()));
+    const bankName = projectId.toUpperCase().replace(/_/g, ' ');
+    return query(collectionGroup(firestore, 'reports'), where('BANK', '==', bankName));
   }, [firestore, projectId]);
   
-  const { data: reports, loading } = useCollectionOnce<{[key: string]: any}>(reportsQuery);
+  const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
 
   const headers = useMemo(() => {
     if (!reports || reports.length === 0) return [];
@@ -91,7 +97,6 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     });
     const sortedHeaders = Array.from(headerSet).sort();
     
-    // Ensure "BANK" and "ID UNIK" are first if they exist
     const preferredOrder = ["ID UNIK", "BANK"];
     return [...preferredOrder.filter(h => sortedHeaders.includes(h)), ...sortedHeaders.filter(h => !preferredOrder.includes(h))];
 
@@ -213,6 +218,9 @@ export default function ReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Reports for {project.name || project.id}</CardTitle>
+                <CardDescription>
+                  Displaying reports for BANK: {project.id.toUpperCase().replace(/_/g, ' ')}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <FilteredReportsTable projectId={project.id} />
@@ -224,3 +232,4 @@ export default function ReportsPage() {
     </div>
   );
 }
+
