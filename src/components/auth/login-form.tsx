@@ -127,7 +127,7 @@ export function LoginForm() {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
         <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
       </CardHeader>
