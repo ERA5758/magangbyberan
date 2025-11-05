@@ -134,45 +134,37 @@ export default function SalesDashboard() {
         </Button>
       </PageHeader>
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Total Pendapatan Saya"
           value={formatCurrency(myTotalIncome)}
           icon={DollarSign}
           description="Total pendapatan Anda bulan ini"
         />
-        <StatCard
-          title="Peringkat Perusahaan"
-          value={myRank > 0 ? `#${myRank}`: 'N/A'}
-          icon={BarChart}
-          description={allSalespersons ? `dari ${allSalespersons.length} tenaga penjualan` : ''}
-        />
-        <div className="lg:col-span-1">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-base">Laporan per Proyek</CardTitle>
-                </CardHeader>
-                <CardContent>
-                {(loading || reportsLoading || projectsLoading) ? <Skeleton className="h-10 w-full" /> : (
-                  reportsByProject.length > 0 ? (
-                    <div className="space-y-2">
-                      {reportsByProject.map(project => (
-                        <div key={project.id} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground" />
-                            <p className="font-medium truncate">{project.name}</p>
-                          </div>
-                          <p className="font-semibold">{project.reportCount.toLocaleString()}</p>
-                        </div>
-                      ))}
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-base">Laporan per Proyek</CardTitle>
+            </CardHeader>
+            <CardContent>
+            {(loading || reportsLoading || projectsLoading) ? <Skeleton className="h-10 w-full" /> : (
+              reportsByProject.length > 0 ? (
+                <div className="space-y-2">
+                  {reportsByProject.map(project => (
+                    <div key={project.id} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        <p className="font-medium truncate">{project.name}</p>
+                      </div>
+                      <p className="font-semibold">{project.reportCount.toLocaleString()}</p>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground text-center">Belum ada laporan.</p>
-                  )
-                )}
-                </CardContent>
-            </Card>
-        </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center">Belum ada laporan.</p>
+              )
+            )}
+            </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
