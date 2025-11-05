@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useCollection, useFirestore } from "@/firebase";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { format } from "date-fns";
 import type { Sale } from "@/lib/types";
 import { useMemo } from "react";
@@ -22,8 +22,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
         firestore ? query(
             collection(firestore, "sales"), 
             where("salesCode", "==", salesCode),
-            orderBy("date", "desc"),
-            limit(5)
+            orderBy("date", "desc")
         ) : null
     , [firestore, salesCode]);
     const { data: mySales, loading } = useCollection<Sale>(mySalesQuery);
@@ -69,5 +68,3 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
         </div>
     )
 }
-
-    

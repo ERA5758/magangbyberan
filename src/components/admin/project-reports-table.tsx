@@ -168,5 +168,3 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         </div>
     );
 }
-
-    
