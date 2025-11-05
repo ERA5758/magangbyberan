@@ -50,7 +50,6 @@ const formSchema = z.object({
   bankName: z.string().min(1, 'Nama Bank harus diisi.'),
   accountNumber: z.string().min(1, 'Nomor Rekening harus diisi.'),
   accountHolder: z.string().min(1, 'Nama Rekening harus diisi.'),
-  ktpPhoto: z.any().optional(),
   projectAssignments: z.array(projectAssignmentSchema),
   supervisorId: z.string().optional(),
 });
@@ -161,7 +160,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           return;
       }
       
-      const { ktpPhoto, ...restOfValues } = values;
+      const { ...restOfValues } = values;
 
       const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
         name: restOfValues.name,
@@ -223,8 +222,8 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           description = error.message.replace('NIK_EXISTS: ', '');
       } else if (error.message?.includes('permission')) {
           description = 'Anda tidak memiliki izin untuk melakukan tindakan ini.';
-      } else if (error.message.includes("Could not initialize Firebase")) {
-          description = "Gagal menghubungi server otentikasi. Periksa koneksi Anda dan coba lagi.";
+      } else if (error.message.includes("credential")) {
+          description = "Kesalahan konfigurasi server: Kredensial Firebase tidak valid.";
       }
       else if (error.message) {
           description = error.message;
@@ -384,23 +383,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               </FormItem>
             )}
           />
-           <FormField
-              control={form.control}
-              name="ktpPhoto"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Foto KTP</FormLabel>
-                  <FormControl>
-                    <Input 
-                        type="file" 
-                        accept="image/*"
-                        onChange={(e) => field.onChange(e.target.files)}
-                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           <FormField
             control={form.control}
             name="bankName"

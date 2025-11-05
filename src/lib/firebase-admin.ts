@@ -10,10 +10,12 @@ function initializeFirebaseAdmin() {
     const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
 
     if (!serviceAccountKeyBase64) {
-      console.warn(
-        'Firebase Admin SDK not initialized. Missing required environment variable: FIREBASE_SERVICE_ACCOUNT_KEY_BASE64.'
+      console.error(
+        'Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set.'
       );
-      return; // Exit if the essential variable is missing.
+      throw new Error(
+        'Server configuration error: Firebase credentials are not set.'
+      );
     }
 
     try {
