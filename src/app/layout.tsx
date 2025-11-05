@@ -177,11 +177,6 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-        <style dangerouslySetInnerHTML={{ __html: `
-          .group[data-sidebar="sidebar"][data-collapsible="icon"] .font-headline {
-            display: none;
-          }
-        `}} />
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>

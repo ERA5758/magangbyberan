@@ -1,23 +1,15 @@
-
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-const AppLogo = ({ className }: { className?: string }) => {
+const AppLogo = ({ className, size=21 }: { className?: string, size?: number }) => {
   return (
-    <div
+    (<div
       className={cn(
         "flex items-center gap-2 text-lg font-bold tracking-tight",
         className
-      )}
-    >
-      <Image
-        src="/icon.svg"
-        width={36}
-        height={36}
-        alt="logo"
-        className="h-auto w-auto"
-      />
-    </div>
+      )}>
+      <Image src="/icon.svg" width={size} height={size} alt="logo" />
+    </div>)
   );
 };
 
