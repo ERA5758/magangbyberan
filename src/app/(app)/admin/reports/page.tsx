@@ -120,7 +120,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
 
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -142,7 +142,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
         where("projectId", "==", projectId),
       ];
 
-      if (projectId === 'btn' && selectedMonth) {
+      if (projectId === 'btn' && selectedMonth && selectedMonth !== 'all') {
         queryConstraints.push(where("input_laporan", "==", selectedMonth));
       }
       
@@ -240,7 +240,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
   
   const headers = project.reportHeaders && project.reportHeaders.length > 0 
     ? project.reportHeaders 
-    : Object.keys(reports[0] || {}).filter(k => !['id', 'projectId', 'lastSyncTimestamp'].includes(k));
+    : [];
 
   if (loading && reports.length === 0) {
     return (
@@ -261,7 +261,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
               <SelectValue placeholder="Filter by Month" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Months</SelectItem>
+              <SelectItem value="all">All Months</SelectItem>
               {months.map(month => (
                 <SelectItem key={month} value={month}>{month}</SelectItem>
               ))}
@@ -487,3 +487,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    
