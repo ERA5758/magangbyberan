@@ -28,6 +28,10 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
     , [firestore, salesCode]);
     const { data: mySales, loading } = useCollection<Sale>(mySalesQuery);
 
+    const handleRowClick = (sale: Sale) => {
+        console.log("Sale clicked:", sale);
+    };
+
     if (loading) {
         return <div>Loading recent sales...</div>
     }
@@ -44,7 +48,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                 </TableHeader>
                 <TableBody>
                 {mySales && mySales.length > 0 ? mySales.map((sale) => (
-                    <TableRow key={sale.id}>
+                    <TableRow key={sale.id} onClick={() => handleRowClick(sale)} className="cursor-pointer">
                         <TableCell>
                             <div className="font-medium">{sale.projectName}</div>
                         </TableCell>

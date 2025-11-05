@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -102,6 +103,10 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     
     fetchReports();
   }, [firestore, projectId]);
+
+  const handleRowClick = (report: Report) => {
+    console.log("Report clicked:", report);
+  };
   
   const headers = useMemo(() => {
       if (reports.length === 0) return [];
@@ -142,7 +147,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         </TableHeader>
         <TableBody>
           {reports.map((report) => (
-            <TableRow key={report.id}>
+            <TableRow key={report.id} onClick={() => handleRowClick(report)} className="cursor-pointer">
               {headers.map(header => (
                 <TableCell key={`${report.id}-${header}`}>
                   {formatValue(report[header])}

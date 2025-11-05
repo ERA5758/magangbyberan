@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useMemo } from "react";
@@ -50,6 +51,12 @@ export function UsersTable() {
         }
     };
 
+    const handleRowClick = (user: AppUser) => {
+        // TODO: Navigate to a user detail/edit page
+        console.log("Navigating to user:", user.name);
+    };
+
+
     if (loading) {
         return <div>Loading users...</div>
     }
@@ -89,7 +96,7 @@ export function UsersTable() {
                     </TableHeader>
                     <TableBody>
                     {users && users.map((user) => (
-                        <TableRow key={user.id}>
+                        <TableRow key={user.id} onClick={() => handleRowClick(user)} className="cursor-pointer">
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>
@@ -106,7 +113,7 @@ export function UsersTable() {
                                 <Badge variant={getBadgeVariant(user.role)}>{user.role}</Badge>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">{user.salesCode}</TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">

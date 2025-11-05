@@ -1,3 +1,4 @@
+
 "use client"
 
 import {
@@ -110,9 +111,9 @@ export function ProjectsTable() {
                                     )) || <span className="text-muted-foreground text-xs">Not Configured</span>}
                                 </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
-                                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Toggle menu</span>

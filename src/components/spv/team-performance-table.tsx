@@ -72,6 +72,12 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         });
     }, [teamMembers, sales]);
 
+    const handleRowClick = (data: TeamPerformanceData) => {
+        console.log("Viewing details for:", data.name);
+        // In a real app, you might navigate to a salesperson-specific report page
+        // e.g., router.push(`/spv/team/${data.id}`)
+    };
+
     if (membersLoading || salesLoading) {
         return <div>Loading team performance...</div>
     }
@@ -92,7 +98,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 </TableHeader>
                 <TableBody>
                 {performanceData.map((data) => (
-                    <TableRow key={data.id}>
+                    <TableRow key={data.id} onClick={() => handleRowClick(data)} className="cursor-pointer">
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>
@@ -113,7 +119,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                 <span className="text-xs text-muted-foreground">{Math.round((data.totalSales / data.salesTarget) * 100)}%</span>
                             </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
