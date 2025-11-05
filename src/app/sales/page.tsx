@@ -167,17 +167,8 @@ export default function SalesDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>Laporan Terkini</CardTitle>
-                <CardDescription>Transaksi laporan terbaru Anda.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <RecentSales salesCodes={userSalesCodes} />
-            </CardContent>
-        </Card>
-        <Card className="lg:col-span-2">
+      <div className="grid grid-cols-1 gap-8">
+        <Card>
             <CardHeader>
                 <CardTitle>Performa Mingguan</CardTitle>
                 <CardDescription>Tren laporan Anda selama seminggu terakhir.</CardDescription>
