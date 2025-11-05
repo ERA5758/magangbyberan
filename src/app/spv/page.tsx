@@ -4,12 +4,13 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { TeamPerformanceTable } from "@/components/spv/team-performance-table";
-import { UsersRound, DollarSign, ClipboardList } from "lucide-react";
+import { UsersRound, DollarSign, ClipboardList, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -18,6 +19,7 @@ import { collection, query, where } from "firebase/firestore";
 import type { Sale, AppUser, Project, Report } from "@/lib/types";
 import { useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -50,18 +52,40 @@ export default function SpvDashboard() {
   , [firestore, teamSalesCodes]);
   const { data: teamReports, loading: reportsLoading } = useCollection<Report>(teamReportsQuery);
 
-  const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+  const teamProjectIds = useMemo(() => {
+    if (!teamMembers) return [];
+    const projectIds = new Set<string>();
+    teamMembers.forEach(member => {
+      member.projectAssignments?.forEach(pa => projectIds.add(pa.projectId));
+    });
+    return Array.from(projectIds);
+  }, [teamMembers]);
+
+  const projectsQuery = useMemo(
+    () => (firestore && teamProjectIds.length > 0 ? query(collection(firestore, "projects"), where("status", "==", "Aktif"), where("__name__", "in", teamProjectIds)) : null),
+    [firestore, teamProjectIds]
+  );
   const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
+
 
   const loading = userLoading || teamLoading || reportsLoading || projectsLoading;
 
-  const { totalCommission, teamSalesForChart } = useMemo(() => {
+  const { totalCommission, teamSalesForChart, salesByProject } = useMemo(() => {
     if (!teamReports || !projects) {
-      return { totalCommission: 0, teamSalesForChart: [] };
+      return { totalCommission: 0, teamSalesForChart: [], salesByProject: [] };
     }
 
     let totalCommission = 0;
     const teamSalesForChart: Sale[] = [];
+    
+    const salesByProject = projects.map(project => {
+        const projectIdentifier = project.name.toLowerCase().replace(/ /g, '_');
+        const projectSalesCount = teamReports.filter(report => report.projectId === projectIdentifier).length;
+        return {
+          ...project,
+          salesCount: projectSalesCount,
+        };
+      }).filter(p => p.salesCount > 0);
 
     teamReports.forEach(report => {
       const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
@@ -78,7 +102,7 @@ export default function SpvDashboard() {
       });
     });
 
-    return { totalCommission, teamSalesForChart };
+    return { totalCommission, teamSalesForChart, salesByProject };
   }, [teamReports, projects]);
   
   const totalTeamSalesCount = teamReports?.length || 0;
@@ -104,12 +128,32 @@ export default function SpvDashboard() {
           icon={DollarSign}
           description="Total komisi yang dihasilkan tim Anda bulan ini"
         />
-        <StatCard
-          title="Total Penjualan Tim"
-          value={totalTeamSalesCount.toLocaleString()}
-          icon={ClipboardList}
-          description="Total transaksi yang berhasil dicatat oleh tim"
-        />
+        <div className="lg:col-span-1">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Penjualan Proyek Tim</CardTitle>
+                </CardHeader>
+                <CardContent>
+                {loading ? <Skeleton className="h-10 w-full" /> : (
+                  salesByProject.length > 0 ? (
+                    <div className="space-y-2">
+                      {salesByProject.map(project => (
+                        <div key={project.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <p className="font-medium truncate">{project.name}</p>
+                          </div>
+                          <p className="font-semibold">{project.salesCount.toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center">Belum ada penjualan.</p>
+                  )
+                )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
