@@ -33,7 +33,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Project name is required.'),
-  status: z.enum(['Active', 'Completed', 'On Hold']),
+  status: z.enum(['Aktif', 'Non Aktif']),
   reportHeaders: z.string().optional(),
 });
 
@@ -51,7 +51,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      status: 'Active',
+      status: 'Aktif',
       reportHeaders: '',
     },
   });
@@ -140,9 +140,8 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="Active">Active</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                  <SelectItem value="On Hold">On Hold</SelectItem>
+                  <SelectItem value="Aktif">Aktif</SelectItem>
+                  <SelectItem value="Non Aktif">Non Aktif</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />

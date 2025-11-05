@@ -16,7 +16,7 @@ export type AppUser = {
 export type Project = {
   id: string;
   name: string;
-  status: 'Active' | 'Completed' | 'On Hold';
+  status: 'Aktif' | 'Non Aktif';
   assignedSalesCodes: string[];
   reportHeaders?: string[];
 };

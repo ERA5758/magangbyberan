@@ -65,9 +65,8 @@ export function ProjectsTable() {
     
     const getBadgeVariant = (status: Project['status']) => {
         switch (status) {
-            case 'Active': return 'default';
-            case 'Completed': return 'secondary';
-            case 'On Hold': return 'destructive';
+            case 'Aktif': return 'default';
+            case 'Non Aktif': return 'destructive';
             default: return 'outline';
         }
     };
