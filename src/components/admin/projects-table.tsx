@@ -23,11 +23,21 @@ import { useCollection, useFirestore } from "@/firebase"
 import { collection } from "firebase/firestore"
 import type { Project } from "@/lib/types"
 import { useRouter } from "next/navigation"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { AddProjectForm } from "./add-project-form"
 
 
 export function ProjectsTable() {
     const firestore = useFirestore();
+    const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
 
     const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
     const { data: projects, loading } = useCollection<Project>(projectsQuery);
@@ -54,10 +64,23 @@ export function ProjectsTable() {
     return (
         <div className="space-y-4">
              <div className="flex justify-end">
-                <Button>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Project
-                </Button>
+                <Dialog open={isAddProjectOpen} onOpenChange={setIsAddProjectOpen}>
+                    <DialogTrigger asChild>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Add Project
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                            <DialogTitle>Add New Project</DialogTitle>
+                            <DialogDescription>
+                                Fill in the details below to create a new project.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <AddProjectForm onSuccess={() => setIsAddProjectOpen(false)} />
+                    </DialogContent>
+                </Dialog>
             </div>
             <div className="rounded-md border">
                 <Table>
@@ -79,7 +102,7 @@ export function ProjectsTable() {
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">{project.assignedSalesCodes.join(', ')}</TableCell>
+                            <TableCell className="hidden md:table-cell">{project.assignedSalesCodes?.join(', ') || 'N/A'}</TableCell>
                             <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                     {project.reportHeaders?.map(header => (
