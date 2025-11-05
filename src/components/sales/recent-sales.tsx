@@ -10,34 +10,76 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useCollection, useFirestore } from "@/firebase";
-import { collection, query, where } from "firebase/firestore";
-import { format } from "date-fns";
-import type { Sale } from "@/lib/types";
+import { collection, query, where, Timestamp } from "firebase/firestore";
+import { format, parseISO } from "date-fns";
+import type { Report, Project } from "@/lib/types";
 import { useMemo } from "react";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
+import { formatCurrency } from "@/lib/utils";
 
-export function RecentSales({ salesCode }: { salesCode: string }) {
+const isFirestoreTimestamp = (value: any): value is Timestamp => {
+  return value && typeof value.toDate === 'function';
+};
+
+const findDateInReport = (report: Report): Date | null => {
+    const dateFields = ['date', 'TANGGAL', 'Incoming Date', 'createdAt', 'created_at', 'timestamp'];
+    for (const field of dateFields) {
+        const value = report[field];
+        if (!value) continue;
+
+        try {
+            if (value instanceof Date) return value;
+            if (isFirestoreTimestamp(value)) return value.toDate();
+            if (typeof value === 'string') {
+                const date = parseISO(value);
+                if (!isNaN(date.getTime())) return date;
+            }
+        } catch (e) {
+            // Ignore parsing errors
+        }
+    }
+    return null;
+}
+
+
+export function RecentSales({ salesCodes }: { salesCodes: string[] }) {
     const firestore = useFirestore();
 
-    const mySalesQuery = useMemo(() => 
-        firestore ? query(
-            collection(firestore, "sales"), 
-            where("salesCode", "==", salesCode)
-        ) : null
-    , [firestore, salesCode]);
-    const { data: mySales, loading } = useCollection<Sale>(mySalesQuery);
+    const myReportsQuery = useMemo(() => 
+        firestore && salesCodes && salesCodes.length > 0
+            ? query(
+                collection(firestore, "reports"), 
+                where("Sales Code", "in", salesCodes)
+            ) : null
+    , [firestore, salesCodes]);
+    const { data: myReports, loading } = useCollection<Report>(myReportsQuery);
+
+    const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+    const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
+
+    const projectsMap = useMemo(() => {
+      if (!projects) return new Map();
+      return new Map(projects.map(p => [p.name.toLowerCase().replace(/ /g, '_'), p]));
+    }, [projects]);
     
-    const sortedSales = useMemo(() => {
-        if (!mySales) return [];
-        return [...mySales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [mySales]);
+    const sortedReports = useMemo(() => {
+        if (!myReports) return [];
+        return [...myReports].sort((a, b) => {
+            const dateA = findDateInReport(a);
+            const dateB = findDateInReport(b);
+            if (!dateA) return 1;
+            if (!dateB) return -1;
+            return dateB.getTime() - dateA.getTime();
+        });
+    }, [myReports]);
 
 
-    const handleRowClick = (sale: Sale) => {
-        console.log("Sale clicked:", sale);
+    const handleRowClick = (report: Report) => {
+        console.log("Report clicked:", report);
     };
 
-    if (loading) {
-        return <div>Memuat penjualan terkini...</div>
+    if (loading || projectsLoading) {
+        return <div>Memuat laporan terkini...</div>
     }
 
     return (
@@ -47,24 +89,32 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                     <TableRow>
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Proyek</TableHead>
-                        <TableHead>Jumlah</TableHead>
+                        <TableHead>Pendapatan</TableHead>
                         <TableHead className="text-right">Tanggal</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {sortedSales && sortedSales.length > 0 ? sortedSales.map((sale, index) => (
-                    <TableRow key={sale.id} onClick={() => handleRowClick(sale)} className="cursor-pointer">
-                        <TableCell>{index + 1}</TableCell>
-                        <TableCell>
-                            <div className="font-medium">{sale.projectName}</div>
-                        </TableCell>
-                        <TableCell>${sale.amount.toLocaleString()}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{format(new Date(sale.date), "MMM d, yyyy")}</TableCell>
-                    </TableRow>
-                )) : (
+                {sortedReports && sortedReports.length > 0 ? sortedReports.slice(0, 5).map((report, index) => {
+                    const project = projectsMap.get(report.projectId);
+                    const fee = project?.feeSales || 0;
+                    const date = findDateInReport(report);
+
+                    return (
+                        <TableRow key={report.id} onClick={() => handleRowClick(report)} className="cursor-pointer">
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>
+                                <div className="font-medium">{project?.name || report.projectId}</div>
+                            </TableCell>
+                            <TableCell>{formatCurrency(fee)}</TableCell>
+                            <TableCell className="text-right text-muted-foreground">
+                                {date ? format(date, "d MMM yyyy") : "N/A"}
+                            </TableCell>
+                        </TableRow>
+                    )
+                }) : (
                     <TableRow>
                         <TableCell colSpan={4} className="text-center">
-                            Tidak ada penjualan terkini.
+                            Tidak ada laporan terkini.
                         </TableCell>
                     </TableRow>
                 )}

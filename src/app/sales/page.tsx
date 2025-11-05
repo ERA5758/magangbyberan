@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
-import { DollarSign, Hash, BarChart, Loader2, RefreshCw } from "lucide-react";
+import { DollarSign, Hash, BarChart, Loader2, RefreshCw, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { RecentSales } from "@/components/sales/recent-sales";
@@ -19,7 +19,7 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import type { Sale, AppUser } from "@/lib/types";
+import type { Report, AppUser, Project } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 
 
@@ -29,22 +29,37 @@ export default function SalesDashboard() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const firestore = useFirestore();
 
-  const mySalesQuery = useMemo(() => 
-    user && user.salesCode && firestore 
-      ? query(collection(firestore, "sales"), where("salesCode", "==", user.salesCode)) 
+  const userSalesCodes = useMemo(() => {
+    if (!user) return [];
+    const codes = user.projectAssignments?.map(pa => pa.salesCode) || [];
+    if(user.salesCode && !codes.includes(user.salesCode)) {
+        codes.push(user.salesCode);
+    }
+    return codes.filter(Boolean);
+  }, [user]);
+
+  const myReportsQuery = useMemo(() => 
+    user && userSalesCodes.length > 0 && firestore 
+      ? query(collection(firestore, "reports"), where("Sales Code", "in", userSalesCodes)) 
       : null
-  , [user, firestore]);
-  const { data: mySales, loading: salesLoading } = useCollection<Sale>(mySalesQuery);
+  , [user, userSalesCodes, firestore]);
+  const { data: myReports, loading: reportsLoading } = useCollection<Report>(myReportsQuery);
 
   const allSalespersonsQuery = useMemo(() => 
     firestore ? query(collection(firestore, "users"), where("role", "==", "Sales")) : null
   , [firestore]);
   const { data: allSalespersons, loading: usersLoading } = useCollection<AppUser>(allSalespersonsQuery);
   
-  const allSalesQuery = useMemo(() => 
-    firestore ? collection(firestore, "sales") : null
+  const allReportsQuery = useMemo(() => 
+    firestore ? collection(firestore, "reports") : null
   , [firestore]);
-  const { data: allSales, loading: allSalesLoading } = useCollection<Sale>(allSalesQuery);
+  const { data: allReports, loading: allReportsLoading } = useCollection<Report>(allReportsQuery);
+
+  const projectsQuery = useMemo(() => 
+    firestore ? collection(firestore, "projects") : null
+  , [firestore]);
+  const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
+
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -63,28 +78,36 @@ export default function SalesDashboard() {
     });
   };
 
-  if (loading || salesLoading || usersLoading || allSalesLoading || !user) {
+  const { myTotalIncome, myRank } = useMemo(() => {
+    if (loading || reportsLoading || usersLoading || allReportsLoading || projectsLoading || !user || !myReports || !allSalespersons || !allReports || !projects) {
+        return { myTotalIncome: 0, myRank: 0 };
+    }
+
+    const calculateIncome = (reports: Report[], targetUser: AppUser) => {
+        const targetSalesCodes = targetUser.projectAssignments?.map(pa => pa.salesCode) || [];
+        if (targetUser.salesCode) targetSalesCodes.push(targetUser.salesCode);
+        
+        const userReports = reports.filter(r => targetSalesCodes.includes(r['Sales Code']));
+        return userReports.reduce((acc, report) => {
+            const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
+            return acc + (project?.feeSales || 0);
+        }, 0);
+    };
+
+    const myTotalIncome = calculateIncome(allReports, user);
+
+    const allIncomes = allSalespersons.map(salesperson => calculateIncome(allReports, salesperson)).sort((a, b) => b - a);
+    const myRank = myTotalIncome > 0 ? allIncomes.indexOf(myTotalIncome) + 1 : 0;
+
+    return { myTotalIncome, myRank };
+
+  }, [loading, reportsLoading, usersLoading, allReportsLoading, projectsLoading, user, myReports, allSalespersons, allReports, projects]);
+
+
+  if (loading || reportsLoading || usersLoading || allReportsLoading || projectsLoading || !user) {
     return <div>Memuat...</div>;
   }
-
-  const totalMySales = mySales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
   
-  const allSalesTotals = allSalespersons?.map(u => {
-      // A user might have multiple sales codes across projects
-      const userSalesCodes = u.projectAssignments?.map(pa => pa.salesCode) || [];
-      // If no assignments, try to use the legacy top-level salesCode
-      if (userSalesCodes.length === 0 && u.salesCode) {
-        userSalesCodes.push(u.salesCode);
-      }
-      return allSales
-        ?.filter(s => userSalesCodes.includes(s.salesCode))
-        .reduce((acc, sale) => acc + sale.amount, 0) || 0;
-    })
-    .sort((a, b) => b - a) || [];
-
-  const myRank = totalMySales > 0 ? allSalesTotals.indexOf(totalMySales) + 1 : 0;
-
-
   return (
     <div className="space-y-8">
       <PageHeader title="Dasbor Penjualan Saya" description={`Selamat datang kembali, ${user.name}!`}>
@@ -100,8 +123,8 @@ export default function SalesDashboard() {
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Total Penjualan Saya"
-          value={formatCurrency(totalMySales)}
+          title="Total Pendapatan Saya"
+          value={formatCurrency(myTotalIncome)}
           icon={DollarSign}
           description="Total pendapatan Anda bulan ini"
         />
@@ -112,30 +135,30 @@ export default function SalesDashboard() {
           description={allSalespersons ? `dari ${allSalespersons.length} tenaga penjualan` : ''}
         />
         <StatCard
-          title="Transaksi Berhasil"
-          value={mySales?.length.toString() || '0'}
-          icon={Hash}
-          description="Jumlah penjualan sukses bulan ini"
+          title="Total Laporan"
+          value={myReports?.length.toString() || '0'}
+          icon={FileText}
+          description="Jumlah laporan sukses bulan ini"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <Card className="lg:col-span-3">
             <CardHeader>
-                <CardTitle>Penjualan Terkini</CardTitle>
-                <CardDescription>Transaksi penjualan terbaru Anda.</CardDescription>
+                <CardTitle>Laporan Terkini</CardTitle>
+                <CardDescription>Transaksi laporan terbaru Anda.</CardDescription>
             </CardHeader>
             <CardContent>
-                <RecentSales salesCode={user.salesCode as string} />
+                <RecentSales salesCodes={userSalesCodes} />
             </CardContent>
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Performa Mingguan</CardTitle>
-                <CardDescription>Tren penjualan Anda selama seminggu terakhir.</CardDescription>
+                <CardDescription>Tren laporan Anda selama seminggu terakhir.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PerformanceChart sales={mySales} />
+                <PerformanceChart reports={myReports} />
             </CardContent>
         </Card>
       </div>

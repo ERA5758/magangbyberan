@@ -7,40 +7,44 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart"
-import { subDays, format, eachDayOfInterval, startOfDay, parse } from 'date-fns';
-import type { Sale } from "@/lib/types";
+import { subDays, format, eachDayOfInterval, startOfDay, parse, parseISO } from 'date-fns';
+import type { Report } from "@/lib/types";
+import { Timestamp } from "firebase/firestore";
 
 const chartConfig = {
-  sales: {
-    label: "Penjualan",
+  reports: {
+    label: "Laporan",
     color: "hsl(var(--primary))",
   },
 }
 
 type PerformanceChartProps = {
-  sales: Sale[] | null | undefined;
+  reports: Report[] | null | undefined;
 }
 
-const findDateInSale = (sale: Sale): Date | null => {
-    const dateFields = ['date', 'Incoming Date', 'Tanggal', 'createdAt'];
+const isFirestoreTimestamp = (value: any): value is Timestamp => {
+  return value && typeof value.toDate === 'function';
+};
+
+
+const findDateInReport = (report: Report): Date | null => {
+    const dateFields = ['date', 'TANGGAL', 'Incoming Date', 'createdAt', 'created_at', 'timestamp'];
     for (const field of dateFields) {
-        const value = sale[field];
+        const value = report[field];
         if (!value) continue;
 
         try {
             if (value instanceof Date) return value;
+            if (isFirestoreTimestamp(value)) return value.toDate();
             if (typeof value === 'string') {
-                let date = new Date(value);
+                let date = parseISO(value);
                 if (!isNaN(date.getTime())) return date;
-
+                
                 date = parse(value, 'M/d/yyyy', new Date());
                 if (!isNaN(date.getTime())) return date;
 
                  date = parse(value, 'd/M/yyyy', new Date());
                 if (!isNaN(date.getTime())) return date;
-            }
-            if (typeof value === 'object' && value.toDate && typeof value.toDate === 'function') {
-                return value.toDate();
             }
         } catch (e) {
             // Ignore parsing errors and try the next field
@@ -50,30 +54,26 @@ const findDateInSale = (sale: Sale): Date | null => {
 }
 
 
-export function PerformanceChart({ sales }: PerformanceChartProps) {
+export function PerformanceChart({ reports }: PerformanceChartProps) {
   const today = startOfDay(new Date());
   const last7Days = eachDayOfInterval({
     start: subDays(today, 6),
     end: today,
   });
 
-  if (!sales) {
+  if (!reports) {
     return <div className="text-center text-muted-foreground p-4">Tidak ada data untuk ditampilkan.</div>;
   }
 
   const chartData = last7Days.map(day => {
-    const daySales = sales
-      .map(sale => {
-        const saleDate = findDateInSale(sale);
-        const saleAmount = sale.amount || 0;
-        return { saleDate, saleAmount };
-      })
-      .filter(item => item.saleDate && startOfDay(item.saleDate).getTime() === day.getTime())
-      .reduce((acc, item) => acc + item.saleAmount, 0);
+    const dayReports = reports.filter(report => {
+        const reportDate = findDateInReport(report);
+        return reportDate && startOfDay(reportDate).getTime() === day.getTime();
+      }).length;
       
     return {
       day: format(day, 'EEE'),
-      sales: daySales,
+      reports: dayReports,
     };
   });
 
@@ -92,7 +92,7 @@ export function PerformanceChart({ sales }: PerformanceChartProps) {
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        <Bar dataKey="sales" fill="var(--color-sales)" radius={8} />
+        <Bar dataKey="reports" fill="var(--color-reports)" radius={8} />
       </BarChart>
     </ChartContainer>
   )
