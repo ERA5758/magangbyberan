@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 
-const AppLogo = ({ className, size=63 }: { className?: string, size?: number }) => {
+const AppLogo = ({ className, size=24 }: { className?: string, size?: number }) => {
   return (
     (<div
       className={cn(
