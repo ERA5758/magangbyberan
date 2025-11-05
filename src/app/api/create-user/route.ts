@@ -15,6 +15,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    // 1. Check for duplicate NIK
+    const nikQuery = await db.collection('users').where('nik', '==', userData.nik).limit(1).get();
+    if (!nikQuery.empty) {
+        return NextResponse.json({ error: `NIK_EXISTS: NIK ${userData.nik} sudah terdaftar.` }, { status: 409 });
+    }
+    
+    // 2. Check for duplicate sales codes if the user is a Sales role
+    if (userData.role === 'Sales' && userData.projectAssignments && userData.projectAssignments.length > 0) {
+        const salesUsersSnapshot = await db.collection('users').where('role', '==', 'Sales').get();
+        const existingSalesCodes = new Set<string>();
+        salesUsersSnapshot.forEach(doc => {
+            const user = doc.data() as AppUser;
+            user.projectAssignments?.forEach(pa => {
+                existingSalesCodes.add(pa.salesCode);
+            });
+        });
+
+        const newSalesCodes = userData.projectAssignments.map((pa: any) => pa.salesCode);
+        for (const code of newSalesCodes) {
+            if (existingSalesCodes.has(code)) {
+                return NextResponse.json({ error: `SALES_CODE_EXISTS: Kode sales ${code} sudah digunakan.` }, { status: 409 });
+            }
+        }
+    }
+
+
     // Create user in Firebase Auth
     const userRecord = await admin.auth().createUser({
       email: userData.email,
@@ -47,7 +73,11 @@ export async function POST(req: NextRequest) {
             default:
                 errorMessage = error.message;
         }
+    } else if (error.message) {
+        errorMessage = error.message;
     }
     return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
+
+    

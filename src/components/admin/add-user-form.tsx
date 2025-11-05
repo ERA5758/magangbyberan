@@ -6,9 +6,9 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
-import { doc, setDoc, collection, query, where } from 'firebase/firestore';
+import { collection, query, where } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { AuthErrorCodes } from 'firebase/auth';
 
 const projectAssignmentSchema = z.object({
   projectId: z.string(),
@@ -52,6 +51,7 @@ const formSchema = z.object({
   accountNumber: z.string().min(1, 'Nomor Rekening harus diisi.'),
   accountHolder: z.string().min(1, 'Nama Rekening harus diisi.'),
   projectAssignments: z.array(projectAssignmentSchema),
+  supervisorId: z.string().optional(),
 });
 
 type AddUserFormProps = {
@@ -59,7 +59,6 @@ type AddUserFormProps = {
 };
 
 export function AddUserForm({ onSuccess }: AddUserFormProps) {
-  const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -69,6 +68,12 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     firestore ? collection(firestore, 'projects') : null
   , [firestore]);
   const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
+
+  const supervisorsQuery = useMemo(() => 
+    firestore ? query(collection(firestore, 'users'), where('role', '==', 'SPV')) : null
+  , [firestore]);
+  const { data: supervisors, loading: supervisorsLoading } = useCollectionOnce<AppUser>(supervisorsQuery);
+
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,6 +123,16 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     }
     
     try {
+      if (values.role === 'Sales' && !values.supervisorId) {
+        toast({
+            variant: 'destructive',
+            title: 'Supervisor Diperlukan',
+            description: 'Harap pilih supervisor untuk pengguna Sales.',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       const assignedProjects = values.projectAssignments
         .filter(p => p.assigned)
         .map(p => {
@@ -155,6 +170,10 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         projectAssignments: values.role === 'Sales' ? assignedProjects : [],
       };
       
+      if (values.role === 'Sales') {
+        userData.supervisorId = values.supervisorId;
+      }
+      
       const response = await fetch('/api/create-user', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,7 +202,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     } catch (error: any) {
       console.error('Error creating user:', error);
       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
-      // Use includes to catch specific error messages from the server
       if (error.message.includes('EMAIL_EXISTS')) {
           description = 'Alamat email ini sudah digunakan oleh akun lain.';
       } else if (error.message.includes('WEAK_PASSWORD')) {
@@ -279,6 +297,34 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
               </FormItem>
             )}
           />
+          {role === 'Sales' && (
+             <FormField
+                control={form.control}
+                name="supervisorId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Supervisor</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Pilih supervisor..." />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {supervisorsLoading ? (
+                            <SelectItem value="loading" disabled>Memuat...</SelectItem>
+                        ) : (
+                            supervisors?.map(spv => (
+                                <SelectItem key={spv.id} value={spv.id}>{spv.name}</SelectItem>
+                            ))
+                        )}
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+          )}
           <FormField
             control={form.control}
             name="nik"
@@ -418,3 +464,5 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
+
+    
