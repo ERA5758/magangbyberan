@@ -29,7 +29,7 @@ export default function SpvDashboard() {
   , [firestore, user]);
   const { data: teamMembers, loading: teamLoading } = useCollection<AppUser>(teamMembersQuery);
 
-  const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode) || [], [teamMembers]);
+  const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode).filter(Boolean) || [], [teamMembers]);
 
   const teamSalesQuery = useMemo(() => 
     firestore && teamSalesCodes && teamSalesCodes.length > 0
