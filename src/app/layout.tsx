@@ -51,6 +51,8 @@ const navItems: NavItem[] = [
   { href: '/admin/projects', label: 'Proyek', icon: Briefcase, roles: ['Admin'] },
   { href: '/admin/reports', label: 'Laporan', icon: ClipboardList, roles: ['Admin'] },
   { href: '/spv/team', label: 'Tim Saya', icon: UsersRound, roles: ['SPV'] },
+  { href: '/spv/reports', label: 'Laporan', icon: ClipboardList, roles: ['SPV'] },
+  { href: '/sales/reports', label: 'Laporan', icon: ClipboardList, roles: ['Sales'] },
 ];
 
 const bottomNavItems = [
