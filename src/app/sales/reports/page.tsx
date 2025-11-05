@@ -420,7 +420,7 @@ export default function SalesReportsPage() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 text-center">
-            <AppLogo />
+            <AppLogo size={144} />
             <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Memuat laporan Anda...</p>
@@ -512,5 +512,7 @@ export default function SalesReportsPage() {
     </div>
   );
 }
+
+    
 
     
