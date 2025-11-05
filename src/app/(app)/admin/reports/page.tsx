@@ -24,7 +24,6 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from "@/components/ui/card";
 import {
   Dialog,
@@ -113,22 +112,10 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   const [firstVisible, setFirstVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [page, setPage] = useState(1);
-  const [isLastPage, setIsLastPage] = useState(false);
-
-  useEffect(() => {
-    // Reset state when projectId changes
-    setReports([]);
-    setLoading(true);
-    setLastVisible(null);
-    setFirstVisible(null);
-    setPage(1);
-    setIsLastPage(false);
-    fetchReports(projectId, "next");
-  }, [projectId]);
-
+  
   const fetchReports = async (
     currentProjectId: string,
-    direction: "next" | "prev"
+    direction: "next" | "prev" | "first"
   ) => {
     if (!firestore) return;
     setLoading(true);
@@ -137,14 +124,15 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       let reportsQuery;
       const baseQuery = query(
         collection(firestore, "reports"),
-        where("projectId", "==", currentProjectId)
+        where("projectId", "==", currentProjectId),
+        orderBy("__name__") // Order by document ID for consistent pagination
       );
 
       if (direction === "next" && lastVisible) {
         reportsQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       } else if (direction === "prev" && firstVisible) {
         reportsQuery = query(baseQuery, endBefore(firstVisible), limitToLast(PAGE_SIZE));
-      } else {
+      } else { // "first" page
         reportsQuery = query(baseQuery, limit(PAGE_SIZE));
       }
 
@@ -153,23 +141,20 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         id: doc.id,
         ...doc.data(),
       })) as Report[];
-
-      setReports(newReports);
-
-      if (documentSnapshots.docs.length > 0) {
+      
+      if (newReports.length > 0) {
+        setReports(newReports);
         setFirstVisible(documentSnapshots.docs[0]);
         setLastVisible(
           documentSnapshots.docs[documentSnapshots.docs.length - 1]
         );
-      }
-      
-      // Check if it's the last page
-      if (documentSnapshots.docs.length < PAGE_SIZE) {
-        setIsLastPage(true);
       } else {
-        setIsLastPage(false);
+        if (direction === 'first') {
+          setReports([]);
+        }
+        // If we tried to go next and got no results, we stay on the current page
+        // and just stop loading. The "Next" button should be disabled anyway.
       }
-
     } catch (error) {
       console.error("Error fetching reports:", error);
       setReports([]);
@@ -178,15 +163,26 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     }
   };
 
+  useEffect(() => {
+    // Reset state and fetch first page when projectId changes
+    setReports([]);
+    setLoading(true);
+    setLastVisible(null);
+    setFirstVisible(null);
+    setPage(1);
+    fetchReports(projectId, "first");
+  }, [projectId]);
+
+
   const handleNextPage = () => {
-    if (!isLastPage) {
+    if (lastVisible) {
       setPage(page + 1);
       fetchReports(projectId, "next");
     }
   };
 
   const handlePrevPage = () => {
-    if (page > 1) {
+    if (firstVisible && page > 1) {
       setPage(page - 1);
       fetchReports(projectId, "prev");
     }
@@ -285,7 +281,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
             variant="outline"
             size="sm"
             onClick={handleNextPage}
-            disabled={isLastPage || loading}
+            disabled={reports.length < PAGE_SIZE || loading}
           >
             Next
             <ChevronRight className="h-4 w-4 ml-2" />
