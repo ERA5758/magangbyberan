@@ -248,18 +248,6 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                              </div>
                         </div>
                     )}
-                    {selectedMember && selectedMember.status !== 'Menunggu Persetujuan' && (
-                        <DialogFooter>
-                            <Button
-                                variant={selectedMember.status === 'Aktif' ? 'destructive' : 'default'}
-                                onClick={handleToggleStatus}
-                                disabled={isUpdating}
-                            >
-                                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {selectedMember.status === 'Aktif' ? 'Nonaktifkan Sales' : 'Aktifkan Sales'}
-                            </Button>
-                        </DialogFooter>
-                    )}
                 </DialogContent>
             </Dialog>
         </>
