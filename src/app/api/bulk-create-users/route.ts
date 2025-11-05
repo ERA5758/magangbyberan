@@ -30,15 +30,13 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    let idToken;
-
     try {
         // 1. Verify Authorization
         const authorization = req.headers.get('Authorization');
         if (!authorization?.startsWith('Bearer ')) {
             return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
         }
-        idToken = authorization.split('Bearer ')[1];
+        const idToken = authorization.split('Bearer ')[1];
         const decodedToken = await auth.verifyIdToken(idToken);
 
         // 2. Verify Caller is Admin

@@ -5,9 +5,15 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
+  let auth, db;
   try {
-    const { auth, db } = getFirebaseAdmin();
+    ({ auth, db } = getFirebaseAdmin());
+  } catch (error: any) {
+    console.error('API Error during Firebase Admin init:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
 
+  try {
     // 1. Verify the authorization token from the client
     const authorization = req.headers.get('Authorization');
     if (!authorization?.startsWith('Bearer ')) {
