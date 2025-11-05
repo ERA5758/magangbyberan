@@ -520,7 +520,7 @@ export default function SpvReportsPage() {
                       Menampilkan laporan untuk tim Anda pada proyek {project.name.toUpperCase().replace(/_/g, " ")}
                     </CardDescription>
                   </div>
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <div className="flex flex-col gap-2 w-full sm:w-auto">
                     <div className="relative w-full sm:max-w-xs">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
@@ -567,5 +567,3 @@ export default function SpvReportsPage() {
     </div>
   );
 }
-
-    
