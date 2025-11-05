@@ -32,15 +32,16 @@ import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
-import { collection } from "firebase/firestore"
+import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore"
 import type { AppUser } from "@/lib/types";
 import { AddUserForm } from "./add-user-form";
-
+import { useToast } from "@/hooks/use-toast";
 
 export function UsersTable() {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
-    const { data: users, loading } = useCollectionOnce<AppUser>(usersQuery);
+    const { data: users, loading, mutate } = useCollectionOnce<AppUser>(usersQuery);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     
     const getRoleBadgeVariant = (role: AppUser['role']) => {
@@ -61,11 +62,37 @@ export function UsersTable() {
         }
     };
 
-    const handleRowClick = (user: AppUser) => {
-        // TODO: Navigate to a user detail/edit page
-        console.log("Navigating to user:", user.name);
+    const handleApprove = async (e: React.MouseEvent, user: AppUser) => {
+        e.stopPropagation();
+        if (!firestore) return;
+        const userRef = doc(firestore, 'users', user.id);
+        try {
+            await updateDoc(userRef, { status: 'Aktif' });
+            toast({ title: 'Pengguna Disetujui', description: `${user.name} sekarang aktif.` });
+            mutate();
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menyetujui pengguna.' });
+        }
     };
 
+    const handleDelete = async (e: React.MouseEvent, user: AppUser) => {
+        e.stopPropagation();
+        if (!firestore) return;
+        const userRef = doc(firestore, 'users', user.id);
+        try {
+            await deleteDoc(userRef);
+            // Note: Deleting from Auth requires admin privileges and is a separate step not handled here.
+            toast({ title: 'Pengguna Ditolak/Dihapus', description: `Data untuk ${user.name} telah dihapus.` });
+            mutate();
+        } catch (err) {
+            toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menghapus pengguna.' });
+        }
+    };
+
+    const handleRowClick = (user: AppUser) => {
+        // Here you can open a detail modal/dialog for the user
+        console.log("Navigating to user:", user.name);
+    };
 
     if (loading) {
         return <div>Memuat pengguna...</div>
@@ -135,10 +162,10 @@ export function UsersTable() {
                                     ))}
                                 </div>
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <TableCell>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                                     <MoreHorizontal className="h-4 w-4" />
                                     <span className="sr-only">Buka menu</span>
                                     </Button>
@@ -147,12 +174,12 @@ export function UsersTable() {
                                     <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                                     {user.status === 'Menunggu Persetujuan' && (
                                         <>
-                                            <DropdownMenuItem>Setujui</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => handleApprove(e, user)}>Setujui</DropdownMenuItem>
                                             <DropdownMenuSeparator />
                                         </>
                                     )}
-                                    <DropdownMenuItem>Ubah</DropdownMenuItem>
-                                    <DropdownMenuItem>Hapus</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Ubah</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Hapus</DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>

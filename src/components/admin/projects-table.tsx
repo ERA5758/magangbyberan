@@ -190,10 +190,10 @@ export function ProjectsTable() {
                                     )}
                                 </div>
                             </TableCell>
-                            <TableCell onClick={(e) => e.stopPropagation()}>
+                            <TableCell>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
-                                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                                        <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
                                             <MoreHorizontal className="h-4 w-4" />
                                             <span className="sr-only">Buka menu</span>
                                         </Button>
