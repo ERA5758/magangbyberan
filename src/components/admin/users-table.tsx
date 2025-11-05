@@ -26,14 +26,15 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-  } from "@/components/ui/dialog"
+    DialogFooter,
+} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, PlusCircle } from "lucide-react"
+import { MoreHorizontal, PlusCircle, User, Mail, Landmark, Phone, Home, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
 import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore"
-import type { AppUser } from "@/lib/types";
+import type { AppUser, Project } from "@/lib/types";
 import { AddUserForm } from "./add-user-form";
 import { useToast } from "@/hooks/use-toast";
 
@@ -42,7 +43,19 @@ export function UsersTable() {
     const { toast } = useToast();
     const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
     const { data: users, loading, mutate } = useCollectionOnce<AppUser>(usersQuery);
+    
+    const projectsQuery = useMemo(() => firestore ? collection(firestore, 'projects') : null, [firestore]);
+    const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
+
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
+    const [isUpdating, setIsUpdating] = useState(false);
+    
+    const projectsMap = useMemo(() => {
+        if (!projects) return new Map();
+        return new Map(projects.map(p => [p.id, p.name]));
+    }, [projects]);
     
     const getRoleBadgeVariant = (role: AppUser['role']) => {
         switch (role) {
@@ -78,10 +91,11 @@ export function UsersTable() {
     const handleDelete = async (e: React.MouseEvent, user: AppUser) => {
         e.stopPropagation();
         if (!firestore) return;
+        // Ideally, this should also call a serverless function to delete the Auth user.
+        // For now, it just deletes the Firestore document.
         const userRef = doc(firestore, 'users', user.id);
         try {
             await deleteDoc(userRef);
-            // Note: Deleting from Auth requires admin privileges and is a separate step not handled here.
             toast({ title: 'Pengguna Ditolak/Dihapus', description: `Data untuk ${user.name} telah dihapus.` });
             mutate();
         } catch (err) {
@@ -90,11 +104,39 @@ export function UsersTable() {
     };
 
     const handleRowClick = (user: AppUser) => {
-        // Here you can open a detail modal/dialog for the user
-        console.log("Navigating to user:", user.name);
+        setSelectedUser(user);
+        setIsDetailOpen(true);
     };
 
-    if (loading) {
+     const handleToggleStatus = async () => {
+        if (!selectedUser || !firestore) return;
+        
+        setIsUpdating(true);
+        const newStatus = selectedUser.status === 'Aktif' ? 'Non Aktif' : 'Aktif';
+        const userRef = doc(firestore, 'users', selectedUser.id);
+
+        try {
+            await updateDoc(userRef, { status: newStatus });
+            toast({
+                title: "Status Diperbarui",
+                description: `Status untuk ${selectedUser.name} telah diubah menjadi ${newStatus}.`,
+            });
+            setSelectedUser(prev => prev ? { ...prev, status: newStatus } : null);
+            mutate(); // Re-fetch data
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast({
+                variant: 'destructive',
+                title: "Gagal Memperbarui Status",
+                description: "Terjadi kesalahan. Silakan coba lagi."
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    }
+
+
+    if (loading || projectsLoading) {
         return <div>Memuat pengguna...</div>
     }
 
@@ -156,9 +198,9 @@ export function UsersTable() {
                                 <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'Aktif'}</Badge>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
-                                <div className="flex flex-wrap gap-1">
+                                <div className="flex flex-wrap gap-1 max-w-xs">
                                     {user.projectAssignments && user.projectAssignments.map((pa) => (
-                                        <Badge key={pa.projectId} variant="outline">{pa.salesCode}</Badge>
+                                        <Badge key={pa.projectId} variant="outline" title={projectsMap.get(pa.projectId) || pa.projectId}>{pa.salesCode}</Badge>
                                     ))}
                                 </div>
                             </TableCell>
@@ -172,14 +214,25 @@ export function UsersTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleRowClick(user);}}>Lihat Detail</DropdownMenuItem>
                                     {user.status === 'Menunggu Persetujuan' && (
                                         <>
-                                            <DropdownMenuItem onClick={(e) => handleApprove(e, user)}>Setujui</DropdownMenuItem>
                                             <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={(e) => handleApprove(e, user)}>Setujui Pengguna</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Tolak Pengguna</DropdownMenuItem>
                                         </>
                                     )}
-                                    <DropdownMenuItem onClick={(e) => e.stopPropagation()}>Ubah</DropdownMenuItem>
-                                    <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Hapus</DropdownMenuItem>
+                                    {user.status !== 'Menunggu Persetujuan' && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={(e) => {
+                                                e.stopPropagation();
+                                                // logic for editing user
+                                                toast({title: "Fitur Dalam Pengembangan", description: "Mengubah pengguna akan segera tersedia."})
+                                            }}>Ubah</DropdownMenuItem>
+                                            <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Hapus</DropdownMenuItem>
+                                        </>
+                                    )}
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
@@ -188,6 +241,87 @@ export function UsersTable() {
                     </TableBody>
                 </Table>
             </div>
+             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Detail Pengguna</DialogTitle>
+                        <DialogDescription>
+                            Informasi lengkap untuk {selectedUser?.name}.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {selectedUser && (
+                        <div className="space-y-4 py-4">
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-20 w-20">
+                                    <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} />
+                                    <AvatarFallback className="text-3xl">{selectedUser.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="space-y-1">
+                                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
+                                    <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="h-3 w-3" />{selectedUser.email}</p>
+                                    <Badge variant={getStatusBadgeVariant(selectedUser.status)}>{selectedUser.status || 'Aktif'}</Badge>
+                                </div>
+                            </div>
+                             <div className="grid grid-cols-1 gap-2 text-sm">
+                                <div className="flex items-start gap-3">
+                                    <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">NIK</p>
+                                        <p className="text-muted-foreground">{selectedUser.nik}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">No. HP</p>
+                                        <p className="text-muted-foreground">{selectedUser.phone}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Home className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">Alamat</p>
+                                        <p className="text-muted-foreground">{selectedUser.address}</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-3">
+                                    <Landmark className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                                    <div>
+                                        <p className="font-medium">Informasi Bank</p>
+                                        <p className="text-muted-foreground">{selectedUser.bankName} - {selectedUser.accountNumber} (a.n. {selectedUser.accountHolder})</p>
+                                    </div>
+                                </div>
+                             </div>
+                             <div>
+                                <h4 className="font-medium mb-2">Penugasan Proyek</h4>
+                                <div className="space-y-2">
+                                    {selectedUser.projectAssignments?.map(pa => (
+                                        <div key={pa.projectId} className="flex justify-between items-center text-sm p-2 bg-muted/50 rounded-md">
+                                            <span className="font-medium">{projectsMap.get(pa.projectId) || 'Proyek tidak diketahui'}</span>
+                                            <Badge variant="outline">{pa.salesCode}</Badge>
+                                        </div>
+                                    ))}
+                                    {(!selectedUser.projectAssignments || selectedUser.projectAssignments.length === 0) && (
+                                        <p className="text-xs text-muted-foreground text-center">Tidak ada penugasan proyek.</p>
+                                    )}
+                                </div>
+                             </div>
+                        </div>
+                    )}
+                    {selectedUser && selectedUser.status !== 'Menunggu Persetujuan' && (
+                        <DialogFooter>
+                            <Button
+                                variant={selectedUser.status === 'Aktif' ? 'destructive' : 'default'}
+                                onClick={handleToggleStatus}
+                                disabled={isUpdating}
+                            >
+                                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {selectedUser.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
+                            </Button>
+                        </DialogFooter>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
