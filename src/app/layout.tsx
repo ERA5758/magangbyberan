@@ -83,9 +83,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-4 text-center">
-            <div className="mb-8 flex flex-col items-center gap-2">
-              <AppLogo size={144} />
-            </div>
+            <AppLogo size={144} />
             <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Memuat dasbor Anda...</p>
@@ -167,7 +165,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const segment = useSelectedLayoutSegment();
-  const isAppRoute = segment !== 'login';
+  const isAppRoute = segment !== 'login' && segment !== 'settings';
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -181,7 +179,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <ThemeProvider>
           <FirebaseClientProvider>
-            {isAppRoute ? <AppLayout>{children}</AppLayout> : children}
+            {isAppRoute || segment === 'settings' ? <AppLayout>{children}</AppLayout> : children}
           </FirebaseClientProvider>
           <Toaster />
         </ThemeProvider>
