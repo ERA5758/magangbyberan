@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState } from "react";
@@ -75,13 +74,15 @@ const formatValue = (value: any): string => {
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
 
-  // New simplified query based on user's suggestion
+  // Simple, robust query on the root 'reports' collection
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
     return query(collection(firestore, 'reports'), where('projectId', '==', projectId));
   }, [firestore, projectId]);
 
   const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
+  
+  // We still need the project doc to get the headers
   const { data: projectData, loading: projectLoading } = useCollectionOnce<Project>(
       useMemo(() => firestore ? query(collection(firestore, 'projects'), where('id', '==', projectId)) : null, [firestore, projectId])
   );
