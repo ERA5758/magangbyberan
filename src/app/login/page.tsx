@@ -8,7 +8,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-2">
           <AppLogo className="h-8 w-auto text-primary" />
-          <p className="text-sm text-muted-foreground">Bangun Karier, Mulai Dari Magang</p>
+          <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
         </div>
         <LoginForm />
       </div>
