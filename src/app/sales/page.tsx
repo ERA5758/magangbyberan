@@ -21,6 +21,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import type { Report, AppUser, Project } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 export default function SalesDashboard() {
@@ -78,9 +79,9 @@ export default function SalesDashboard() {
     });
   };
 
-  const { myTotalIncome, myRank } = useMemo(() => {
+  const { myTotalIncome, myRank, reportsByProject } = useMemo(() => {
     if (loading || reportsLoading || usersLoading || allReportsLoading || projectsLoading || !user || !myReports || !allSalespersons || !allReports || !projects) {
-        return { myTotalIncome: 0, myRank: 0 };
+        return { myTotalIncome: 0, myRank: 0, reportsByProject: [] };
     }
 
     const calculateIncome = (reports: Report[], targetUser: AppUser) => {
@@ -98,8 +99,20 @@ export default function SalesDashboard() {
 
     const allIncomes = allSalespersons.map(salesperson => calculateIncome(allReports, salesperson)).sort((a, b) => b - a);
     const myRank = myTotalIncome > 0 ? allIncomes.indexOf(myTotalIncome) + 1 : 0;
+    
+    const userProjectIds = user.projectAssignments?.map(pa => pa.projectId) || [];
+    const myProjects = projects.filter(p => userProjectIds.includes(p.id));
 
-    return { myTotalIncome, myRank };
+    const reportsByProject = myProjects.map(project => {
+        const projectIdentifier = project.name.toLowerCase().replace(/ /g, '_');
+        const projectReportsCount = myReports.filter(report => report.projectId === projectIdentifier).length;
+        return {
+          ...project,
+          reportCount: projectReportsCount,
+        };
+      }).filter(p => p.reportCount > 0);
+
+    return { myTotalIncome, myRank, reportsByProject };
 
   }, [loading, reportsLoading, usersLoading, allReportsLoading, projectsLoading, user, myReports, allSalespersons, allReports, projects]);
 
@@ -134,12 +147,32 @@ export default function SalesDashboard() {
           icon={BarChart}
           description={allSalespersons ? `dari ${allSalespersons.length} tenaga penjualan` : ''}
         />
-        <StatCard
-          title="Total Laporan"
-          value={myReports?.length.toString() || '0'}
-          icon={FileText}
-          description="Jumlah laporan sukses bulan ini"
-        />
+        <div className="lg:col-span-1">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-base">Laporan per Proyek</CardTitle>
+                </CardHeader>
+                <CardContent>
+                {(loading || reportsLoading || projectsLoading) ? <Skeleton className="h-10 w-full" /> : (
+                  reportsByProject.length > 0 ? (
+                    <div className="space-y-2">
+                      {reportsByProject.map(project => (
+                        <div key={project.id} className="flex items-center justify-between text-sm">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <p className="font-medium truncate">{project.name}</p>
+                          </div>
+                          <p className="font-semibold">{project.reportCount.toLocaleString()}</p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center">Belum ada laporan.</p>
+                  )
+                )}
+                </CardContent>
+            </Card>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
