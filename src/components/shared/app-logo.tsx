@@ -10,7 +10,13 @@ const AppLogo = ({ className }: { className?: string }) => {
         className
       )}
     >
-      <Image src="/icon.svg" width={240} height={240} alt="logo" />
+      <Image
+        src="/icon.svg"
+        width={100}
+        height={100}
+        alt="logo"
+        className="h-auto w-auto"
+      />
     </div>
   );
 };
