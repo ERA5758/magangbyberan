@@ -3,8 +3,14 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { useFirestore } from "@/firebase";
-import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { collection, query, where, Timestamp, getDocs } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  Timestamp,
+  getDocs,
+  collectionGroup,
+} from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
   Card,
@@ -24,110 +30,104 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { format, parseISO, parse as dateFnsParse } from 'date-fns';
-import { useRouter } from 'next/navigation';
+import { format, parse, parseISO } from "date-fns";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
-  return value && typeof value.toDate === 'function';
+  return value && typeof value.toDate === "function";
 };
 
-const formatValue = (value: any): string => {
-    if (value === undefined || value === null) {
-      return 'N/A';
-    }
-    
-    if (isFirestoreTimestamp(value)) {
-        try {
-            return format(value.toDate(), 'dd-MM-yyyy');
-        } catch (e) {
-            return 'Invalid Date';
-        }
-    }
+const formatValue = (value: any, key?: string): string => {
+  if (value === undefined || value === null) {
+    return "N/A";
+  }
 
-    if (typeof value === 'string') {
-        try {
-            // ISO format check
-            if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-                return format(parseISO(value), 'dd-MM-yyyy');
-            }
-            // M/d/yyyy or d/M/yyyy format check
-            const dateWithSlashes = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-            if (dateWithSlashes) {
-                // Try parsing M/d/yyyy first
-                let d = dateFnsParse(value, 'M/d/yyyy', new Date());
-                if (!isNaN(d.getTime())) {
-                    return format(d, 'dd-MM-yyyy');
-                }
-                 // Then try d/M/yyyy
-                d = dateFnsParse(value, 'd/M/yyyy', new Date());
-                if (!isNaN(d.getTime())) {
-                    return format(d, 'dd-MM-yyyy');
-                }
-            }
-        } catch (e) {
-           // Not a date string, return original string
-        }
+  if (isFirestoreTimestamp(value)) {
+    try {
+      return format(value.toDate(), "dd-MM-yyyy");
+    } catch (e) {
+      return "Invalid Date";
     }
+  }
 
-    if (typeof value === 'number') {
-        return value.toLocaleString('id-ID');
+  if (typeof value === "string") {
+    try {
+      // ISO format check
+      if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+        return format(parseISO(value), "dd-MM-yyyy");
+      }
+      // M/d/yyyy or d/M/yyyy format check
+      const dateWithSlashes = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (dateWithSlashes) {
+        // Try parsing M/d/yyyy first
+        let d = parse(value, "M/d/yyyy", new Date());
+        if (!isNaN(d.getTime())) {
+          return format(d, "dd-MM-yyyy");
+        }
+        // Then try d/M/yyyy
+        d = parse(value, "d/M/yyyy", new Date());
+        if (!isNaN(d.getTime())) {
+          return format(d, "dd-MM-yyyy");
+        }
+      }
+    } catch (e) {
+      // Not a date string, return original string
     }
-    if (typeof value === 'boolean') {
-        return value ? 'Yes' : 'No';
+  }
+
+  if (typeof value === "number") {
+    // Do not format MID with thousand separators
+    if (key === 'MID') {
+      return String(value);
     }
-    
-    return String(value);
+    return value.toLocaleString("id-ID");
+  }
+  if (typeof value === "boolean") {
+    return value ? "Yes" : "No";
+  }
+
+  return String(value);
 };
 
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  
-  useEffect(() => {
-    if (!firestore || !projectId) {
-        setLoading(false);
-        return;
-    }
-    
-    const fetchReports = async () => {
-      setLoading(true);
-      try {
-        const reportsQuery = query(
-          collection(firestore, 'reports'),
-          where('projectId', '==', projectId)
-        );
-        const snapshot = await getDocs(reportsQuery);
-        const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Report[];
-        setReports(reportsData);
-      } catch (error) {
-        console.error("Error fetching reports:", error);
-        setReports([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchReports();
+
+  const reportsQuery = useMemo(() => {
+    if (!firestore || !projectId) return null;
+    // This query now correctly targets the root 'reports' collection
+    return query(
+      collection(firestore, "reports"),
+      where("projectId", "==", projectId)
+    );
   }, [firestore, projectId]);
+
+  const { data: fetchedReports, loading: reportsLoading } = useCollectionOnce<Report>(reportsQuery);
+
+  useEffect(() => {
+    setLoading(reportsLoading);
+    if (fetchedReports) {
+      setReports(fetchedReports);
+    }
+  }, [fetchedReports, reportsLoading]);
 
   const handleRowClick = (report: Report) => {
     console.log("Report clicked:", report);
     // Placeholder for navigation or modal
   };
-  
+
   const headers = useMemo(() => {
-      if (reports.length === 0) return [];
-      const allHeaders = new Set<string>();
-      reports.forEach(report => {
-          Object.keys(report).forEach(key => {
-              if (key !== 'id' && key !== 'projectId' && key !== 'lastSyncTimestamp') {
-                  allHeaders.add(key);
-              }
-          });
+    if (reports.length === 0) return [];
+    const allHeaders = new Set<string>();
+    reports.forEach((report) => {
+      Object.keys(report).forEach((key) => {
+        if (key !== "id" && key !== "projectId" && key !== "lastSyncTimestamp") {
+          allHeaders.add(key);
+        }
       });
-      return Array.from(allHeaders).sort();
+    });
+    return Array.from(allHeaders).sort();
   }, [reports]);
 
   if (loading) {
@@ -139,9 +139,13 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       </div>
     );
   }
-  
+
   if (reports.length === 0) {
-      return <p className="text-center text-muted-foreground py-8">No reports found for this project.</p>;
+    return (
+      <p className="text-center text-muted-foreground py-8">
+        No reports found for this project.
+      </p>
+    );
   }
 
   return (
@@ -149,17 +153,23 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       <Table>
         <TableHeader>
           <TableRow>
-            {headers.map(header => (
-              <TableHead key={header} className="capitalize whitespace-nowrap">{header.replace(/_/g, ' ')}</TableHead>
+            {headers.map((header) => (
+              <TableHead key={header} className="capitalize whitespace-nowrap">
+                {header.replace(/_/g, " ")}
+              </TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
           {reports.map((report) => (
-            <TableRow key={report.id} onClick={() => handleRowClick(report)} className="cursor-pointer">
-              {headers.map(header => (
+            <TableRow
+              key={report.id}
+              onClick={() => handleRowClick(report)}
+              className="cursor-pointer"
+            >
+              {headers.map((header) => (
                 <TableCell key={`${report.id}-${header}`}>
-                  {formatValue(report[header])}
+                  {formatValue(report[header], header)}
                 </TableCell>
               ))}
             </TableRow>
@@ -171,8 +181,8 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
 }
 
 const formatNameToId = (name: string) => {
-  return name.toLowerCase().replace(/ /g, '_');
-}
+  return name.toLowerCase().replace(/ /g, "_");
+};
 
 export default function ReportsPage() {
   const firestore = useFirestore();
@@ -190,19 +200,19 @@ export default function ReportsPage() {
           description="View reports filtered by project."
         />
         <div className="space-y-4">
-            <Skeleton className="h-10 w-1/3" />
-            <Card>
-                <CardHeader>
-                    <Skeleton className="h-6 w-48" />
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-2">
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                        <Skeleton className="h-8 w-full" />
-                    </div>
-                </CardContent>
-            </Card>
+          <Skeleton className="h-10 w-1/3" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-6 w-48" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     );
@@ -228,8 +238,10 @@ export default function ReportsPage() {
       </div>
     );
   }
-  
-  const defaultTabValue = projects[0]?.name ? formatNameToId(projects[0].name) : '';
+
+  const defaultTabValue = projects[0]?.name
+    ? formatNameToId(projects[0].name)
+    : "";
 
   return (
     <div className="space-y-8">
@@ -240,18 +252,26 @@ export default function ReportsPage() {
       <Tabs defaultValue={defaultTabValue} className="space-y-4">
         <TabsList>
           {projects.map((project) => (
-            <TabsTrigger key={project.id} value={formatNameToId(project.name)}>
-              {project.name.toUpperCase().replace(/_/g, ' ')}
+            <TabsTrigger
+              key={project.id}
+              value={formatNameToId(project.name)}
+            >
+              {project.name.toUpperCase().replace(/_/g, " ")}
             </TabsTrigger>
           ))}
         </TabsList>
         {projects.map((project) => (
-          <TabsContent key={project.id} value={formatNameToId(project.name)}>
+          <TabsContent
+            key={project.id}
+            value={formatNameToId(project.name)}
+          >
             <Card>
               <CardHeader>
-                <CardTitle>Reports for {project.name.toUpperCase().replace(/_/g, ' ')}</CardTitle>
+                <CardTitle>
+                  Reports for {project.name.toUpperCase().replace(/_/g, " ")}
+                </CardTitle>
                 <CardDescription>
-                  Displaying reports for {project.name.toUpperCase().replace(/_/g, ' ')}
+                  Displaying reports for {project.name.toUpperCase().replace(/_/g, " ")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
