@@ -193,10 +193,13 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     } catch (error: any) {
       console.error('Error creating user:', error);
       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+      // Use includes to catch specific error messages from the server
       if (error.message.includes('EMAIL_EXISTS')) {
           description = 'Alamat email ini sudah digunakan oleh akun lain.';
       } else if (error.message.includes('WEAK_PASSWORD')) {
           description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
+      } else if (error.message) {
+          description = error.message;
       }
       toast({
         variant: 'destructive',
@@ -447,5 +450,4 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
-
     
