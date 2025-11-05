@@ -28,3 +28,8 @@ export type Sale = {
   amount: number;
   date: string; // ISO 8601 format
 };
+
+export type Report = {
+  id: string;
+  [key: string]: any;
+};
