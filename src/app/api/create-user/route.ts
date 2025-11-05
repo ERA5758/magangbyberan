@@ -1,11 +1,25 @@
+
 import { NextRequest, NextResponse } from 'next/server';
-import { initializeAdminApp } from '@/lib/firebase-admin';
+import admin from 'firebase-admin';
+import serviceAccount from '@/lib/serviceAccountKey';
 import type { AppUser } from '@/lib/types';
+
+// Inisialisasi Firebase Admin SDK di dalam route handler
+// untuk memastikan kredensial selalu dimuat dengan benar.
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+    });
+  } catch (error: any) {
+    console.error('Firebase Admin Initialization Error:', error.stack);
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
-    const admin = initializeAdminApp();
     const db = admin.firestore();
+    const auth = admin.auth();
     
     const { password, ...userData } = await req.json();
 
@@ -21,7 +35,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Check for duplicate email in Auth
     try {
-      await admin.auth().getUserByEmail(userData.email);
+      await auth.getUserByEmail(userData.email);
       return NextResponse.json({ error: 'EMAIL_EXISTS: Email ini sudah digunakan oleh akun lain.' }, { status: 409 });
     } catch (error: any) {
       if (error.code !== 'auth/user-not-found') {
@@ -51,7 +65,7 @@ export async function POST(req: NextRequest) {
 
 
     // Create user in Firebase Auth
-    const userRecord = await admin.auth().createUser({
+    const userRecord = await auth.createUser({
       email: userData.email,
       password: password,
       displayName: userData.name,
@@ -59,7 +73,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Set custom claims if needed (e.g., role)
-    await admin.auth().setCustomUserClaims(userRecord.uid, { role: userData.role });
+    await auth.setCustomUserClaims(userRecord.uid, { role: userData.role });
 
     // Save user data to Firestore
     const userDocRef = db.collection('users').doc(userRecord.uid);
@@ -80,7 +94,9 @@ export async function POST(req: NextRequest) {
     console.error('API Error creating user:', error);
     // Provide more specific error messages from Firebase Auth
     let errorMessage = 'An unexpected error occurred.';
-    if (error.code) {
+     if (error.message && error.message.includes('service account')) {
+        errorMessage = 'Firebase Admin SDK service account credentials are not set or are invalid.';
+    } else if (error.code) {
         switch (error.code) {
             case 'auth/email-already-exists':
                 errorMessage = 'EMAIL_EXISTS: Email ini sudah digunakan oleh akun lain.';
