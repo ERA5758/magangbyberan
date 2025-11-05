@@ -32,12 +32,14 @@ import { Badge } from "@/components/ui/badge"
 import { useFirestore } from "@/firebase"
 import { collection, query, where, doc, updateDoc } from "firebase/firestore"
 import { useCollection } from "@/firebase/firestore/use-collection"
-import type { Sale, AppUser } from "@/lib/types";
+import type { Report, AppUser, Project } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast"
+import { formatCurrency } from "@/lib/utils"
 
 type TeamPerformanceData = AppUser & {
-    totalSales: number;
     salesCount: number;
+    totalSalesAmount: number;
+    totalIncome: number;
 }
 
 export function TeamPerformanceTable({ supervisorId }: { supervisorId: string }) {
@@ -54,29 +56,48 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
     , [firestore, supervisorId]);
     const { data: teamMembers, loading: membersLoading } = useCollection<AppUser>(teamMembersQuery);
     
-    const teamSalesCodes = useMemo(() => teamMembers?.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode)).filter(Boolean) || [], [teamMembers]);
+    const teamSalesCodes = useMemo(() => teamMembers?.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode)).filter(Boolean) as string[] || [], [teamMembers]);
 
-    const salesQuery = useMemo(() => 
+    const reportsQuery = useMemo(() => 
         firestore && teamSalesCodes && teamSalesCodes.length > 0 
-            ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes)) 
+            ? query(collection(firestore, "reports"), where("Sales Code", "in", teamSalesCodes)) 
             : null
     , [firestore, teamSalesCodes]);
-    const { data: sales, loading: salesLoading } = useCollection<Sale>(salesQuery);
+    const { data: reports, loading: reportsLoading } = useCollection<Report>(reportsQuery);
+    
+    const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
+    const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
 
     const performanceData: TeamPerformanceData[] = useMemo(() => {
-        if (!teamMembers) return [];
+        if (!teamMembers || !reports || !projects) return [];
 
         return teamMembers.map(member => {
             const memberSalesCodes = member.projectAssignments?.map(pa => pa.salesCode) || [];
-            const memberSales = sales?.filter(s => memberSalesCodes.includes(s.salesCode)) || [];
-            const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
+            if(member.salesCode) memberSalesCodes.push(member.salesCode);
+
+            const memberReports = reports?.filter(r => memberSalesCodes.includes(r['Sales Code'])) || [];
+            
+            const { totalSalesAmount, totalIncome } = memberReports.reduce((acc, report) => {
+                const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
+                // Assuming amount is stored in the report, if not, it's 0.
+                // The user did not specify where the 'amount' for a sale comes from in the report.
+                // We'll assume 0 for now. The income is based on fee per report.
+                const saleAmount = 0; 
+                const income = project?.feeSales || 0;
+                return {
+                    totalSalesAmount: acc.totalSalesAmount + saleAmount,
+                    totalIncome: acc.totalIncome + income,
+                }
+            }, { totalSalesAmount: 0, totalIncome: 0 });
+
             return {
                 ...member,
-                totalSales,
-                salesCount: memberSales.length,
+                salesCount: memberReports.length,
+                totalSalesAmount,
+                totalIncome,
             }
         });
-    }, [teamMembers, sales]);
+    }, [teamMembers, reports, projects]);
 
     const handleRowClick = (data: TeamPerformanceData) => {
         setSelectedMember(data);
@@ -119,7 +140,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         }
     }
 
-    if (membersLoading || salesLoading) {
+    if (membersLoading || reportsLoading || projectsLoading) {
         return <div>Memuat kinerja tim...</div>
     }
 
@@ -140,7 +161,8 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Tenaga Penjualan</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Jumlah Penjualan</TableHead>
+                        <TableHead>Jumlah Laporan</TableHead>
+                        <TableHead>Total Pendapatan</TableHead>
                         <TableHead>
                         <span className="sr-only">Aksi</span>
                         </TableHead>
@@ -166,6 +188,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                 <Badge variant={getStatusBadgeVariant(data.status)}>{data.status || 'Aktif'}</Badge>
                             </TableCell>
                             <TableCell className="text-center">{data.salesCount}</TableCell>
+                            <TableCell>{formatCurrency(data.totalIncome)}</TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
