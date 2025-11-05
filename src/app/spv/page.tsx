@@ -3,14 +3,12 @@
 
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { TeamPerformanceTable } from "@/components/spv/team-performance-table";
-import { UsersRound, DollarSign, ClipboardList, FileText } from "lucide-react";
+import { UsersRound, DollarSign, FileText } from "lucide-react";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from "@/components/ui/card";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -105,7 +103,6 @@ export default function SpvDashboard() {
     return { totalCommission, teamSalesForChart, salesByProject };
   }, [teamReports, projects]);
   
-  const totalTeamSalesCount = teamReports?.length || 0;
 
   if (loading || !user) {
     return <div>Memuat...</div>
@@ -156,15 +153,7 @@ export default function SpvDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
-        <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>Kinerja Tim</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {user.uid && <TeamPerformanceTable supervisorId={user.uid} />}
-            </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-8">
         <Card className="lg:col-span-2">
             <CardHeader>
                 <CardTitle>Tren Penjualan Mingguan</CardTitle>
