@@ -1,36 +1,53 @@
 
 import admin from 'firebase-admin';
 
-// This guard prevents re-initialization on hot reloads
-if (!admin.apps.length) {
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
-  if (!privateKey) {
-    throw new Error('The FIREBASE_PRIVATE_KEY environment variable is not set.');
-  }
-  
-  // The private key is often stored base64 encoded, let's decode it.
-  // And also replace all \\n with \n
-  const decodedPrivateKey = Buffer.from(privateKey, 'base64').toString('utf8').replace(/\\n/g, '\n');
+// This function initializes the Firebase Admin SDK.
+// It's designed to be idempotent, meaning it will only initialize the app once,
+// even if called multiple times.
+function initializeFirebaseAdmin() {
+  // Check if the app is already initialized to prevent errors.
+  if (admin.apps.length === 0) {
+    const privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: decodedPrivateKey,
-      }),
-    });
-  } catch (e: any) {
-    console.error('Failed to initialize Firebase Admin SDK credentials.', e);
-    // Provide a more helpful error message
-    if (e.message.includes('json')) {
-         throw new Error('Firebase Admin SDK credentials error: Check if the environment variables are set correctly.');
+    if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !privateKey) {
+        console.warn("Firebase Admin SDK not initialized. Missing required environment variables.");
+        return; // Exit if essential variables are missing.
     }
-    throw e;
+    
+    try {
+      // The private key from environment variables often has escaped newlines.
+      // We need to replace them with actual newlines for the SDK to parse it correctly.
+      const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: formattedPrivateKey,
+        }),
+      });
+       console.log("Firebase Admin SDK initialized successfully.");
+    } catch (error: any) {
+      // Log a more descriptive error to help with debugging.
+      console.error("Firebase admin initialization error:", error.message);
+      throw new Error("Could not initialize Firebase Admin SDK. Please check server logs for details.");
+    }
   }
 }
 
-const auth = admin.auth();
-const db = admin.firestore();
 
-export { auth, db };
+// This is a getter function to ensure the SDK is initialized before returning services.
+export function getFirebaseAdmin() {
+  initializeFirebaseAdmin();
+  
+  // After attempting initialization, if there are still no apps, it means it failed.
+  if (admin.apps.length === 0) {
+    throw new Error("Firebase Admin SDK is not initialized. API Route cannot function.");
+  }
+  
+  // Return the initialized services.
+  return {
+    auth: admin.auth(),
+    db: admin.firestore(),
+  };
+}

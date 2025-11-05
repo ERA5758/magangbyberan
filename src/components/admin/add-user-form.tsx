@@ -6,7 +6,7 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useFirestore } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
 import { collection, query, where } from 'firebase/firestore';
 
@@ -31,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { useCurrentUser } from '@/hooks/use-current-user';
 
 const projectAssignmentSchema = z.object({
   projectId: z.string(),
@@ -61,6 +62,7 @@ type AddUserFormProps = {
 
 export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const firestore = useFirestore();
+  const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -113,17 +115,21 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!firestore) {
-      toast({
-        variant: 'destructive',
-        title: 'Firebase tidak terinisialisasi',
-        description: 'Firebase belum siap, silakan coba lagi nanti.',
-      });
-      setIsLoading(false);
-      return;
+
+    const currentUser = auth?.currentUser;
+    if (!currentUser) {
+        toast({
+            variant: 'destructive',
+            title: 'Otentikasi Diperlukan',
+            description: 'Anda harus masuk untuk membuat pengguna baru.',
+        });
+        setIsLoading(false);
+        return;
     }
-    
+
     try {
+      const idToken = await currentUser.getIdToken();
+
       if (values.role === 'Sales' && !values.supervisorId) {
         toast({
             variant: 'destructive',
@@ -156,16 +162,13 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           return;
       }
       
-      // Note: KTP photo upload logic needs to be implemented.
-      // This would involve uploading the file to Firebase Storage and getting a URL.
-      // For now, we are just collecting the file input.
       const { ktpPhoto, ...restOfValues } = values;
 
       const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
         name: restOfValues.name,
         email: restOfValues.email,
         role: restOfValues.role,
-        status: 'Aktif', // Admin creates active users directly
+        status: 'Aktif',
         nik: restOfValues.nik,
         address: restOfValues.address,
         phone: restOfValues.phone,
@@ -182,7 +185,10 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
       
       const response = await fetch('/api/create-user', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${idToken}`,
+        },
         body: JSON.stringify({
             password: restOfValues.password,
             ...userData
@@ -208,11 +214,18 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     } catch (error: any) {
       console.error('Error creating user:', error);
       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
-      if (error.message.includes('EMAIL_EXISTS')) {
+      if (error.message?.includes('EMAIL_EXISTS')) {
           description = 'Alamat email ini sudah digunakan oleh akun lain.';
-      } else if (error.message.includes('WEAK_PASSWORD')) {
+      } else if (error.message?.includes('WEAK_PASSWORD')) {
           description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
-      } else if (error.message) {
+      } else if (error.message?.includes('SALES_CODE_EXISTS')) {
+          description = error.message.replace('SALES_CODE_EXISTS: ', '');
+      } else if (error.message?.includes('NIK_EXISTS')) {
+          description = error.message.replace('NIK_EXISTS: ', '');
+      } else if (error.message?.includes('permission')) {
+          description = 'Anda tidak memiliki izin untuk melakukan tindakan ini.';
+      }
+      else if (error.message) {
           description = error.message;
       }
       toast({
@@ -487,5 +500,3 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
-
-    

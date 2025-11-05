@@ -1,35 +1,52 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import 'dotenv/config'; // Ensure environment variables are loaded
-import { db, auth } from '@/lib/firebase-admin';
+import { getFirebaseAdmin } from '@/lib/server/firebase-admin';
 import type { AppUser } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
   try {
-    const { password, ...userData } = await req.json();
+    const { auth, db } = getFirebaseAdmin();
 
+    // 1. Verify the authorization token from the client
+    const authorization = req.headers.get('Authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing or invalid token' }, { status: 401 });
+    }
+    const idToken = authorization.split('Bearer ')[1];
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const callerUid = decodedToken.uid;
+
+    // 2. Check caller permissions
+    const callerDocRef = db.collection('users').doc(callerUid);
+    const callerDoc = await callerDocRef.get();
+    const callerData = callerDoc.data();
+    
+    if (!callerDoc.exists || callerData?.role !== 'Admin') {
+      return NextResponse.json({ error: 'Permission denied: Caller is not an admin.' }, { status: 403 });
+    }
+
+    // 3. Validate Input Data
+    const { password, ...userData } = await req.json();
     if (!password || !userData.email) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
-    // 1. Check for duplicate NIK
+    // 4. Check for duplicates
     const nikQuery = await db.collection('users').where('nik', '==', userData.nik).limit(1).get();
     if (!nikQuery.empty) {
         return NextResponse.json({ error: `NIK_EXISTS: NIK ${userData.nik} sudah terdaftar.` }, { status: 409 });
     }
 
-    // 2. Check for duplicate email in Auth
     try {
       await auth.getUserByEmail(userData.email);
       return NextResponse.json({ error: 'EMAIL_EXISTS: Email ini sudah digunakan oleh akun lain.' }, { status: 409 });
     } catch (error: any) {
       if (error.code !== 'auth/user-not-found') {
-        throw error; // Re-throw other auth errors
+        throw error;
       }
-      // If user is not found, we can proceed.
     }
     
-    // 3. Check for duplicate sales codes if the user is a Sales role
     if (userData.role === 'Sales' && userData.projectAssignments && userData.projectAssignments.length > 0) {
         const salesUsersSnapshot = await db.collection('users').where('role', '==', 'Sales').get();
         const existingSalesCodes = new Set<string>();
@@ -48,8 +65,7 @@ export async function POST(req: NextRequest) {
         }
     }
 
-
-    // Create user in Firebase Auth
+    // 5. Create user in Firebase Auth
     const userRecord = await auth.createUser({
       email: userData.email,
       password: password,
@@ -57,10 +73,10 @@ export async function POST(req: NextRequest) {
       disabled: userData.status !== 'Aktif',
     });
 
-    // Set custom claims if needed (e.g., role)
+    // 6. Set custom claims
     await auth.setCustomUserClaims(userRecord.uid, { role: userData.role });
 
-    // Save user data to Firestore
+    // 7. Save user data to Firestore
     const userDocRef = db.collection('users').doc(userRecord.uid);
     const dataToSave: Omit<AppUser, 'id'> = {
         ...userData,
@@ -75,8 +91,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ uid: userRecord.uid }, { status: 201 });
 
-  } catch (error: any)
- {
+  } catch (error: any) {
     console.error('API Error creating user:', error);
     let errorMessage = 'An unexpected error occurred.';
     let statusCode = 500;
@@ -90,6 +105,11 @@ export async function POST(req: NextRequest) {
             case 'auth/invalid-password':
                 errorMessage = 'WEAK_PASSWORD: Kata sandi harus minimal 6 karakter.';
                 statusCode = 400;
+                break;
+            case 'auth/id-token-expired':
+            case 'auth/id-token-revoked':
+                errorMessage = 'Token otorisasi tidak valid atau telah kedaluwarsa. Harap muat ulang halaman dan coba lagi.';
+                statusCode = 401;
                 break;
             default:
                 errorMessage = error.message;
