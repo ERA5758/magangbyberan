@@ -137,8 +137,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       let reportsQuery;
       const baseQuery = query(
         collection(firestore, "reports"),
-        where("projectId", "==", currentProjectId),
-        orderBy("ID_UNIK") // Use a consistent field for ordering
+        where("projectId", "==", currentProjectId)
       );
 
       if (direction === "next" && lastVisible) {
