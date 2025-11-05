@@ -29,7 +29,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, PlusCircle, User, Mail, Landmark, Phone, Home, Loader2 } from "lucide-react"
+import { MoreHorizontal, PlusCircle, User, Mail, Landmark, Phone, Home, Loader2, Upload } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
@@ -37,6 +37,7 @@ import { collection, doc, updateDoc, deleteDoc } from "firebase/firestore"
 import type { AppUser, Project } from "@/lib/types";
 import { AddUserForm } from "./add-user-form";
 import { useToast } from "@/hooks/use-toast";
+import { BulkImportUsersForm } from "./bulk-import-users-form";
 
 export function UsersTable() {
     const firestore = useFirestore();
@@ -48,6 +49,7 @@ export function UsersTable() {
     const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
 
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+    const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -142,7 +144,28 @@ export function UsersTable() {
 
     return (
         <div className="space-y-4">
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+                <Dialog open={isBulkImportOpen} onOpenChange={setIsBulkImportOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline">
+                            <Upload className="mr-2 h-4 w-4" />
+                            Impor Pengguna
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-lg">
+                         <DialogHeader>
+                            <DialogTitle>Impor Pengguna Massal</DialogTitle>
+                            <DialogDescription>
+                                Unggah file CSV untuk menambahkan beberapa pengguna sekaligus.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <BulkImportUsersForm onSuccess={() => {
+                            setIsBulkImportOpen(false);
+                            mutate();
+                        }} />
+                    </DialogContent>
+                </Dialog>
+
                 <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
                     <DialogTrigger asChild>
                         <Button>
@@ -157,7 +180,10 @@ export function UsersTable() {
                             Isi formulir di bawah ini untuk membuat akun pengguna baru.
                         </DialogDescription>
                         </DialogHeader>
-                        <AddUserForm onSuccess={() => setIsAddUserOpen(false)} />
+                        <AddUserForm onSuccess={() => {
+                            setIsAddUserOpen(false)
+                            mutate();
+                        }} />
                     </DialogContent>
                 </Dialog>
             </div>

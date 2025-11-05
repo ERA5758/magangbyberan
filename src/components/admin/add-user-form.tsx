@@ -31,7 +31,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { useCurrentUser } from '@/hooks/use-current-user';
 
 const projectAssignmentSchema = z.object({
   projectId: z.string(),
@@ -224,6 +223,8 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
           description = error.message.replace('NIK_EXISTS: ', '');
       } else if (error.message?.includes('permission')) {
           description = 'Anda tidak memiliki izin untuk melakukan tindakan ini.';
+      } else if (error.message.includes("Could not initialize Firebase")) {
+          description = "Gagal menghubungi server otentikasi. Periksa koneksi Anda dan coba lagi.";
       }
       else if (error.message) {
           description = error.message;
