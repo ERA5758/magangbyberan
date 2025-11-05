@@ -13,6 +13,7 @@ export type AppUser = {
   name: string;
   email: string | null;
   role: 'Admin' | 'SPV' | 'Sales';
+  status: 'Aktif' | 'Menunggu Persetujuan';
   avatar: string;
   projectAssignments?: ProjectAssignment[];
   salesCode?: string; // for backward compatibility if needed, but should be deprecated
@@ -53,6 +54,7 @@ export const useCurrentUser = () => {
             name: data.name || 'No Name',
             email: authUser.email,
             role: data.role || 'Sales',
+            status: data.status || 'Aktif',
             avatar: authUser.photoURL || data.avatar || `https://i.pravatar.cc/150?u=${authUser.uid}`,
             salesCode: primarySalesCode, // For components expecting a single sales code
             ...data
@@ -74,4 +76,3 @@ export const useCurrentUser = () => {
 
   return { user: appUser, loading: userLoading };
 };
-

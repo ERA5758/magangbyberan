@@ -78,7 +78,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         setIsDetailOpen(true);
     };
     
-    const getStatusBadgeVariant = (status: AppUser['status']) => {
+    const getStatusBadgeVariant = (status?: AppUser['status']) => {
         switch (status) {
             case 'Aktif': return 'secondary';
             case 'Menunggu Persetujuan': return 'default';
@@ -130,7 +130,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                 </div>
                             </TableCell>
                             <TableCell>
-                                <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
+                                <Badge variant={getStatusBadgeVariant(data.status)}>{data.status || 'Aktif'}</Badge>
                             </TableCell>
                             <TableCell className="text-center">{data.salesCount}</TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -171,7 +171,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                 <div className="space-y-1">
                                     <h3 className="text-lg font-semibold">{selectedMember.name}</h3>
                                     <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="h-3 w-3" />{selectedMember.email}</p>
-                                    <Badge variant={getStatusBadgeVariant(selectedMember.status)}>{selectedMember.status}</Badge>
+                                    <Badge variant={getStatusBadgeVariant(selectedMember.status)}>{selectedMember.status || 'Aktif'}</Badge>
                                 </div>
                             </div>
                              <div className="grid grid-cols-1 gap-2 text-sm">

@@ -33,7 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
 import { collection } from "firebase/firestore"
-import type { AppUser } from "@/hooks/use-current-user"
+import type { AppUser } from "@/lib/types";
 import { AddUserForm } from "./add-user-form";
 
 
@@ -52,7 +52,7 @@ export function UsersTable() {
         }
     };
     
-    const getStatusBadgeVariant = (status: AppUser['status']) => {
+    const getStatusBadgeVariant = (status?: AppUser['status']) => {
         switch (status) {
             case 'Aktif': return 'secondary';
             case 'Menunggu Persetujuan': return 'default';
