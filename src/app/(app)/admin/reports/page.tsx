@@ -58,7 +58,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground py-8">
-              There are no projects in the database. Please add a project first from the Admin &gt; Projects page.
+              There are no projects in the database. Please add a project first from the Admin > Projects page.
             </p>
           </CardContent>
         </Card>
