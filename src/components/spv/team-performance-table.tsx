@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { MoreHorizontal } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import { useCollection, useFirestore } from "@/firebase"
 import { collection, query, where } from "firebase/firestore"
 import type { Sale, AppUser } from "@/lib/types";
@@ -30,6 +31,7 @@ type TeamPerformanceData = {
     name: string;
     avatar: string;
     email: string;
+    status: 'Aktif' | 'Menunggu Persetujuan';
     totalSales: number;
     salesCount: number;
     salesTarget: number;
@@ -66,6 +68,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 name: member.name,
                 avatar: member.avatar,
                 email: member.email,
+                status: member.status || 'Aktif',
                 totalSales,
                 salesCount: memberSales.length,
                 salesTarget: 10000, // Mock target, can be moved to user/project data
@@ -75,6 +78,14 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
 
     const handleRowClick = (data: TeamPerformanceData) => {
         console.log("Viewing details for:", data.name);
+    };
+    
+    const getStatusBadgeVariant = (status: TeamPerformanceData['status']) => {
+        switch (status) {
+            case 'Aktif': return 'secondary';
+            case 'Menunggu Persetujuan': return 'default';
+            default: return 'outline';
+        }
     };
 
     if (membersLoading || salesLoading) {
@@ -96,6 +107,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 <TableRow>
                     <TableHead className="w-[50px]">No.</TableHead>
                     <TableHead>Tenaga Penjualan</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Jumlah Penjualan</TableHead>
                     <TableHead>Total Penjualan</TableHead>
                     <TableHead className="hidden md:table-cell">Progres Target</TableHead>
@@ -119,6 +131,9 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                     <div className="text-sm text-muted-foreground">{data.email}</div>
                                 </div>
                             </div>
+                        </TableCell>
+                        <TableCell>
+                            <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
                         </TableCell>
                         <TableCell className="text-center">{data.salesCount}</TableCell>
                         <TableCell className="font-medium">${data.totalSales.toLocaleString()}</TableCell>

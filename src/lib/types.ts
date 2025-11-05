@@ -15,6 +15,7 @@ export type AppUser = {
   avatar: string;
   supervisorId?: string;
   projectAssignments?: ProjectAssignment[];
+  status: 'Aktif' | 'Menunggu Persetujuan';
   [key: string]: any; 
 };
 
@@ -40,4 +41,3 @@ export type Report = {
   projectId: string; // To link back to the project
   [key: string]: any;
 };
-

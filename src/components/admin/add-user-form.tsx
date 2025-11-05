@@ -155,6 +155,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         name: values.name,
         email: values.email,
         role: values.role,
+        status: 'Aktif',
         nik: values.nik,
         address: values.address,
         phone: values.phone,

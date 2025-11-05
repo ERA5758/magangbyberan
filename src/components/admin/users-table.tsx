@@ -17,6 +17,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
     Dialog,
@@ -42,11 +43,19 @@ export function UsersTable() {
     const { data: users, loading } = useCollectionOnce<AppUser>(usersQuery);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     
-    const getBadgeVariant = (role: AppUser['role']) => {
+    const getRoleBadgeVariant = (role: AppUser['role']) => {
         switch (role) {
             case 'Admin': return 'default';
             case 'SPV': return 'secondary';
             case 'Sales': return 'outline';
+            default: return 'outline';
+        }
+    };
+    
+    const getStatusBadgeVariant = (status: AppUser['status']) => {
+        switch (status) {
+            case 'Aktif': return 'secondary';
+            case 'Menunggu Persetujuan': return 'default';
             default: return 'outline';
         }
     };
@@ -89,6 +98,7 @@ export function UsersTable() {
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Pengguna</TableHead>
                         <TableHead>Peran</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead className="hidden md:table-cell">Proyek & Kode Sales</TableHead>
                         <TableHead>
                         <span className="sr-only">Aksi</span>
@@ -112,7 +122,10 @@ export function UsersTable() {
                                 </div>
                             </TableCell>
                             <TableCell>
-                                <Badge variant={getBadgeVariant(user.role)}>{user.role}</Badge>
+                                <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
+                            </TableCell>
+                             <TableCell>
+                                <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'Aktif'}</Badge>
                             </TableCell>
                             <TableCell className="hidden md:table-cell">
                                 <div className="flex flex-wrap gap-1">
@@ -131,6 +144,12 @@ export function UsersTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                    {user.status === 'Menunggu Persetujuan' && (
+                                        <>
+                                            <DropdownMenuItem>Setujui</DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                        </>
+                                    )}
                                     <DropdownMenuItem>Ubah</DropdownMenuItem>
                                     <DropdownMenuItem>Hapus</DropdownMenuItem>
                                 </DropdownMenuContent>
