@@ -10,7 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { useCollection, useFirestore } from "@/firebase";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, where } from "firebase/firestore";
 import { format } from "date-fns";
 import type { Sale } from "@/lib/types";
 import { useMemo } from "react";
@@ -21,11 +21,16 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
     const mySalesQuery = useMemo(() => 
         firestore ? query(
             collection(firestore, "sales"), 
-            where("salesCode", "==", salesCode),
-            orderBy("date", "desc")
+            where("salesCode", "==", salesCode)
         ) : null
     , [firestore, salesCode]);
     const { data: mySales, loading } = useCollection<Sale>(mySalesQuery);
+    
+    const sortedSales = useMemo(() => {
+        if (!mySales) return [];
+        return [...mySales].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [mySales]);
+
 
     const handleRowClick = (sale: Sale) => {
         console.log("Sale clicked:", sale);
@@ -47,7 +52,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {mySales && mySales.length > 0 ? mySales.map((sale, index) => (
+                {sortedSales && sortedSales.length > 0 ? sortedSales.map((sale, index) => (
                     <TableRow key={sale.id} onClick={() => handleRowClick(sale)} className="cursor-pointer">
                         <TableCell>{index + 1}</TableCell>
                         <TableCell>
