@@ -36,6 +36,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project, Report, AppUser } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -106,7 +113,7 @@ const formatValue = (value: any, key?: string): string => {
 
 const PAGE_SIZE = 50;
 
-function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, teamSalesCodes: string[] }) {
+function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { project: Project, teamMembers: AppUser[], selectedSalesId?: string }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,9 +130,12 @@ function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, t
   const projectId = project.name.toLowerCase().replace(/ /g, "_");
 
   const projectRelevantSalesCodes = useMemo(() => {
-    // For an SPV, it's a good enough approximation to filter reports by all their team's sales codes.
-    return teamSalesCodes;
-  }, [teamSalesCodes]);
+    if (selectedSalesId) {
+      const selectedMember = teamMembers.find(m => m.id === selectedSalesId);
+      return selectedMember?.projectAssignments?.map(pa => pa.salesCode).filter(Boolean) as string[] || [];
+    }
+    return teamMembers.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode)).filter(Boolean) as string[];
+  }, [teamMembers, selectedSalesId]);
 
 
   useEffect(() => {
@@ -275,7 +285,7 @@ function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, t
     <>
       {(!loading && reports.length === 0) ? (
          <p className="text-center text-muted-foreground py-8">
-            Tidak ada laporan yang ditemukan untuk tim Anda di proyek ini.
+            Tidak ada laporan yang ditemukan untuk filter yang dipilih.
         </p>
       ) : !project.reportHeaders || project.reportHeaders.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">
@@ -414,9 +424,8 @@ export default function SpvReportsPage() {
   );
   const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
   
-  const teamSalesCodes = useMemo(() => teamMembers?.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode)).filter(Boolean) as string[] || [], [teamMembers]);
-
   const [activeTab, setActiveTab] = useState<string | undefined>();
+  const [selectedSalesId, setSelectedSalesId] = useState<string | undefined>();
 
   useEffect(() => {
     if (projects && projects.length > 0 && !activeTab) {
@@ -488,14 +497,35 @@ export default function SpvReportsPage() {
                 <CardTitle>
                   Laporan untuk {project.name.toUpperCase().replace(/_/g, " ")}
                 </CardTitle>
-                <CardDescription>
-                  Menampilkan laporan untuk tim Anda pada proyek {project.name.toUpperCase().replace(/_/g, " ")}
-                </CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+                    <CardDescription>
+                    Menampilkan laporan untuk tim Anda pada proyek {project.name.toUpperCase().replace(/_/g, " ")}
+                    </CardDescription>
+                    <div className="w-full sm:w-auto sm:min-w-[200px]">
+                      <Select
+                        value={selectedSalesId}
+                        onValueChange={(value) => setSelectedSalesId(value === 'all' ? undefined : value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Filter Berdasarkan Sales" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Sales</SelectItem>
+                          {teamMembers?.map((member) => (
+                            <SelectItem key={member.id} value={member.id}>
+                              {member.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <FilteredReportsTable
                   project={project}
-                  teamSalesCodes={teamSalesCodes}
+                  teamMembers={teamMembers || []}
+                  selectedSalesId={selectedSalesId}
                 />
               </CardContent>
             </Card>
