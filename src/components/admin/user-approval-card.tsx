@@ -2,7 +2,8 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useCollectionOnce, useFirestore, useAuth } from '@/firebase';
+import { useFirestore, useAuth } from '@/firebase';
+import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
 import { collection, query, where, doc, updateDoc, deleteDoc, getDoc, setDoc, writeBatch } from 'firebase/firestore';
 import type { AppUser } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -108,7 +109,9 @@ export function UserApprovalCard() {
           description: `Permintaan untuk ${user.name} telah ditolak dan dihapus.`,
         });
       }
-      mutate(); // Re-fetch the data
+      if (mutate) {
+        mutate(); // Re-fetch the data
+      }
     } catch (error: any) {
       console.error('Error handling approval:', error);
       toast({
