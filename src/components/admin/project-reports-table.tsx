@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCollection, useDoc, useFirestore } from "@/firebase";
-import { collection, doc, Timestamp } from "firebase/firestore";
+import { collection, doc, Timestamp, query, where } from "firebase/firestore";
 import type { Report, Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -57,17 +57,19 @@ const formatValue = (value: any): string => {
 export function ProjectReportsTable({ projectId }: { projectId: string }) {
     const firestore = useFirestore();
     
-    // 1. Fetch the project document to get reportHeaders
     const projectRef = useMemo(() => 
         firestore ? doc(firestore, "projects", projectId) : null
     , [firestore, projectId]);
     const { data: project, loading: projectLoading } = useDoc<Project>(projectRef);
 
-    // 2. Fetch the reports sub-collection
-    const reportsCollectionRef = useMemo(() => 
-        firestore ? collection(firestore, "projects", projectId, "reports") : null
-    , [firestore, projectId]);
-    const { data: reports, loading: reportsLoading } = useCollection<Report>(reportsCollectionRef);
+    const reportsQuery = useMemo(() => {
+        if (!firestore) return null;
+        // Construct a query to filter reports by the BANK field, matching the projectId
+        const reportsCollectionRef = collection(firestore, "projects", projectId, "reports");
+        return query(reportsCollectionRef); // No filter needed if we are already in the subcollection. The previous logic was wrong.
+    }, [firestore, projectId]);
+    
+    const { data: reports, loading: reportsLoading } = useCollection<Report>(reportsQuery);
 
     const headers = useMemo(() => {
         if (project?.reportHeaders && project.reportHeaders.length > 0) {
