@@ -9,7 +9,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
+    // Ensure the admin app is initialized before using any of its services.
     initializeAdminApp();
+    
     const { email, password } = req.body;
 
     if (!email) {
@@ -25,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.status(200).json({ uid: userRecord.uid });
   } catch (error: any) {
     console.error('Error creating user:', error);
+    // Send a more specific error message back to the client.
     res.status(500).json({ error: error.message || 'Failed to create user' });
   }
 }
