@@ -2,7 +2,8 @@
 "use client";
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import { useAuth, useCurrentUser, useFirestore } from "@/firebase";
+import { useAuth, useFirestore } from "@/firebase";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   collection,
   query,
