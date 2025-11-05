@@ -84,7 +84,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="flex h-screen w-full items-center justify-center bg-background">
             <div className="flex flex-col items-center gap-4 text-center">
                 <div className="mb-8 flex flex-col items-center gap-2">
-                  <AppLogo />
+                  <AppLogo size={144} />
                   <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
                 </div>
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
