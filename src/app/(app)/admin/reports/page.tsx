@@ -8,8 +8,7 @@ import {
   query,
   where,
   Timestamp,
-  getDocs,
-  collectionGroup,
+  limit,
 } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -106,7 +105,8 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     if (!firestore || !projectId) return null;
     return query(
       collection(firestore, "reports"),
-      where("projectId", "==", projectId)
+      where("projectId", "==", projectId),
+      limit(100)
     );
   }, [firestore, projectId]);
 
