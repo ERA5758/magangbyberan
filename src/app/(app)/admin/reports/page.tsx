@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useFirestore } from "@/firebase";
 import {
   collection,
@@ -112,27 +112,28 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   const [firstVisible, setFirstVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [page, setPage] = useState(1);
+  const isMountedRef = useRef(true);
   
   const fetchReports = async (
     currentProjectId: string,
     direction: "next" | "prev" | "first"
   ) => {
     if (!firestore) return;
-    setLoading(true);
+    if (isMountedRef.current) setLoading(true);
 
     try {
       let reportsQuery;
       const baseQuery = query(
         collection(firestore, "reports"),
         where("projectId", "==", currentProjectId),
-        orderBy("__name__") // Order by document ID for consistent pagination
+        orderBy("__name__")
       );
 
       if (direction === "next" && lastVisible) {
         reportsQuery = query(baseQuery, startAfter(lastVisible), limit(PAGE_SIZE));
       } else if (direction === "prev" && firstVisible) {
         reportsQuery = query(baseQuery, endBefore(firstVisible), limitToLast(PAGE_SIZE));
-      } else { // "first" page
+      } else { 
         reportsQuery = query(baseQuery, limit(PAGE_SIZE));
       }
 
@@ -142,35 +143,43 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         ...doc.data(),
       })) as Report[];
       
-      if (newReports.length > 0) {
-        setReports(newReports);
-        setFirstVisible(documentSnapshots.docs[0]);
-        setLastVisible(
-          documentSnapshots.docs[documentSnapshots.docs.length - 1]
-        );
-      } else {
-        if (direction === 'first') {
-          setReports([]);
+      if (isMountedRef.current) {
+        if (newReports.length > 0) {
+          setReports(newReports);
+          setFirstVisible(documentSnapshots.docs[0]);
+          setLastVisible(
+            documentSnapshots.docs[documentSnapshots.docs.length - 1]
+          );
+        } else {
+          if (direction === 'first') {
+            setReports([]);
+          }
         }
-        // If we tried to go next and got no results, we stay on the current page
-        // and just stop loading. The "Next" button should be disabled anyway.
       }
     } catch (error) {
       console.error("Error fetching reports:", error);
-      setReports([]);
+      if (isMountedRef.current) {
+        setReports([]);
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    // Reset state and fetch first page when projectId changes
+    isMountedRef.current = true;
     setReports([]);
     setLoading(true);
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
     fetchReports(projectId, "first");
+    
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [projectId, firestore]);
 
 
@@ -412,7 +421,7 @@ export default function ReportsPage() {
                 <CardDescription>
                   Displaying reports for{" "}
                   {project.name.toUpperCase().replace(/_/g, " ")}
-                </dCardDescription>
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <FilteredReportsTable
@@ -426,3 +435,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    
