@@ -14,14 +14,14 @@ export default function UsersPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="User Management"
-        description="View, add, or manage all users on the platform."
+        title="Manajemen Pengguna"
+        description="Lihat, tambah, atau kelola semua pengguna di platform."
       />
       <Card>
         <CardHeader>
-          <CardTitle>All Users</CardTitle>
+          <CardTitle>Semua Pengguna</CardTitle>
           <CardDescription>
-            A list of all users in the system. Click 'Add User' to create a new one.
+            Daftar semua pengguna dalam sistem. Klik 'Tambah Pengguna' untuk membuat yang baru.
           </CardDescription>
         </CardHeader>
         <CardContent>

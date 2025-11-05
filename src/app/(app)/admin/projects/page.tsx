@@ -13,12 +13,12 @@ export default function ProjectsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Projects"
-        description="Manage all company projects."
+        title="Proyek"
+        description="Kelola semua proyek perusahaan."
       />
       <Card>
         <CardHeader>
-          <CardTitle>All Projects</CardTitle>
+          <CardTitle>Semua Proyek</CardTitle>
         </CardHeader>
         <CardContent>
           <ProjectsTable />

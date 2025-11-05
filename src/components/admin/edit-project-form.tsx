@@ -32,7 +32,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Project name is required.'),
+  name: z.string().min(1, 'Nama proyek harus diisi.'),
   status: z.enum(['Aktif', 'Non Aktif']),
   reportHeaders: z.string().optional(),
 });
@@ -66,7 +66,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
     if (!firestore) {
       toast({
         variant: 'destructive',
-        title: 'Firebase not initialized',
+        title: 'Firebase tidak terinisialisasi',
       });
       setIsLoading(false);
       return;
@@ -87,8 +87,8 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
       });
 
       toast({
-        title: 'Project Updated',
-        description: `Project "${values.name}" has been successfully updated.`,
+        title: 'Proyek Diperbarui',
+        description: `Proyek "${values.name}" telah berhasil diperbarui.`,
       });
 
       if (onSuccess) {
@@ -98,8 +98,8 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
       console.error('Error updating project:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to Update Project',
-        description: 'An unexpected error occurred. Please try again.',
+        title: 'Gagal Memperbarui Proyek',
+        description: 'Terjadi kesalahan tak terduga. Silakan coba lagi.',
       });
     } finally {
       setIsLoading(false);
@@ -114,9 +114,9 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Project Name</FormLabel>
+              <FormLabel>Nama Proyek</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Project Alpha" {...field} />
+                <Input placeholder="cth., Proyek Alpha" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -131,7 +131,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a status" />
+                    <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -148,15 +148,15 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
           name="reportHeaders"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Report Headers</FormLabel>
+              <FormLabel>Header Laporan</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="ID UNIK, Merchant Name, STATUS_PROCESS, PIC..."
+                  placeholder="ID UNIK, Nama Merchant, STATUS_PROSES, PIC..."
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Enter the column headers you want to display, separated by commas.
+                Masukkan header kolom yang ingin ditampilkan, dipisahkan dengan koma.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -165,7 +165,7 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Save Changes
+            Simpan Perubahan
           </Button>
         </div>
       </form>

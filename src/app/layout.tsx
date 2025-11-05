@@ -6,7 +6,7 @@ import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
   title: 'Magang By BERAN',
-  description: 'Sales Data Aggregation Platform',
+  description: 'Platform Agregasi Data Penjualan',
 };
 
 export default function RootLayout({

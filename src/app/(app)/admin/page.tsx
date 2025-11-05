@@ -37,26 +37,26 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Admin Dashboard" description="Welcome back! Here's an overview of your platform." />
+      <PageHeader title="Dasbor Admin" description="Selamat datang kembali! Berikut adalah ringkasan platform Anda." />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="Total Users"
+          title="Total Pengguna"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : users?.length.toString() || '0'}
           icon={Users}
-          description="Number of registered users"
+          description="Jumlah pengguna terdaftar"
         />
         <StatCard
-          title="Total Projects"
+          title="Total Proyek"
           value={isLoading ? <Skeleton className="h-6 w-16" /> : projects?.length.toString() || '0'}
           icon={Briefcase}
-          description="All active and completed projects"
+          description="Semua proyek aktif dan selesai"
         />
         <StatCard
-          title="Total Sales"
+          title="Total Penjualan"
           value={isLoading ? <Skeleton className="h-6 w-28" /> : `$${totalSales.toLocaleString()}`}
           icon={DollarSign}
-          description="Total revenue from all projects"
+          description="Total pendapatan dari semua proyek"
         />
       </div>
 
@@ -65,11 +65,11 @@ export default function AdminDashboard() {
             <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>User Management</CardTitle>
-                    <CardDescription>View, add, or manage users.</CardDescription>
+                    <CardTitle>Manajemen Pengguna</CardTitle>
+                    <CardDescription>Lihat, tambah, atau kelola pengguna.</CardDescription>
                 </div>
                 <Button asChild size="sm">
-                    <Link href="/admin/users">View All</Link>
+                    <Link href="/admin/users">Lihat Semua</Link>
                 </Button>
             </CardHeader>
             <CardContent>
@@ -82,11 +82,11 @@ export default function AdminDashboard() {
             <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Projects</CardTitle>
-                    <CardDescription>Manage all company projects.</CardDescription>
+                    <CardTitle>Proyek</CardTitle>
+                    <CardDescription>Kelola semua proyek perusahaan.</CardDescription>
                 </div>
                  <Button asChild size="sm">
-                    <Link href="/admin/projects">View All</Link>
+                    <Link href="/admin/projects">Lihat Semua</Link>
                 </Button>
             </CardHeader>
             <CardContent>

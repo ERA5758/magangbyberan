@@ -92,15 +92,15 @@ export function ProjectsTable() {
         try {
             await deleteDoc(doc(firestore, "projects", projectToDelete.id));
             toast({
-                title: "Project Deleted",
-                description: `Project "${projectToDelete.name}" has been successfully deleted.`,
+                title: "Proyek Dihapus",
+                description: `Proyek "${projectToDelete.name}" telah berhasil dihapus.`,
             });
         } catch (e) {
             console.error("Error deleting project:", e);
             toast({
                 variant: "destructive",
-                title: "Failed to Delete Project",
-                description: "An unexpected error occurred. Please try again."
+                title: "Gagal Menghapus Proyek",
+                description: "Terjadi kesalahan tak terduga. Silakan coba lagi."
             })
         } finally {
             setIsDeleteDialogOpen(false);
@@ -110,11 +110,11 @@ export function ProjectsTable() {
 
 
     if (loading) {
-        return <div>Loading projects...</div>
+        return <div>Memuat proyek...</div>
     }
 
     if (error) {
-        return <div>Error loading projects: {error.message}</div>
+        return <div>Terjadi galat saat memuat proyek: {error.message}</div>
     }
 
     return (
@@ -124,14 +124,14 @@ export function ProjectsTable() {
                     <DialogTrigger asChild>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Add Project
+                            Tambah Proyek
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Add New Project</DialogTitle>
+                            <DialogTitle>Tambah Proyek Baru</DialogTitle>
                             <DialogDescription>
-                                Fill in the details below to create a new project.
+                                Isi detail di bawah ini untuk membuat proyek baru.
                             </DialogDescription>
                         </DialogHeader>
                         <AddProjectForm onSuccess={() => {
@@ -145,11 +145,11 @@ export function ProjectsTable() {
                     <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px]">No.</TableHead>
-                        <TableHead>Project Name</TableHead>
+                        <TableHead>Nama Proyek</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="hidden lg:table-cell">Report Headers</TableHead>
+                        <TableHead className="hidden lg:table-cell">Header Laporan</TableHead>
                         <TableHead>
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">Aksi</span>
                         </TableHead>
                     </TableRow>
                     </TableHeader>
@@ -168,7 +168,7 @@ export function ProjectsTable() {
                                             <Badge key={header} variant="outline" className="text-xs">{header}</Badge>
                                         ))
                                     ) : (
-                                         <span className="text-muted-foreground text-xs">Not Configured</span>
+                                         <span className="text-muted-foreground text-xs">Belum Dikonfigurasi</span>
                                     )}
                                     {project.reportHeaders && project.reportHeaders.length > 5 && (
                                         <Badge variant="outline" className="text-xs">...</Badge>
@@ -180,20 +180,20 @@ export function ProjectsTable() {
                                 <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
+                                    <span className="sr-only">Buka menu</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuLabel>Aksi</DropdownMenuLabel>
                                     <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
-                                        Edit Project
+                                        Ubah Proyek
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem 
                                         onClick={(e) => handleDeleteClick(e, project)}
                                         className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                                     >
-                                        Delete Project
+                                        Hapus Proyek
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
@@ -207,9 +207,9 @@ export function ProjectsTable() {
                  <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
                     <DialogContent className="sm:max-w-md">
                         <DialogHeader>
-                            <DialogTitle>Edit Project: {selectedProject.name}</DialogTitle>
+                            <DialogTitle>Ubah Proyek: {selectedProject.name}</DialogTitle>
                             <DialogDescription>
-                                Update the details for this project.
+                                Perbarui detail untuk proyek ini.
                             </DialogDescription>
                         </DialogHeader>
                         <EditProjectForm project={selectedProject} onSuccess={() => {
@@ -222,17 +222,17 @@ export function ProjectsTable() {
              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the 
+                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen proyek 
                         <span className="font-semibold"> {projectToDelete?.name} </span> 
-                        project and all of its associated data.
+                        dan semua data terkaitnya.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                    <AlertDialogCancel onClick={() => setProjectToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel onClick={() => setProjectToDelete(null)}>Batal</AlertDialogCancel>
                     <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
-                        Delete
+                        Hapus
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

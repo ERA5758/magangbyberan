@@ -32,7 +32,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
     };
 
     if (loading) {
-        return <div>Loading recent sales...</div>
+        return <div>Memuat penjualan terkini...</div>
     }
 
     return (
@@ -41,9 +41,9 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px]">No.</TableHead>
-                        <TableHead>Project</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead className="text-right">Date</TableHead>
+                        <TableHead>Proyek</TableHead>
+                        <TableHead>Jumlah</TableHead>
+                        <TableHead className="text-right">Tanggal</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -59,7 +59,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                 )) : (
                     <TableRow>
                         <TableCell colSpan={4} className="text-center">
-                            No recent sales found.
+                            Tidak ada penjualan terkini.
                         </TableCell>
                     </TableRow>
                 )}

@@ -19,23 +19,23 @@ export default function ProjectDetailPage() {
   const { data: project, loading } = useDoc<Project>(projectRef);
 
   if (loading) {
-    return <div>Loading project details...</div>;
+    return <div>Memuat detail proyek...</div>;
   }
 
   if (!project) {
-    return <div>Project not found.</div>;
+    return <div>Proyek tidak ditemukan.</div>;
   }
 
   return (
     <div className="space-y-8">
       <PageHeader
         title={project.name}
-        description={`Reports and details for ${project.name}.`}
+        description={`Laporan dan detail untuk ${project.name}.`}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>Reports</CardTitle>
+          <CardTitle>Laporan</CardTitle>
         </CardHeader>
         <CardContent>
           <ProjectReportsTable projectId={id as string} />

@@ -31,7 +31,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
-  name: z.string().min(1, 'Project name is required.'),
+  name: z.string().min(1, 'Nama proyek harus diisi.'),
   status: z.enum(['Aktif', 'Non Aktif']),
   reportHeaders: z.string().optional(),
 });
@@ -59,8 +59,8 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     if (!firestore) {
       toast({
         variant: 'destructive',
-        title: 'Firebase not initialized',
-        description: 'Firestore is not ready, please try again later.',
+        title: 'Firebase tidak terinisialisasi',
+        description: 'Firestore belum siap, silakan coba lagi nanti.',
       });
       setIsLoading(false);
       return;
@@ -82,8 +82,8 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       });
 
       toast({
-        title: 'Project Created',
-        description: `Project "${values.name}" has been successfully created.`,
+        title: 'Proyek Dibuat',
+        description: `Proyek "${values.name}" telah berhasil dibuat.`,
       });
 
       form.reset();
@@ -94,8 +94,8 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       console.error('Error creating project:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to Create Project',
-        description: 'An unexpected error occurred. Please try again.',
+        title: 'Gagal Membuat Proyek',
+        description: 'Terjadi kesalahan tak terduga. Silakan coba lagi.',
       });
     } finally {
       setIsLoading(false);
@@ -110,9 +110,9 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Project Name</FormLabel>
+              <FormLabel>Nama Proyek</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Project Alpha" {...field} />
+                <Input placeholder="cth., Proyek Alpha" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -127,7 +127,7 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a status" />
+                    <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -144,15 +144,15 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
           name="reportHeaders"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Report Headers</FormLabel>
+              <FormLabel>Header Laporan</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="ID UNIK, Merchant Name, STATUS_PROCESS, PIC..."
+                  placeholder="ID UNIK, Nama Merchant, STATUS_PROSES, PIC..."
                   {...field}
                 />
               </FormControl>
               <FormDescription>
-                Enter the column headers you want to display, separated by commas.
+                Masukkan header kolom yang ingin ditampilkan, dipisahkan dengan koma.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -161,7 +161,7 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Project
+            Buat Proyek
           </Button>
         </div>
       </form>

@@ -46,24 +46,21 @@ export default function SalesDashboard() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     toast({
-      title: "Refreshing Data...",
-      description: "Fetching the latest sales information.",
+      title: "Menyegarkan Data...",
+      description: "Mengambil informasi penjualan terbaru.",
     });
 
-    // In a real app, you might re-fetch data here.
-    // with react-query or SWR, you'd invalidate queries.
-    // For this basic setup, we'll just simulate a delay.
     await new Promise(res => setTimeout(res, 1500));
 
     setIsRefreshing(false);
     toast({
-      title: "Data Refreshed",
-      description: "Your sales data is up to date.",
+      title: "Data Disegarkan",
+      description: "Data penjualan Anda sudah yang terbaru.",
     });
   };
 
   if (loading || salesLoading || usersLoading || allSalesLoading || !user) {
-    return <div>Loading...</div>;
+    return <div>Memuat...</div>;
   }
 
   const totalMySales = mySales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
@@ -80,43 +77,43 @@ export default function SalesDashboard() {
 
   return (
     <div className="space-y-8">
-      <PageHeader title="My Sales Dashboard" description={`Welcome back, ${user.name}!`}>
+      <PageHeader title="Dasbor Penjualan Saya" description={`Selamat datang kembali, ${user.name}!`}>
         <Button onClick={handleRefresh} disabled={isRefreshing}>
           {isRefreshing ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
             <RefreshCw className="mr-2 h-4 w-4" />
           )}
-          Refresh Data
+          Segarkan Data
         </Button>
       </PageHeader>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
-          title="My Total Sales"
+          title="Total Penjualan Saya"
           value={`$${totalMySales.toLocaleString()}`}
           icon={DollarSign}
-          description="Your total revenue generated this month"
+          description="Total pendapatan Anda bulan ini"
         />
         <StatCard
-          title="Company Rank"
+          title="Peringkat Perusahaan"
           value={myRank > 0 ? `#${myRank}`: 'N/A'}
           icon={BarChart}
-          description={allSalespersons ? `out of ${allSalespersons.length} salespersons` : ''}
+          description={allSalespersons ? `dari ${allSalespersons.length} tenaga penjualan` : ''}
         />
         <StatCard
-          title="Deals Closed"
+          title="Transaksi Berhasil"
           value={mySales?.length.toString() || '0'}
           icon={Hash}
-          description="Number of successful sales this month"
+          description="Jumlah penjualan sukses bulan ini"
         />
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-5">
         <Card className="lg:col-span-3">
             <CardHeader>
-                <CardTitle>Recent Sales</CardTitle>
-                <CardDescription>Your most recent sales transactions.</CardDescription>
+                <CardTitle>Penjualan Terkini</CardTitle>
+                <CardDescription>Transaksi penjualan terbaru Anda.</CardDescription>
             </CardHeader>
             <CardContent>
                 <RecentSales salesCode={user.salesCode} />
@@ -124,8 +121,8 @@ export default function SalesDashboard() {
         </Card>
         <Card className="lg:col-span-2">
             <CardHeader>
-                <CardTitle>Weekly Performance</CardTitle>
-                <CardDescription>Your sales trend over the past week.</CardDescription>
+                <CardTitle>Performa Mingguan</CardTitle>
+                <CardDescription>Tren penjualan Anda selama seminggu terakhir.</CardDescription>
             </CardHeader>
             <CardContent>
                 <PerformanceChart sales={mySales} />

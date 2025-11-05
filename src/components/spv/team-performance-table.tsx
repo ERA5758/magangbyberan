@@ -74,12 +74,10 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
 
     const handleRowClick = (data: TeamPerformanceData) => {
         console.log("Viewing details for:", data.name);
-        // In a real app, you might navigate to a salesperson-specific report page
-        // e.g., router.push(`/spv/team/${data.id}`)
     };
 
     if (membersLoading || salesLoading) {
-        return <div>Loading team performance...</div>
+        return <div>Memuat kinerja tim...</div>
     }
 
     return (
@@ -88,12 +86,12 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 <TableHeader>
                 <TableRow>
                     <TableHead className="w-[50px]">No.</TableHead>
-                    <TableHead>Salesperson</TableHead>
-                    <TableHead>Sales Count</TableHead>
-                    <TableHead>Total Sales</TableHead>
-                    <TableHead className="hidden md:table-cell">Target Progress</TableHead>
+                    <TableHead>Tenaga Penjualan</TableHead>
+                    <TableHead>Jumlah Penjualan</TableHead>
+                    <TableHead>Total Penjualan</TableHead>
+                    <TableHead className="hidden md:table-cell">Progres Target</TableHead>
                     <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Aksi</span>
                     </TableHead>
                 </TableRow>
                 </TableHeader>
@@ -126,13 +124,13 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                             <DropdownMenuTrigger asChild>
                                 <Button aria-haspopup="true" size="icon" variant="ghost">
                                 <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Toggle menu</span>
+                                <span className="sr-only">Buka menu</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>View Details</DropdownMenuItem>
-                                <DropdownMenuItem>Send Message</DropdownMenuItem>
+                                <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                <DropdownMenuItem>Lihat Detail</DropdownMenuItem>
+                                <DropdownMenuItem>Kirim Pesan</DropdownMenuItem>
                             </DropdownMenuContent>
                             </DropdownMenu>
                         </TableCell>
@@ -143,5 +141,3 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         </div>
     )
 }
-
-    

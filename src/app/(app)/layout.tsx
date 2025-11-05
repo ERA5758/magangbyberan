@@ -40,17 +40,17 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: '/admin', label: 'Dashboard', icon: LayoutDashboard, roles: ['Admin'] },
-  { href: '/spv', label: 'Dashboard', icon: LayoutDashboard, roles: ['SPV'] },
-  { href: '/sales', label: 'Dashboard', icon: LayoutDashboard, roles: ['Sales'] },
-  { href: '/admin/users', label: 'Users', icon: Users, roles: ['Admin'] },
-  { href: '/admin/projects', label: 'Projects', icon: Briefcase, roles: ['Admin'] },
-  { href: '/admin/reports', label: 'Reports', icon: ClipboardList, roles: ['Admin'] },
-  { href: '/spv/team', label: 'My Team', icon: UsersRound, roles: ['SPV'] },
+  { href: '/admin', label: 'Dasbor', icon: LayoutDashboard, roles: ['Admin'] },
+  { href: '/spv', label: 'Dasbor', icon: LayoutDashboard, roles: ['SPV'] },
+  { href: '/sales', label: 'Dasbor', icon: LayoutDashboard, roles: ['Sales'] },
+  { href: '/admin/users', label: 'Pengguna', icon: Users, roles: ['Admin'] },
+  { href: '/admin/projects', label: 'Proyek', icon: Briefcase, roles: ['Admin'] },
+  { href: '/admin/reports', label: 'Laporan', icon: ClipboardList, roles: ['Admin'] },
+  { href: '/spv/team', label: 'Tim Saya', icon: UsersRound, roles: ['SPV'] },
 ];
 
 const bottomNavItems = [
-    { href: '/settings', label: 'Settings', icon: Settings, roles: ['Admin', 'SPV', 'Sales'] as const },
+    { href: '/settings', label: 'Pengaturan', icon: Settings, roles: ['Admin', 'SPV', 'Sales'] as const },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -78,7 +78,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <div className="flex flex-col items-center gap-4">
                 <AppLogo />
                 <div className="space-y-2 text-center mt-4">
-                    <p className="text-muted-foreground">Loading your dashboard...</p>
+                    <p className="text-muted-foreground">Memuat dasbor Anda...</p>
                     <Skeleton className="h-4 w-[250px] mx-auto" />
                     <Skeleton className="h-4 w-[200px] mx-auto" />
                 </div>
@@ -129,9 +129,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                </SidebarMenuItem>
             ))}
              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout} tooltip="Logout">
+                <SidebarMenuButton onClick={handleLogout} tooltip="Keluar">
                     <LogOut />
-                    <span>Logout</span>
+                    <span>Keluar</span>
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

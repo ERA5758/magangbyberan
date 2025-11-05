@@ -64,7 +64,7 @@ const formatValue = (value: any, key?: string): string => {
     try {
       return format(value.toDate(), "dd-MM-yyyy");
     } catch (e) {
-      return "Invalid Date";
+      return "Tanggal Tidak Valid";
     }
   }
 
@@ -96,7 +96,7 @@ const formatValue = (value: any, key?: string): string => {
     return value.toLocaleString("id-ID");
   }
   if (typeof value === "boolean") {
-    return value ? "Yes" : "No";
+    return value ? "Ya" : "Tidak";
   }
 
   return String(value);
@@ -183,7 +183,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
             setReports([]);
           }
           if(direction !== 'first') {
-            setPage(page); // stay on the current page if no results on next/prev
+            setPage(page);
           }
         }
       }
@@ -249,11 +249,11 @@ function FilteredReportsTable({ project }: { project: Project }) {
     <>
       {(!loading && reports.length === 0) ? (
          <p className="text-center text-muted-foreground py-8">
-            No reports found for the selected criteria.
+            Tidak ada laporan yang ditemukan untuk kriteria yang dipilih.
         </p>
       ) : !project.reportHeaders || project.reportHeaders.length === 0 ? (
         <p className="text-center text-muted-foreground py-8">
-            Report headers are not configured for this project. Please configure them in the project settings.
+            Header laporan belum dikonfigurasi untuk proyek ini. Harap konfigurasikan di pengaturan proyek.
         </p>
       ) : (
         <>
@@ -273,7 +273,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
                 {loading ? (
                     <TableRow>
                         <TableCell colSpan={headers.length + 1} className="h-24 text-center">
-                            Loading...
+                            Memuat...
                         </TableCell>
                     </TableRow>
                 ) : (
@@ -298,7 +298,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
 
           <div className="flex items-center justify-end space-x-4 py-4">
               <span className="text-sm text-muted-foreground">
-                Page {page} of {Math.ceil(totalCount / PAGE_SIZE)} (Total: {totalCount.toLocaleString()} reports)
+                Halaman {page} dari {Math.ceil(totalCount / PAGE_SIZE)} (Total: {totalCount.toLocaleString()} laporan)
               </span>
               <div className="flex items-center space-x-2">
                 <Button
@@ -308,7 +308,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
                     disabled={page === 1 || loading}
                 >
                     <ChevronLeft className="h-4 w-4 mr-2" />
-                    Previous
+                    Sebelumnya
                 </Button>
                 <Button
                     variant="outline"
@@ -316,7 +316,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
                     onClick={handleNextPage}
                     disabled={reports.length < PAGE_SIZE || loading}
                 >
-                    Next
+                    Berikutnya
                     <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
               </div>
@@ -331,9 +331,9 @@ function FilteredReportsTable({ project }: { project: Project }) {
       >
         <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Report Detail</DialogTitle>
+            <DialogTitle>Detail Laporan</DialogTitle>
             <DialogDescription>
-              Details for report ID:{" "}
+              Detail untuk laporan ID:{" "}
               {selectedReport?.["ID UNIK"] || selectedReport?.id}
             </DialogDescription>
           </DialogHeader>
@@ -382,8 +382,8 @@ export default function ReportsPage() {
     return (
       <div className="space-y-8">
         <PageHeader
-          title="Project Reports"
-          description="View reports filtered by project."
+          title="Laporan Proyek"
+          description="Lihat laporan yang difilter berdasarkan proyek."
         />
         <div className="space-y-4">
           <Skeleton className="h-10 w-1/3" />
@@ -408,16 +408,16 @@ export default function ReportsPage() {
     return (
       <div className="space-y-8">
         <PageHeader
-          title="Project Reports"
-          description="View reports filtered by project."
+          title="Laporan Proyek"
+          description="Lihat laporan yang difilter berdasarkan proyek."
         />
         <Card>
           <CardHeader>
-            <CardTitle>No Active Projects Found</CardTitle>
+            <CardTitle>Tidak Ada Proyek Aktif Ditemukan</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground py-8">
-              There are no active projects to display reports for.
+              Tidak ada proyek aktif untuk menampilkan laporan.
             </p>
           </CardContent>
         </Card>
@@ -428,8 +428,8 @@ export default function ReportsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Project Reports"
-        description="View reports filtered by project."
+        title="Laporan Proyek"
+        description="Lihat laporan yang difilter berdasarkan proyek."
       />
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList>
@@ -449,11 +449,10 @@ export default function ReportsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>
-                  Reports for {project.name.toUpperCase().replace(/_/g, " ")}
+                  Laporan untuk {project.name.toUpperCase().replace(/_/g, " ")}
                 </CardTitle>
                 <CardDescription>
-                  Displaying reports for{" "}
-                  {project.name.toUpperCase().replace(/_/g, " ")}
+                  Menampilkan laporan untuk {project.name.toUpperCase().replace(/_/g, " ")}
                 </CardDescription>
               </CardHeader>
               <CardContent>

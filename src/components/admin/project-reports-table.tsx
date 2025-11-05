@@ -29,7 +29,7 @@ const formatValue = (value: any): string => {
         try {
             return format(value.toDate(), 'dd/MM/yyyy');
         } catch (e) {
-            return 'Invalid Date';
+            return 'Tanggal Tidak Valid';
         }
     }
 
@@ -40,7 +40,6 @@ const formatValue = (value: any): string => {
             }
             const dateWithSlashes = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
             if (dateWithSlashes) {
-                // Attempt to parse M/d/yyyy or d/M/yyyy
                 const d = new Date(value);
                 if (!isNaN(d.getTime())) {
                     return format(d, 'dd/MM/yyyy');
@@ -55,7 +54,7 @@ const formatValue = (value: any): string => {
         return value.toLocaleString('id-ID');
     }
     if (typeof value === 'boolean') {
-        return value ? 'Yes' : 'No';
+        return value ? 'Ya' : 'Tidak';
     }
     
     return String(value);
@@ -76,7 +75,6 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Fetch project to get headers
                 const projectRef = doc(firestore, "projects", projectId);
                 const projectSnap = await getDoc(projectRef);
 
@@ -85,14 +83,12 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                     fetchedProject = { id: projectSnap.id, ...projectSnap.data() } as Project;
                     setProject(fetchedProject);
                 } else {
-                    // If project doesn't exist, we can't fetch reports for it.
                     setProject(null);
                     setReports([]);
                     setLoading(false);
                     return;
                 }
 
-                // 2. Fetch reports for that project
                 const reportsQuery = query(
                   collection(firestore, "reports"),
                   where("projectId", "==", fetchedProject.name.toLowerCase().replace(/ /g, "_"))
@@ -130,15 +126,15 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
     }
 
     if (!project) {
-        return <p className="text-center text-muted-foreground py-8">Project configuration not found.</p>;
+        return <p className="text-center text-muted-foreground py-8">Konfigurasi proyek tidak ditemukan.</p>;
     }
     
     if (headers.length === 0) {
-         return <p className="text-center text-muted-foreground py-8">No report headers configured for this project. Please set them on the Projects page.</p>;
+         return <p className="text-center text-muted-foreground py-8">Tidak ada header laporan yang dikonfigurasi untuk proyek ini. Harap atur di halaman Proyek.</p>;
     }
 
     if (reports.length === 0) {
-         return <p className="text-center text-muted-foreground py-8">No reports found for this project.</p>;
+         return <p className="text-center text-muted-foreground py-8">Tidak ada laporan yang ditemukan untuk proyek ini.</p>;
     }
 
     return (

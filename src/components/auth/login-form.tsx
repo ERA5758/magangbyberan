@@ -26,8 +26,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { AppUser } from "@/hooks/use-current-user";
 
 const formSchema = z.object({
-  email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  email: z.string().email({ message: "Harap masukkan email yang valid." }),
+  password: z.string().min(1, { message: "Kata sandi harus diisi." }),
 });
 
 export function LoginForm() {
@@ -51,8 +51,8 @@ export function LoginForm() {
     if (!auth || !firestore) {
       toast({
         variant: "destructive",
-        title: "Firebase not initialized",
-        description: "Firebase is not ready, please try again later.",
+        title: "Firebase tidak terinisialisasi",
+        description: "Firebase belum siap, harap coba lagi nanti.",
       });
       setIsLoading(false);
       return;
@@ -70,11 +70,10 @@ export function LoginForm() {
         const userRole = userData.role; 
 
         toast({
-            title: "Login Successful",
-            description: `Welcome back, ${userData.name}! Redirecting...`,
+            title: "Login Berhasil",
+            description: `Selamat datang kembali, ${userData.name}! Mengalihkan...`,
         });
         
-        // Redirect based on role
         switch (userRole) {
           case 'Admin':
             router.push('/admin');
@@ -86,38 +85,36 @@ export function LoginForm() {
             router.push('/sales');
             break;
           default:
-             // Default redirect if role is not defined, though it shouldn't happen with correct data.
             toast({
               variant: "destructive",
-              title: "Role not found",
-              description: "User role is not defined. Please contact support.",
+              title: "Peran tidak ditemukan",
+              description: "Peran pengguna tidak ditentukan. Harap hubungi dukungan.",
             });
             await auth.signOut();
             router.push('/login');
         }
 
       } else {
-        // This case should ideally not happen if user creation is handled correctly
         await auth.signOut();
-        throw new Error("User data not found in Firestore. Please contact support.");
+        throw new Error("Data pengguna tidak ditemukan. Harap hubungi dukungan.");
       }
     } catch (error: any) {
       console.error("Login Error:", error);
-      let description = "An unexpected error occurred. Please try again.";
+      let description = "Terjadi kesalahan tak terduga. Silakan coba lagi.";
       if (error.code) {
         switch (error.code) {
           case AuthErrorCodes.INVALID_CREDENTIAL:
           case "auth/user-not-found":
           case "auth/wrong-password":
-            description = "Invalid email or password. Please check your credentials and try again.";
+            description = "Email atau kata sandi tidak valid. Harap periksa kembali dan coba lagi.";
             break;
           default:
-            description = `An error occurred: ${error.message}`;
+            description = `Terjadi kesalahan: ${error.message}`;
         }
       }
       toast({
         variant: "destructive",
-        title: "Login Failed",
+        title: "Login Gagal",
         description: description,
       });
     } finally {
@@ -128,9 +125,9 @@ export function LoginForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Welcome Back</CardTitle>
+        <CardTitle className="text-2xl">Selamat Datang Kembali</CardTitle>
         <p className="text-sm text-muted-foreground pt-2">Bangun Karier, Mulai Dari Magang</p>
-        <CardDescription>Enter your credentials to access your dashboard.</CardDescription>
+        <CardDescription>Masukkan kredensial Anda untuk mengakses dasbor.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -142,7 +139,7 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="name@example.com" {...field} />
+                    <Input placeholder="nama@contoh.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -153,7 +150,7 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Kata Sandi</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Input type={showPassword ? 'text' : 'password'} placeholder="••••••••" {...field} />
@@ -174,7 +171,7 @@ export function LoginForm() {
             />
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Sign In
+              Masuk
             </Button>
           </form>
         </Form>

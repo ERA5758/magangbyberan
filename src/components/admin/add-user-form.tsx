@@ -116,8 +116,8 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     if (!auth || !firestore) {
       toast({
         variant: 'destructive',
-        title: 'Firebase not initialized',
-        description: 'Firebase is not ready, please try again later.',
+        title: 'Firebase tidak terinisialisasi',
+        description: 'Firebase belum siap, silakan coba lagi nanti.',
       });
       setIsLoading(false);
       return;
@@ -128,9 +128,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             .filter(p => p.assigned)
             .map(p => {
                 if (!p.salesCode) {
-                    // This is now a form-level error, handled by Zod if we make salesCode required when assigned is true.
-                    // For now, let's throw to prevent submission.
-                    throw new Error(`Sales code for project ${p.projectName} is required.`);
+                    throw new Error(`Kode sales untuk proyek ${p.projectName} harus diisi.`);
                 }
                 return {
                     projectId: p.projectId,
@@ -141,18 +139,16 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         if (values.role === 'Sales' && assignedProjects.length === 0) {
             toast({
                 variant: 'destructive',
-                title: 'Project Assignment Required',
-                description: 'Please assign at least one project and provide a sales code.',
+                title: 'Penugasan Proyek Diperlukan',
+                description: 'Harap tetapkan setidaknya satu proyek dan berikan kode sales.',
             });
             setIsLoading(false);
             return;
         }
 
-      // 1. Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
       const user = userCredential.user;
 
-      // 2. ONLY if Auth creation is successful, create user document in Firestore
       const userDocRef = doc(firestore, 'users', user.uid);
       
       const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
@@ -200,7 +196,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             description = 'Format alamat email tidak valid.';
             break;
           default:
-            description = error.message || `Terjadi galat: ${error.message}`;
+            description = error.message || `Terjadi galat: ${error.code}`;
         }
       } else {
         description = error.message || description;
@@ -298,7 +294,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
             name="supervisorId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Pilih supervisor</FormLabel>
+                <FormLabel>Pilih Supervisor</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!supervisors || supervisors.length === 0}>
                   <FormControl>
                     <SelectTrigger>
@@ -398,11 +394,11 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         {role === 'Sales' && (
           <Card>
             <CardHeader>
-              <CardTitle>Project Assignments</CardTitle>
-              <CardDescription>Select projects and assign a unique sales code for each.</CardDescription>
+              <CardTitle>Penugasan Proyek</CardTitle>
+              <CardDescription>Pilih proyek dan tetapkan kode sales unik untuk masing-masing.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {projectsLoading ? <p>Loading projects...</p> : 
+              {projectsLoading ? <p>Memuat proyek...</p> : 
                 fields.map((item, index) => {
                   const isChecked = form.watch(`projectAssignments.${index}.assigned`);
                   return (
@@ -430,7 +426,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
                       render={({ field }) => (
                         <FormItem className="flex-1 w-full">
                           <FormControl>
-                            <Input placeholder="Enter Sales Code" {...field} disabled={!isChecked} />
+                            <Input placeholder="Masukkan Kode Sales" {...field} disabled={!isChecked} />
                           </FormControl>
                            <FormMessage />
                         </FormItem>

@@ -58,7 +58,7 @@ export function UsersTable() {
 
 
     if (loading) {
-        return <div>Loading users...</div>
+        return <div>Memuat pengguna...</div>
     }
 
     return (
@@ -68,7 +68,7 @@ export function UsersTable() {
                     <DialogTrigger asChild>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Add User
+                            Tambah Pengguna
                         </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-[425px] md:max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -87,11 +87,11 @@ export function UsersTable() {
                     <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px]">No.</TableHead>
-                        <TableHead>User</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead className="hidden md:table-cell">Projects & Sales Codes</TableHead>
+                        <TableHead>Pengguna</TableHead>
+                        <TableHead>Peran</TableHead>
+                        <TableHead className="hidden md:table-cell">Proyek & Kode Sales</TableHead>
                         <TableHead>
-                        <span className="sr-only">Actions</span>
+                        <span className="sr-only">Aksi</span>
                         </TableHead>
                     </TableRow>
                     </TableHeader>
@@ -126,13 +126,13 @@ export function UsersTable() {
                                 <DropdownMenuTrigger asChild>
                                     <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
+                                    <span className="sr-only">Buka menu</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>Edit</DropdownMenuItem>
-                                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                                    <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                    <DropdownMenuItem>Ubah</DropdownMenuItem>
+                                    <DropdownMenuItem>Hapus</DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
@@ -144,5 +144,3 @@ export function UsersTable() {
         </div>
     )
 }
-
-    
