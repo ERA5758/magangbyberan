@@ -46,13 +46,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -110,17 +104,14 @@ const formatValue = (value: any, key?: string): string => {
 
 const PAGE_SIZE = 50;
 
-const months = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
-];
-
 function FilteredReportsTable({ project }: { project: Project }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
+  
+  const [tlFilterInput, setTlFilterInput] = useState("");
+  const [activeTlFilter, setActiveTlFilter] = useState("");
 
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -142,8 +133,8 @@ function FilteredReportsTable({ project }: { project: Project }) {
         where("projectId", "==", projectId),
       ];
 
-      if (projectId === 'btn' && selectedMonth && selectedMonth !== 'all') {
-        queryConstraints.push(where("input_laporan", "==", selectedMonth));
+      if (projectId === 'btn' && activeTlFilter) {
+        queryConstraints.push(where("team_leader", "==", activeTlFilter));
       }
       
       let reportsQuery;
@@ -199,13 +190,13 @@ function FilteredReportsTable({ project }: { project: Project }) {
   
   useEffect(() => {
     isMountedRef.current = true;
-    // Reset state when project changes
     setReports([]);
     setLoading(true);
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
-    setSelectedMonth("all");
+    setTlFilterInput("");
+    setActiveTlFilter("");
     fetchReports("first");
     
     return () => {
@@ -214,18 +205,19 @@ function FilteredReportsTable({ project }: { project: Project }) {
   }, [project, firestore]);
   
   useEffect(() => {
-    // Re-fetch when month changes, but not on initial render if project is the same
-    if (!loading) {
-      setPage(1);
-      setLastVisible(null);
-      setFirstVisible(null);
-      fetchReports("first");
-    }
-  }, [selectedMonth]);
+    setPage(1);
+    setLastVisible(null);
+    setFirstVisible(null);
+    fetchReports("first");
+  }, [activeTlFilter]);
 
-
-  const handleMonthChange = (month: string) => {
-    setSelectedMonth(month);
+  const handleApplyFilter = () => {
+    setActiveTlFilter(tlFilterInput);
+  };
+  
+  const handleResetFilter = () => {
+    setTlFilterInput("");
+    setActiveTlFilter("");
   };
   
   const handleNextPage = () => {
@@ -263,18 +255,15 @@ function FilteredReportsTable({ project }: { project: Project }) {
   return (
     <>
       {projectId === 'btn' && (
-        <div className="flex justify-start mb-4">
-          <Select onValueChange={handleMonthChange} value={selectedMonth}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Filter by Month" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Months</SelectItem>
-              {months.map(month => (
-                <SelectItem key={month} value={month}>{month}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2 mb-4">
+          <Input 
+            placeholder="Filter by Team Leader..."
+            value={tlFilterInput}
+            onChange={(e) => setTlFilterInput(e.target.value)}
+            className="w-[240px]"
+          />
+          <Button onClick={handleApplyFilter}>Filter</Button>
+          <Button onClick={handleResetFilter} variant="outline">Reset</Button>
         </div>
       )}
       
@@ -495,3 +484,5 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    
