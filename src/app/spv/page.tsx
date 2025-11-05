@@ -9,8 +9,8 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection, query, where } from "firebase/firestore";
@@ -18,6 +18,7 @@ import type { Sale, AppUser, Project, Report } from "@/lib/types";
 import { useMemo } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TeamPerformanceChart } from "@/components/spv/team-performance-chart";
 
 export default function SpvDashboard() {
   const { user, loading: userLoading } = useCurrentUser();
@@ -68,13 +69,12 @@ export default function SpvDashboard() {
 
   const loading = userLoading || teamLoading || reportsLoading || projectsLoading;
 
-  const { totalCommission, teamSalesForChart, salesByProject } = useMemo(() => {
-    if (!teamReports || !projects) {
-      return { totalCommission: 0, teamSalesForChart: [], salesByProject: [] };
+  const { totalCommission, salesByProject, teamPerformanceData } = useMemo(() => {
+    if (!teamReports || !projects || !teamMembers) {
+      return { totalCommission: 0, salesByProject: [], teamPerformanceData: [] };
     }
 
     let totalCommission = 0;
-    const teamSalesForChart: Sale[] = [];
     
     const salesByProject = projects.map(project => {
         const projectIdentifier = project.name.toLowerCase().replace(/ /g, '_');
@@ -90,18 +90,27 @@ export default function SpvDashboard() {
       if (project && project.feeSpv) {
         totalCommission += project.feeSpv;
       }
-      // Create a Sale-like object for the chart
-      teamSalesForChart.push({
-        id: report.id,
-        amount: project?.feeSpv || 0,
-        date: report.createdAt, // Assuming createdAt is available and is a timestamp
-        salesCode: report["Sales Code"],
-        projectName: project?.name || report.projectId,
-      });
     });
 
-    return { totalCommission, teamSalesForChart, salesByProject };
-  }, [teamReports, projects]);
+    const teamPerformanceData = teamMembers.map(member => {
+      const memberSalesCodes = member.projectAssignments?.map(pa => pa.salesCode) || [];
+      if(member.salesCode) memberSalesCodes.push(member.salesCode);
+
+      const memberReports = teamReports.filter(report => memberSalesCodes.includes(report["Sales Code"]));
+      const memberIncome = memberReports.reduce((acc, report) => {
+        const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
+        return acc + (project?.feeSales || 0);
+      }, 0);
+
+      return {
+        name: member.name.split(' ')[0], // Use first name for chart label
+        reports: memberReports.length,
+        income: memberIncome,
+      }
+    });
+
+    return { totalCommission, salesByProject, teamPerformanceData };
+  }, [teamReports, projects, teamMembers]);
   
 
   if (loading || !user) {
@@ -154,12 +163,13 @@ export default function SpvDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-8">
-        <Card className="lg:col-span-2">
+        <Card>
             <CardHeader>
-                <CardTitle>Tren Penjualan Mingguan</CardTitle>
+                <CardTitle>Performa Tim Penjualan</CardTitle>
+                <CardDescription>Jumlah laporan dan total pendapatan per anggota tim.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PerformanceChart sales={teamSalesForChart} />
+                <TeamPerformanceChart data={teamPerformanceData} />
             </CardContent>
         </Card>
       </div>
