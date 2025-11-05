@@ -1,31 +1,20 @@
 {
-  "theme_color": "#FF0000",
-  "background_color": "#FF0000",
-  "display": "standalone",
-  "scope": "/",
-  "start_url": "/",
-  "name": "Magang By Beran",
+  "name": "Magang By BERAN",
   "short_name": "Magang",
-  "description": "Bangun Karier, Mulai Dari Magang",
+  "description": "Platform Agregasi Data Penjualan",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FF0000",
   "icons": [
     {
-      "src": "/icon-192x192.png",
-      "sizes": "192x192",
-      "type": "image/png"
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     },
     {
-      "src": "/icon-256x256.png",
-      "sizes": "256x256",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-384x384.png",
-      "sizes": "384x384",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512x512.png",
-      "sizes": "512x512",
+      "src": "/icon.png",
+      "sizes": "32x32",
       "type": "image/png"
     }
   ]

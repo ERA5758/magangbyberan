@@ -9,7 +9,6 @@ import { collection, query, where } from "firebase/firestore";
 import { DollarSign, Hash, BarChart, Loader2, RefreshCw, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { RecentSales } from "@/components/sales/recent-sales";
 import { PerformanceChart } from "@/components/dashboard/performance-chart";
 import {
   Card,
@@ -22,10 +21,11 @@ import { useToast } from "@/hooks/use-toast";
 import type { Report, AppUser, Project } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 
 
 export default function SalesDashboard() {
-  const { user, loading } = useCurrentUser();
+  const { user, loading: userLoading } = useCurrentUser();
   const { toast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const firestore = useFirestore();
@@ -46,20 +46,16 @@ export default function SalesDashboard() {
   , [user, userSalesCodes, firestore]);
   const { data: myReports, loading: reportsLoading } = useCollection<Report>(myReportsQuery);
 
-  const allSalespersonsQuery = useMemo(() => 
-    firestore ? query(collection(firestore, "users"), where("role", "==", "Sales")) : null
-  , [firestore]);
-  const { data: allSalespersons, loading: usersLoading } = useCollection<AppUser>(allSalespersonsQuery);
-  
-  const allReportsQuery = useMemo(() => 
-    firestore ? collection(firestore, "reports") : null
-  , [firestore]);
-  const { data: allReports, loading: allReportsLoading } = useCollection<Report>(allReportsQuery);
+  const assignedProjectIds = useMemo(() => {
+    if (!user?.projectAssignments) return [];
+    return user.projectAssignments.map(pa => pa.projectId);
+  }, [user]);
 
-  const projectsQuery = useMemo(() => 
-    firestore ? collection(firestore, "projects") : null
-  , [firestore]);
-  const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsQuery);
+  const projectsQuery = useMemo(
+    () => (firestore && assignedProjectIds.length > 0 ? query(collection(firestore, "projects"), where("status", "==", "Aktif"), where("__name__", "in", assignedProjectIds)) : null),
+    [firestore, assignedProjectIds]
+  );
+  const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);
 
 
   const handleRefresh = async () => {
@@ -79,46 +75,49 @@ export default function SalesDashboard() {
     });
   };
 
-  const { myTotalIncome, myRank, reportsByProject } = useMemo(() => {
-    if (loading || reportsLoading || usersLoading || allReportsLoading || projectsLoading || !user || !myReports || !allSalespersons || !allReports || !projects) {
-        return { myTotalIncome: 0, myRank: 0, reportsByProject: [] };
+  const { myTotalIncome, reportsByProject } = useMemo(() => {
+    if (userLoading || reportsLoading || projectsLoading || !user || !myReports || !projects) {
+        return { myTotalIncome: 0, reportsByProject: [] };
     }
-
-    const calculateIncome = (reports: Report[], targetUser: AppUser) => {
-        const targetSalesCodes = targetUser.projectAssignments?.map(pa => pa.salesCode) || [];
-        if (targetUser.salesCode) targetSalesCodes.push(targetUser.salesCode);
-        
-        const userReports = reports.filter(r => targetSalesCodes.includes(r['Sales Code']));
-        return userReports.reduce((acc, report) => {
-            const project = projects.find(p => p.name.toLowerCase().replace(/ /g, '_') === report.projectId);
-            return acc + (project?.feeSales || 0);
-        }, 0);
-    };
-
-    const myTotalIncome = calculateIncome(allReports, user);
-
-    const allIncomes = allSalespersons.map(salesperson => calculateIncome(allReports, salesperson)).sort((a, b) => b - a);
-    const myRank = myTotalIncome > 0 ? allIncomes.indexOf(myTotalIncome) + 1 : 0;
     
-    const userProjectIds = user.projectAssignments?.map(pa => pa.projectId) || [];
-    const myProjects = projects.filter(p => userProjectIds.includes(p.id));
+    const projectFees: Record<string, number> = {};
+    projects.forEach(p => {
+        projectFees[p.name.toLowerCase().replace(/ /g, '_')] = p.feeSales || 0;
+    });
 
-    const reportsByProject = myProjects.map(project => {
+    const myTotalIncome = myReports.reduce((acc, report) => {
+        return acc + (projectFees[report.projectId] || 0);
+    }, 0);
+    
+    const reportsCountByProject: Record<string, number> = {};
+    myReports.forEach(report => {
+        reportsCountByProject[report.projectId] = (reportsCountByProject[report.projectId] || 0) + 1;
+    });
+
+    const reportsByProject = projects.map(project => {
         const projectIdentifier = project.name.toLowerCase().replace(/ /g, '_');
-        const projectReportsCount = myReports.filter(report => report.projectId === projectIdentifier).length;
         return {
-          ...project,
-          reportCount: projectReportsCount,
+          id: project.id,
+          name: project.name,
+          reportCount: reportsCountByProject[projectIdentifier] || 0,
         };
       }).filter(p => p.reportCount > 0);
 
-    return { myTotalIncome, myRank, reportsByProject };
+    return { myTotalIncome, reportsByProject };
 
-  }, [loading, reportsLoading, usersLoading, allReportsLoading, projectsLoading, user, myReports, allSalespersons, allReports, projects]);
+  }, [userLoading, reportsLoading, projectsLoading, user, myReports, projects]);
 
+  const isLoading = userLoading || reportsLoading || projectsLoading;
 
-  if (loading || reportsLoading || usersLoading || allReportsLoading || projectsLoading || !user) {
-    return <div>Memuat...</div>;
+  if (isLoading || !user) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center bg-background">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Memuat dasbor Anda...</p>
+          </div>
+        </div>
+    );
   }
   
   return (
@@ -137,7 +136,7 @@ export default function SalesDashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Total Pendapatan Saya"
-          value={formatCurrency(myTotalIncome)}
+          value={isLoading ? <Skeleton className="h-8 w-28" /> : formatCurrency(myTotalIncome)}
           icon={DollarSign}
           description="Total pendapatan Anda bulan ini"
         />
@@ -146,7 +145,7 @@ export default function SalesDashboard() {
                 <CardTitle className="text-base">Laporan per Proyek</CardTitle>
             </CardHeader>
             <CardContent>
-            {(loading || reportsLoading || projectsLoading) ? <Skeleton className="h-10 w-full" /> : (
+            {isLoading ? <Skeleton className="h-10 w-full" /> : (
               reportsByProject.length > 0 ? (
                 <div className="space-y-2">
                   {reportsByProject.map(project => (
@@ -174,7 +173,13 @@ export default function SalesDashboard() {
                 <CardDescription>Tren laporan Anda selama seminggu terakhir.</CardDescription>
             </CardHeader>
             <CardContent>
-                <PerformanceChart reports={myReports} />
+                {isLoading ? (
+                    <div className="w-full h-[200px] flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                ) : (
+                    <PerformanceChart reports={myReports} />
+                )}
             </CardContent>
         </Card>
       </div>

@@ -3,7 +3,7 @@
 
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { useCollection, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Users, Briefcase } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import type { AppUser, Project } from '@/lib/types';
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectSalesSummary } from "@/components/admin/project-sales-summary";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -24,8 +25,8 @@ export default function AdminDashboard() {
   const usersCollection = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
   const projectsCollection = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
 
-  const { data: users, loading: usersLoading } = useCollection<AppUser>(usersCollection);
-  const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsCollection);
+  const { data: users, loading: usersLoading } = useCollectionOnce<AppUser>(usersCollection);
+  const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsCollection);
 
   const isLoading = usersLoading || projectsLoading;
 
