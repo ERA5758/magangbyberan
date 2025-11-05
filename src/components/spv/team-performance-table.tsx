@@ -109,8 +109,6 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                     <TableHead>Tenaga Penjualan</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Jumlah Penjualan</TableHead>
-                    <TableHead>Total Penjualan</TableHead>
-                    <TableHead className="hidden md:table-cell">Progres Target</TableHead>
                     <TableHead>
                     <span className="sr-only">Aksi</span>
                     </TableHead>
@@ -136,13 +134,6 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                             <Badge variant={getStatusBadgeVariant(data.status)}>{data.status}</Badge>
                         </TableCell>
                         <TableCell className="text-center">{data.salesCount}</TableCell>
-                        <TableCell className="font-medium">${data.totalSales.toLocaleString()}</TableCell>
-                        <TableCell className="hidden md:table-cell">
-                            <div className="flex items-center gap-2">
-                                <Progress value={(data.totalSales / data.salesTarget) * 100} className="h-2" />
-                                <span className="text-xs text-muted-foreground">{Math.round((data.totalSales / data.salesTarget) * 100)}%</span>
-                            </div>
-                        </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
