@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useCollection, useDoc, useFirestore } from "@/firebase";
-import { collection, doc, Timestamp, query, where } from "firebase/firestore";
+import { collection, doc, Timestamp, query } from "firebase/firestore";
 import type { Report, Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -64,9 +64,9 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
 
     const reportsQuery = useMemo(() => {
         if (!firestore) return null;
-        // Construct a query to filter reports by the BANK field, matching the projectId
+        // Correctly query the sub-collection 'reports' inside the specific project document.
         const reportsCollectionRef = collection(firestore, "projects", projectId, "reports");
-        return query(reportsCollectionRef); // No filter needed if we are already in the subcollection. The previous logic was wrong.
+        return query(reportsCollectionRef); 
     }, [firestore, projectId]);
     
     const { data: reports, loading: reportsLoading } = useCollection<Report>(reportsQuery);
