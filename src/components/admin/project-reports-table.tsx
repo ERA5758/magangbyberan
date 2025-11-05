@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -10,11 +10,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useFirestore } from "@/firebase";
-import { useDoc } from "@/firebase/firestore/use-doc";
-import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { collection, doc, Timestamp, query } from "firebase/firestore";
-import type { Project } from "@/lib/types";
+import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
+import type { Project, Report } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -58,19 +57,48 @@ const formatValue = (value: any): string => {
 
 export function ProjectReportsTable({ projectId }: { projectId: string }) {
     const firestore = useFirestore();
+    const [project, setProject] = useState<Project | null>(null);
+    const [reports, setReports] = useState<Report[]>([]);
+    const [loading, setLoading] = useState(true);
     
-    const projectRef = useMemo(() => 
-        firestore ? doc(firestore, "projects", projectId) : null
-    , [firestore, projectId]);
-    const { data: project, loading: projectLoading } = useDoc<Project>(projectRef);
+    useEffect(() => {
+        if (!firestore || !projectId) return;
 
-    const reportsQuery = useMemo(() => {
-        if (!firestore) return null;
-        const reportsCollectionRef = collection(firestore, "projects", projectId, "reports");
-        return query(reportsCollectionRef); 
+        const fetchData = async () => {
+            setLoading(true);
+            try {
+                // 1. Fetch project document to get headers
+                const projectRef = doc(firestore, "projects", projectId);
+                const projectSnap = await getDoc(projectRef);
+
+                if (!projectSnap.exists()) {
+                    setProject(null);
+                    setReports([]);
+                    return;
+                }
+                
+                const projectData = { id: projectSnap.id, ...projectSnap.data() } as Project;
+                setProject(projectData);
+
+                // 2. Fetch reports subcollection
+                const reportsRef = collection(firestore, "projects", projectId, "reports");
+                const reportsQuery = query(reportsRef);
+                const reportsSnap = await getDocs(reportsQuery);
+                
+                const reportsData = reportsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Report[];
+                setReports(reportsData);
+
+            } catch (error) {
+                console.error("Error fetching project data:", error);
+                setProject(null);
+                setReports([]);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchData();
     }, [firestore, projectId]);
-    
-    const { data: reports, loading: reportsLoading } = useCollectionOnce<{[key: string]: any}>(reportsQuery);
 
     const headers = useMemo(() => {
         if (project?.reportHeaders && project.reportHeaders.length > 0) {
@@ -90,9 +118,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         return [];
     }, [project, reports]);
 
-    const isLoading = projectLoading || reportsLoading;
-
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="space-y-2 mt-4">
                 <Skeleton className="h-8 w-full" />
