@@ -14,6 +14,7 @@ import { useCollection, useDoc, useFirestore } from "@/firebase";
 import { collection, doc, Timestamp, query } from "firebase/firestore";
 import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format } from "date-fns";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -37,24 +38,26 @@ const formatValue = (value: any): string => {
     if (isFirestoreTimestamp(value)) {
         return formatDate(value.toDate());
     }
-    if (typeof value === 'string') {
-        // Test for 'M/D/YYYY' or 'MM/DD/YYYY' format
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
-            try {
-                // Firestore timestamps from strings are often weird, parse manually
-                const parts = value.split('/');
-                const date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
-                return formatDate(date);
-            } catch (e) {
-                return value; // if parsing fails, return original string
-            }
+    // Check for string date format like "M/D/YYYY" or "MM/DD/YYYY"
+    if (typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+        try {
+            const parts = value.split('/');
+            // new Date(year, monthIndex, day)
+            const date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+            return formatDate(date);
+        } catch (e) {
+            // if parsing fails, return original string
+            return value;
         }
     }
     if (typeof value === 'number') {
         return value.toLocaleString('id-ID');
     }
+    if (typeof value === 'boolean') {
+      return value ? 'Yes' : 'No';
+    }
     return String(value);
-}
+};
 
 export function ProjectReportsTable({ projectId }: { projectId: string }) {
     const firestore = useFirestore();
@@ -70,17 +73,22 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         return query(reportsCollectionRef); 
     }, [firestore, projectId]);
     
-    // Explicitly type reports as an array of objects with any properties
     const { data: reports, loading: reportsLoading } = useCollection<{[key: string]: any}>(reportsQuery);
 
     const headers = useMemo(() => {
         if (project?.reportHeaders && project.reportHeaders.length > 0) {
             return project.reportHeaders;
         }
-        // If no headers are configured, try to dynamically generate from the first report
         if(reports && reports.length > 0) {
-            // Get all keys, but exclude ones we probably don't want to show
-            return Object.keys(reports[0]).filter(key => key !== 'id' && key !== 'lastSyncTimestamp');
+            const dynamicHeaders = new Set<string>();
+            reports.forEach(report => {
+                Object.keys(report).forEach(key => {
+                    if(key !== 'id' && key !== 'lastSyncTimestamp') { 
+                        dynamicHeaders.add(key);
+                    }
+                });
+            });
+            return Array.from(dynamicHeaders).sort();
         }
         return [];
     }, [project, reports]);
@@ -101,14 +109,13 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         return <p className="text-center text-muted-foreground py-8">Project configuration not found.</p>;
     }
     
-    if (headers.length === 0 && reports?.length === 0) {
+    if (headers.length === 0 && (!reports || reports.length === 0)) {
         return <p className="text-center text-muted-foreground py-8">No reports found and no headers configured for this project.</p>;
     }
     
     if (headers.length === 0) {
-         return <p className="text-center text-muted-foreground py-8">No report headers configured for this project. Please set them in the 'Projects' page.</p>;
+         return <p className="text-center text-muted-foreground py-8">No report headers configured for this project. Please set them on the Projects page.</p>;
     }
-
 
     return (
         <div className="rounded-md border">
@@ -116,7 +123,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                 <TableHeader>
                     <TableRow>
                         {headers.map(header => (
-                            <TableHead key={header}>{header}</TableHead>
+                            <TableHead key={header} className="capitalize">{header.replace(/_/g, ' ')}</TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>

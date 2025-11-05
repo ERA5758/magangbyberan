@@ -29,6 +29,7 @@ export type Sale = {
   date: string; // ISO 8601 format
 };
 
+// Report type is intentionally kept loose because the structure is dynamic
 export type Report = {
   id: string;
   [key: string]: any;
