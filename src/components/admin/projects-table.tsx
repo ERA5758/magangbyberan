@@ -141,8 +141,6 @@ export function ProjectsTable() {
                                     <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
                                         Edit Project
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>Assign Sales</DropdownMenuItem>
-                                    <DropdownMenuItem>Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
                             </TableCell>
