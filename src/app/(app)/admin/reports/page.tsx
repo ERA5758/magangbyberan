@@ -49,7 +49,8 @@ import {
 } from "@/components/ui/table";
 import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import AppLogo from "@/components/shared/app-logo";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === "function";
@@ -380,25 +381,14 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-8">
-        <PageHeader
-          title="Laporan Proyek"
-          description="Lihat laporan yang difilter berdasarkan proyek."
-        />
-        <div className="space-y-4">
-          <Skeleton className="h-10 w-1/3" />
-          <Card>
-            <CardHeader>
-              <Skeleton className="h-6 w-48" />
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-              </div>
-            </CardContent>
-          </Card>
+      <div className="flex h-[80vh] w-full items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4 text-center">
+            <div className="mb-4 flex flex-col items-center gap-2">
+              <AppLogo className="h-8 w-auto text-primary" />
+              <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
+            </div>
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Memuat laporan...</p>
         </div>
       </div>
     );

@@ -27,10 +27,10 @@ import {
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -75,13 +75,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4">
-                <AppLogo />
-                <div className="space-y-2 text-center mt-4">
-                    <p className="text-muted-foreground">Memuat dasbor Anda...</p>
-                    <Skeleton className="h-4 w-[250px] mx-auto" />
-                    <Skeleton className="h-4 w-[200px] mx-auto" />
+            <div className="flex flex-col items-center gap-4 text-center">
+                <div className="mb-4 flex flex-col items-center gap-2">
+                  <AppLogo className="h-8 w-auto text-primary" />
+                  <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
                 </div>
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Memuat dasbor Anda...</p>
             </div>
         </div>
     );
