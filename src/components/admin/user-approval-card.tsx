@@ -31,9 +31,11 @@ export function UserApprovalCard() {
   const pendingUsersQuery = useMemo(() =>
     firestore ? query(collection(firestore, 'users'), where('status', '==', 'Menunggu Persetujuan')) : null
   , [firestore]);
+  
+  const allUsersQuery = useMemo(() => firestore ? collection(firestore, 'users') : null, [firestore]);
 
   const { data: pendingUsers, loading, error, mutate } = useCollectionOnce<AppUser>(pendingUsersQuery);
-  const { data: allUsers } = useCollectionOnce<AppUser>(firestore ? collection(firestore, 'users') : null);
+  const { data: allUsers } = useCollectionOnce<AppUser>(allUsersQuery);
 
   const supervisors = useMemo(() => {
     if (!allUsers) return {};
