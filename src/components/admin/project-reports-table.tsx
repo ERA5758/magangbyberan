@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useFirestore } from "@/firebase";
-import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, Timestamp, query, where } from "firebase/firestore";
 import type { Project, Report } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from 'date-fns';
@@ -95,7 +95,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                 // 2. Fetch reports for that project
                 const reportsQuery = query(
                   collection(firestore, "reports"),
-                  where("projectId", "==", projectId)
+                  where("projectId", "==", fetchedProject.name.toLowerCase().replace(/ /g, "_"))
                 );
                 const reportsSnap = await getDocs(reportsQuery);
                 const reportsData = reportsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Report[];
@@ -146,14 +146,16 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[50px]">No.</TableHead>
                         {headers.map(header => (
                             <TableHead key={header} className="capitalize whitespace-nowrap">{header.replace(/_/g, ' ')}</TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {reports.map((report) => (
+                {reports.map((report, index) => (
                     <TableRow key={report.id} onClick={() => handleRowClick(report)} className="cursor-pointer">
+                        <TableCell>{index + 1}</TableCell>
                         {headers.map(header => (
                             <TableCell key={`${report.id}-${header}`}>
                                 {formatValue(report[header])}
@@ -166,3 +168,5 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         </div>
     );
 }
+
+    

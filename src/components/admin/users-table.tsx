@@ -86,6 +86,7 @@ export function UsersTable() {
                 <Table>
                     <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>User</TableHead>
                         <TableHead>Role</TableHead>
                         <TableHead className="hidden md:table-cell">Sales Code</TableHead>
@@ -95,8 +96,9 @@ export function UsersTable() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {users && users.map((user) => (
+                    {users && users.map((user, index) => (
                         <TableRow key={user.id} onClick={() => handleRowClick(user)} className="cursor-pointer">
+                            <TableCell>{index + 1}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>
@@ -136,3 +138,5 @@ export function UsersTable() {
         </div>
     )
 }
+
+    

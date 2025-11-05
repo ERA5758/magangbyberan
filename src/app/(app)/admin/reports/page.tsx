@@ -171,7 +171,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     setFirstVisible(null);
     setPage(1);
     fetchReports(projectId, "first");
-  }, [projectId]);
+  }, [projectId, firestore]);
 
 
   const handleNextPage = () => {
@@ -233,6 +233,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">No.</TableHead>
               {headers.map((header) => (
                 <TableHead key={header} className="capitalize whitespace-nowrap">
                   {header.replace(/_/g, " ")}
@@ -243,17 +244,18 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
           <TableBody>
             {loading ? (
                 <TableRow>
-                    <TableCell colSpan={headers.length} className="h-24 text-center">
+                    <TableCell colSpan={headers.length + 1} className="h-24 text-center">
                         Loading...
                     </TableCell>
                 </TableRow>
             ) : (
-                reports.map((report) => (
+                reports.map((report, index) => (
                   <TableRow
                     key={report.id}
                     onClick={() => handleRowClick(report)}
                     className="cursor-pointer"
                   >
+                    <TableCell>{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
                     {headers.map((header) => (
                       <TableCell key={`${report.id}-${header}`}>
                         {formatValue(report[header], header)}
@@ -432,5 +434,7 @@ export default function ReportsPage() {
     </div>
   );
 }
+
+    
 
     

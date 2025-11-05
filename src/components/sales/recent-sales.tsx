@@ -41,14 +41,16 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
             <Table>
                 <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Project</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead className="text-right">Date</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                {mySales && mySales.length > 0 ? mySales.map((sale) => (
+                {mySales && mySales.length > 0 ? mySales.map((sale, index) => (
                     <TableRow key={sale.id} onClick={() => handleRowClick(sale)} className="cursor-pointer">
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>
                             <div className="font-medium">{sale.projectName}</div>
                         </TableCell>
@@ -57,7 +59,7 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
                     </TableRow>
                 )) : (
                     <TableRow>
-                        <TableCell colSpan={3} className="text-center">
+                        <TableCell colSpan={4} className="text-center">
                             No recent sales found.
                         </TableCell>
                     </TableRow>
@@ -67,3 +69,5 @@ export function RecentSales({ salesCode }: { salesCode: string }) {
         </div>
     )
 }
+
+    

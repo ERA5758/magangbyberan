@@ -87,6 +87,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
             <Table>
                 <TableHeader>
                 <TableRow>
+                    <TableHead className="w-[50px]">No.</TableHead>
                     <TableHead>Salesperson</TableHead>
                     <TableHead>Sales Count</TableHead>
                     <TableHead>Total Sales</TableHead>
@@ -97,8 +98,9 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 </TableRow>
                 </TableHeader>
                 <TableBody>
-                {performanceData.map((data) => (
+                {performanceData.map((data, index) => (
                     <TableRow key={data.id} onClick={() => handleRowClick(data)} className="cursor-pointer">
+                        <TableCell>{index + 1}</TableCell>
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar>
@@ -141,3 +143,5 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         </div>
     )
 }
+
+    

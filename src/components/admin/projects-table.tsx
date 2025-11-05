@@ -87,6 +87,7 @@ export function ProjectsTable() {
                 <Table>
                     <TableHeader>
                     <TableRow>
+                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Project Name</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="hidden md:table-cell">Assigned Sales</TableHead>
@@ -97,8 +98,9 @@ export function ProjectsTable() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {projects && projects.map((project) => (
+                    {projects && projects.map((project, index) => (
                         <TableRow key={project.id} onClick={() => handleRowClick(project.id)} className="cursor-pointer">
+                            <TableCell>{index + 1}</TableCell>
                             <TableCell className="font-medium">{project.name}</TableCell>
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
@@ -136,3 +138,5 @@ export function ProjectsTable() {
         </div>
     )
 }
+
+    
