@@ -3,8 +3,6 @@
 
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { UsersTable } from "@/components/admin/users-table";
-import { ProjectsTable } from "@/components/admin/projects-table";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
 import { Users, Briefcase } from "lucide-react";
@@ -18,8 +16,6 @@ import {
 import type { AppUser, Project } from '@/lib/types';
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { ProjectSalesSummary } from "@/components/admin/project-sales-summary";
 
 export default function AdminDashboard() {
@@ -61,43 +57,6 @@ export default function AdminDashboard() {
           <ProjectSalesSummary />
         </CardContent>
       </Card>
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-            <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Manajemen Pengguna</CardTitle>
-                    <CardDescription>Lihat, tambah, atau kelola pengguna.</CardDescription>
-                </div>
-                <Button asChild size="sm">
-                    <Link href="/admin/users">Lihat Semua</Link>
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <UsersTable />
-            </CardContent>
-            </Card>
-        </div>
-        
-        <div className="lg:col-span-1">
-            <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Proyek</CardTitle>
-                    <CardDescription>Kelola semua proyek perusahaan.</CardDescription>
-                </div>
-                 <Button asChild size="sm">
-                    <Link href="/admin/projects">Lihat Semua</Link>
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <ProjectsTable />
-            </CardContent>
-            </Card>
-        </div>
-      </div>
     </div>
   );
 }
