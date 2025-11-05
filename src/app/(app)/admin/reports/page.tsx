@@ -18,6 +18,7 @@ import {
   limitToLast,
   doc,
   getDoc,
+  getCountFromServer,
 } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import {
@@ -114,9 +115,29 @@ function FilteredReportsTable({ project }: { project: Project }) {
   const [firstVisible, setFirstVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const isMountedRef = useRef(true);
   
   const projectId = project.name.toLowerCase().replace(/ /g, "_");
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    if (!firestore) return;
+
+    const fetchCount = async () => {
+      const countQuery = query(collection(firestore, "reports"), where("projectId", "==", projectId));
+      const snapshot = await getCountFromServer(countQuery);
+      if (isMountedRef.current) {
+        setTotalCount(snapshot.data().count);
+      }
+    }
+    fetchCount();
+
+    return () => {
+      isMountedRef.current = false;
+    }
+  }, [project, firestore, projectId]);
+
 
   const fetchReports = async (
     direction: "next" | "prev" | "first"
@@ -162,7 +183,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
             setReports([]);
           }
           if(direction !== 'first') {
-            setReports([]);
+            setPage(page); // stay on the current page if no results on next/prev
           }
         }
       }
@@ -275,26 +296,30 @@ function FilteredReportsTable({ project }: { project: Project }) {
             </Table>
           </div>
 
-          <div className="flex items-center justify-end space-x-2 py-4">
-              <span className="text-sm text-muted-foreground">Page {page}</span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handlePrevPage}
-                disabled={page === 1 || loading}
-              >
-                <ChevronLeft className="h-4 w-4 mr-2" />
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleNextPage}
-                disabled={reports.length < PAGE_SIZE || loading}
-              >
-                Next
-                <ChevronRight className="h-4 w-4 ml-2" />
-              </Button>
+          <div className="flex items-center justify-end space-x-4 py-4">
+              <span className="text-sm text-muted-foreground">
+                Page {page} of {Math.ceil(totalCount / PAGE_SIZE)} (Total: {totalCount.toLocaleString()} reports)
+              </span>
+              <div className="flex items-center space-x-2">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrevPage}
+                    disabled={page === 1 || loading}
+                >
+                    <ChevronLeft className="h-4 w-4 mr-2" />
+                    Previous
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={reports.length < PAGE_SIZE || loading}
+                >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                </Button>
+              </div>
             </div>
         </>
       )}
