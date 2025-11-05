@@ -82,14 +82,14 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   if (loading || !user) {
     return (
         <div className="flex h-screen w-full items-center justify-center bg-background">
-            <div className="flex flex-col items-center gap-4 text-center">
-                <div className="mb-8 flex flex-col items-center gap-2">
-                  <AppLogo size={144} />
-                  <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
-                </div>
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm text-muted-foreground">Memuat dasbor Anda...</p>
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="mb-8 flex flex-col items-center gap-2">
+              <AppLogo size={108} />
+              <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
             </div>
+            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Memuat dasbor Anda...</p>
+          </div>
         </div>
     );
   }
@@ -101,7 +101,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader className="justify-center">
-          <AppLogo />
+          <AppLogo size={86} />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
