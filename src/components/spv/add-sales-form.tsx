@@ -6,10 +6,9 @@ import { useFieldArray, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase';
+import { useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
-import { collection, doc, setDoc } from 'firebase/firestore';
-import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
+import { collection } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -53,7 +52,6 @@ type AddSalesFormProps = {
 
 export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
   const firestore = useFirestore();
-  const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -99,7 +97,7 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!firestore || !auth) {
+    if (!firestore) {
       toast({
         variant: 'destructive',
         title: 'Firebase tidak terinisialisasi',
@@ -131,13 +129,8 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
         setIsLoading(false);
         return;
       }
-      
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
 
-      const userDocRef = doc(firestore, 'users', user.uid);
-
-      await setDoc(userDocRef, {
+      const userData = {
         name: values.name,
         email: values.email,
         role: 'Sales',
@@ -151,7 +144,22 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
         accountHolder: values.accountHolder,
         projectAssignments: assignedProjects,
         createdAt: new Date().toISOString(),
+      };
+      
+      const response = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            password: values.password,
+            ...userData
+        }),
       });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal mengirim permintaan.');
+      }
 
       toast({
         title: 'Permintaan Berhasil Dikirim',
@@ -166,22 +174,10 @@ export function AddSalesForm({ supervisorId, onSuccess }: AddSalesFormProps) {
     } catch (error: any) {
       console.error('Error creating user:', error);
       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
-      if (error.code) {
-        switch (error.code) {
-          case AuthErrorCodes.EMAIL_EXISTS:
-            description = 'Alamat email ini sudah digunakan oleh akun lain.';
-            break;
-          case AuthErrorCodes.WEAK_PASSWORD:
-            description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
-            break;
-          case AuthErrorCodes.INVALID_EMAIL:
-            description = 'Format alamat email tidak valid.';
-            break;
-          default:
-            description = error.message;
-        }
-      } else {
-        description = error.message || description;
+      if (error.message.includes('EMAIL_EXISTS')) {
+          description = 'Alamat email ini sudah digunakan oleh akun lain.';
+      } else if (error.message.includes('WEAK_PASSWORD')) {
+          description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
       }
       toast({
         variant: 'destructive',

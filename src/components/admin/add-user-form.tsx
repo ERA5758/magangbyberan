@@ -8,7 +8,6 @@ import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
-import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 import { doc, setDoc, collection, query, where } from 'firebase/firestore';
 
 import { Button } from '@/components/ui/button';
@@ -32,6 +31,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { AppUser, Project } from '@/lib/types';
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
+import { AuthErrorCodes } from 'firebase/auth';
 
 const projectAssignmentSchema = z.object({
   projectId: z.string(),
@@ -113,7 +113,7 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    if (!auth || !firestore) {
+    if (!firestore) {
       toast({
         variant: 'destructive',
         title: 'Firebase tidak terinisialisasi',
@@ -124,38 +124,33 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     }
     
     try {
-        const assignedProjects = values.projectAssignments
-            .filter(p => p.assigned)
-            .map(p => {
-                if (!p.salesCode) {
-                    throw new Error(`Kode sales untuk proyek ${p.projectName} harus diisi.`);
-                }
-                return {
-                    projectId: p.projectId,
-                    salesCode: p.salesCode,
-                }
-            });
+      const assignedProjects = values.projectAssignments
+        .filter(p => p.assigned)
+        .map(p => {
+            if (!p.salesCode) {
+                throw new Error(`Kode sales untuk proyek ${p.projectName} harus diisi.`);
+            }
+            return {
+                projectId: p.projectId,
+                salesCode: p.salesCode,
+            }
+        });
 
-        if (values.role === 'Sales' && assignedProjects.length === 0) {
-            toast({
-                variant: 'destructive',
-                title: 'Penugasan Proyek Diperlukan',
-                description: 'Harap tetapkan setidaknya satu proyek dan berikan kode sales.',
-            });
-            setIsLoading(false);
-            return;
-        }
-
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      const userDocRef = doc(firestore, 'users', user.uid);
+      if (values.role === 'Sales' && assignedProjects.length === 0) {
+          toast({
+              variant: 'destructive',
+              title: 'Penugasan Proyek Diperlukan',
+              description: 'Harap tetapkan setidaknya satu proyek dan berikan kode sales.',
+          });
+          setIsLoading(false);
+          return;
+      }
       
       const userData: Omit<AppUser, 'uid' | 'avatar' | 'id'> & { [key: string]: any } = {
         name: values.name,
         email: values.email,
         role: values.role,
-        status: 'Aktif',
+        status: 'Aktif', // Admin creates active users directly
         nik: values.nik,
         address: values.address,
         phone: values.phone,
@@ -170,8 +165,21 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         userData.supervisorId = values.supervisorId;
       }
       
-      await setDoc(userDocRef, userData);
+      const response = await fetch('/api/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            password: values.password,
+            ...userData
+        }),
+      });
 
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Gagal membuat pengguna.');
+      }
+      
       toast({
         title: 'Pengguna Berhasil Dibuat',
         description: `${values.name} telah ditambahkan sebagai ${values.role}.`,
@@ -184,23 +192,11 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
 
     } catch (error: any) {
       console.error('Error creating user:', error);
-       let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
-      if (error.code) {
-        switch (error.code) {
-          case AuthErrorCodes.EMAIL_EXISTS:
-            description = 'Alamat email ini sudah digunakan oleh akun lain.';
-            break;
-          case AuthErrorCodes.WEAK_PASSWORD:
-            description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
-            break;
-          case AuthErrorCodes.INVALID_EMAIL:
-            description = 'Format alamat email tidak valid.';
-            break;
-          default:
-            description = error.message || `Terjadi galat: ${error.code}`;
-        }
-      } else {
-        description = error.message || description;
+      let description = 'Terjadi kesalahan yang tidak terduga. Silakan coba lagi.';
+      if (error.message.includes('EMAIL_EXISTS')) {
+          description = 'Alamat email ini sudah digunakan oleh akun lain.';
+      } else if (error.message.includes('WEAK_PASSWORD')) {
+          description = 'Kata sandi terlalu lemah. Harap gunakan minimal 6 karakter.';
       }
       toast({
         variant: 'destructive',
@@ -451,3 +447,5 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
+
+    
