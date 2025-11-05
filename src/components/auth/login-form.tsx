@@ -67,6 +67,18 @@ export function LoginForm() {
 
       if (userDoc.exists()) {
         const userData = userDoc.data() as AppUser;
+
+        if (userData.status === 'Non Aktif') {
+          await auth.signOut();
+          toast({
+            variant: "destructive",
+            title: "Login Gagal",
+            description: "Akun Anda tidak aktif. Harap hubungi administrator.",
+          });
+          setIsLoading(false);
+          return;
+        }
+
         const userRole = userData.role; 
 
         toast({
