@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react";
@@ -29,7 +28,8 @@ import {
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useCollection, useFirestore } from "@/firebase"
+import { useFirestore } from "@/firebase"
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
 import { collection } from "firebase/firestore"
 import type { AppUser } from "@/hooks/use-current-user"
 import { AddUserForm } from "./add-user-form";
@@ -38,7 +38,7 @@ import { AddUserForm } from "./add-user-form";
 export function UsersTable() {
     const firestore = useFirestore();
     const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
-    const { data: users, loading } = useCollection<AppUser>(usersQuery);
+    const { data: users, loading } = useCollectionOnce<AppUser>(usersQuery);
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     
     const getBadgeVariant = (role: AppUser['role']) => {

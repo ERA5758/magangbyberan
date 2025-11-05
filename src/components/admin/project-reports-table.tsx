@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo } from "react";
@@ -10,11 +9,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useCollection, useDoc, useFirestore } from "@/firebase";
+import { useFirestore } from "@/firebase";
+import { useDoc } from "@/firebase/firestore/use-doc";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { collection, doc, Timestamp, query } from "firebase/firestore";
 import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -38,15 +38,12 @@ const formatValue = (value: any): string => {
     if (isFirestoreTimestamp(value)) {
         return formatDate(value.toDate());
     }
-    // Check for string date format like "M/D/YYYY" or "MM/DD/YYYY"
     if (typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
         try {
             const parts = value.split('/');
-            // new Date(year, monthIndex, day)
-            const date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+            const date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
             return formatDate(date);
         } catch (e) {
-            // if parsing fails, return original string
             return value;
         }
     }
@@ -73,7 +70,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         return query(reportsCollectionRef); 
     }, [firestore, projectId]);
     
-    const { data: reports, loading: reportsLoading } = useCollection<{[key: string]: any}>(reportsQuery);
+    const { data: reports, loading: reportsLoading } = useCollectionOnce<{[key: string]: any}>(reportsQuery);
 
     const headers = useMemo(() => {
         if (project?.reportHeaders && project.reportHeaders.length > 0) {
@@ -107,10 +104,6 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
 
     if (!project) {
         return <p className="text-center text-muted-foreground py-8">Project configuration not found.</p>;
-    }
-    
-    if (headers.length === 0 && (!reports || reports.length === 0)) {
-        return <p className="text-center text-muted-foreground py-8">No reports found and no headers configured for this project.</p>;
     }
     
     if (headers.length === 0) {

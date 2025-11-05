@@ -1,8 +1,8 @@
-
 "use client";
 
 import { useMemo } from "react";
-import { useFirestore, useCollection } from "@/firebase";
+import { useFirestore } from "@/firebase";
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { collection, query } from "firebase/firestore";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,28 +17,30 @@ export default function ReportsPage() {
     () => (firestore ? query(collection(firestore, "projects")) : null),
     [firestore]
   );
-  const { data: projects, loading } = useCollection<Project>(projectsQuery);
+  const { data: projects, loading } = useCollectionOnce<Project>(projectsQuery);
 
   if (loading) {
     return (
       <div className="space-y-8">
         <PageHeader
-          title="Reports"
-          description="View all reports from every project."
+          title="Project Reports"
+          description="View reports filtered by project."
         />
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <Skeleton className="h-6 w-40" />
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-48 w-full" />
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+            <Skeleton className="h-10 w-1/3" />
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-6 w-48" />
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                        <Skeleton className="h-8 w-full" />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
       </div>
     );
   }
@@ -47,16 +49,16 @@ export default function ReportsPage() {
     return (
       <div className="space-y-8">
         <PageHeader
-          title="Reports"
-          description="View all reports from every project."
+          title="Project Reports"
+          description="View reports filtered by project."
         />
         <Card>
           <CardHeader>
-            <CardTitle>Consolidated Reports</CardTitle>
+            <CardTitle>No Projects Found</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-center text-muted-foreground py-8">
-              No projects found in Firestore. Please add a project first.
+              There are no projects in the database. Please add a project first from the Admin &gt; Projects page.
             </p>
           </CardContent>
         </Card>

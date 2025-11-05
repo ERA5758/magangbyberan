@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -19,7 +18,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 import { MoreHorizontal, PlusCircle } from "lucide-react"
-import { useCollection, useFirestore } from "@/firebase"
+import { useFirestore } from "@/firebase"
+import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
 import { collection } from "firebase/firestore"
 import type { Project } from "@/lib/types"
 import { useRouter } from "next/navigation"
@@ -40,7 +40,7 @@ export function ProjectsTable() {
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
 
     const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
-    const { data: projects, loading } = useCollection<Project>(projectsQuery);
+    const { data: projects, loading } = useCollectionOnce<Project>(projectsQuery);
     
     const router = useRouter();
     

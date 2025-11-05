@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -6,7 +5,8 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState, useMemo } from 'react';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { useAuth, useFirestore, useCollection } from '@/firebase';
+import { useAuth, useFirestore } from '@/firebase';
+import { useCollectionOnce } from '@/firebase/firestore/use-collection-once';
 import { createUserWithEmailAndPassword, AuthErrorCodes } from 'firebase/auth';
 import { doc, setDoc, collection, query, where } from 'firebase/firestore';
 
@@ -60,12 +60,12 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const supervisorsQuery = useMemo(() => 
     firestore ? query(collection(firestore, 'users'), where('role', '==', 'SPV')) : null
   , [firestore]);
-  const { data: supervisors } = useCollection<AppUser>(supervisorsQuery);
+  const { data: supervisors } = useCollectionOnce<AppUser>(supervisorsQuery);
   
   const projectsQuery = useMemo(() => 
     firestore ? collection(firestore, 'projects') : null
   , [firestore]);
-  const { data: projects } = useCollection<Project>(projectsQuery);
+  const { data: projects } = useCollectionOnce<Project>(projectsQuery);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
