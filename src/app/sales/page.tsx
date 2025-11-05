@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import type { Sale, AppUser } from "@/lib/types";
+import { formatCurrency } from "@/lib/utils";
 
 
 export default function SalesDashboard() {
@@ -100,7 +101,7 @@ export default function SalesDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Penjualan Saya"
-          value={`$${totalMySales.toLocaleString()}`}
+          value={formatCurrency(totalMySales)}
           icon={DollarSign}
           description="Total pendapatan Anda bulan ini"
         />
