@@ -100,7 +100,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider>
       <Sidebar>
-        <SidebarHeader>
+        <SidebarHeader className="justify-center">
           <AppLogo />
         </SidebarHeader>
         <SidebarContent>

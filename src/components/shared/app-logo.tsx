@@ -11,7 +11,6 @@ const AppLogo = ({ className }: { className?: string }) => {
       )}
     >
       <Image src="/icon.svg" width={32} height={32} alt="logo" />
-      <span className="font-headline">Magang By BERAN</span>
     </div>
   );
 };
