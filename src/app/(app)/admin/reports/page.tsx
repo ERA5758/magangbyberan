@@ -46,6 +46,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -69,7 +76,7 @@ const formatValue = (value: any, key?: string): string => {
 
   if (typeof value === "string") {
     try {
-      if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
+      if (/\d{4}-\d{2}-\d{2}T\d{2}/.test(value)) {
         return format(parseISO(value), "dd-MM-yyyy");
       }
       const dateWithSlashes = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -103,11 +110,17 @@ const formatValue = (value: any, key?: string): string => {
 
 const PAGE_SIZE = 50;
 
+const months = [
+  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+];
+
 function FilteredReportsTable({ project }: { project: Project }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -115,19 +128,28 @@ function FilteredReportsTable({ project }: { project: Project }) {
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [page, setPage] = useState(1);
   const isMountedRef = useRef(true);
+  
+  const projectId = project.name.toLowerCase().replace(/ /g, "_");
 
   const fetchReports = async (
-    currentProjectId: string,
     direction: "next" | "prev" | "first"
   ) => {
     if (!firestore) return;
     if (isMountedRef.current) setLoading(true);
 
     try {
+      let queryConstraints = [
+        where("projectId", "==", projectId),
+      ];
+
+      if (projectId === 'btn' && selectedMonth) {
+        queryConstraints.push(where("input_laporan", "==", selectedMonth));
+      }
+      
       let reportsQuery;
       const baseQuery = query(
         collection(firestore, "reports"),
-        where("projectId", "==", currentProjectId),
+        ...queryConstraints,
         orderBy("__name__")
       );
 
@@ -146,7 +168,7 @@ function FilteredReportsTable({ project }: { project: Project }) {
       })) as Report[];
       
       if (isMountedRef.current) {
-        if (newReports.length > 0) {
+        if (documentSnapshots.docs.length > 0) {
           setReports(newReports);
           setFirstVisible(documentSnapshots.docs[0]);
           setLastVisible(
@@ -154,6 +176,11 @@ function FilteredReportsTable({ project }: { project: Project }) {
           );
         } else {
           if (direction === 'first') {
+            setReports([]);
+          }
+          // If we are on a page > 1 and there are no results, it means we went past the end.
+          // We could auto-navigate back, but for now we just show no results.
+          if(direction !== 'first') {
             setReports([]);
           }
         }
@@ -177,24 +204,33 @@ function FilteredReportsTable({ project }: { project: Project }) {
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
-    fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "first");
+    fetchReports("first");
     
     return () => {
       isMountedRef.current = false;
     };
-  }, [project, firestore]);
+  }, [project, firestore, selectedMonth]);
 
+
+  const handleMonthChange = (month: string) => {
+    setSelectedMonth(month);
+    // Reset pagination
+    setPage(1);
+    setLastVisible(null);
+    setFirstVisible(null);
+  };
+  
   const handleNextPage = () => {
     if (lastVisible) {
       setPage(page + 1);
-      fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "next");
+      fetchReports("next");
     }
   };
 
   const handlePrevPage = () => {
     if (firstVisible && page > 1) {
       setPage(page - 1);
-      fetchReports(project.name.toLowerCase().replace(/ /g, "_"), "prev");
+      fetchReports("prev");
     }
   };
 
@@ -215,85 +251,97 @@ function FilteredReportsTable({ project }: { project: Project }) {
       </div>
     );
   }
-
-  if (!loading && reports.length === 0) {
-    return (
-      <p className="text-center text-muted-foreground py-8">
-        No reports found for this project.
-      </p>
-    );
-  }
   
-  if (!project.reportHeaders || project.reportHeaders.length === 0) {
-    return (
-       <p className="text-center text-muted-foreground py-8">
-        Report headers are not configured for this project. Please configure them in the project settings.
-      </p>
-    )
-  }
-
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[50px]">No.</TableHead>
-              {headers.map((header) => (
-                <TableHead key={header} className="capitalize whitespace-nowrap">
-                  {header.replace(/_/g, " ")}
-                </TableHead>
+      {projectId === 'btn' && (
+        <div className="flex justify-start mb-4">
+          <Select onValueChange={handleMonthChange} value={selectedMonth}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Months</SelectItem>
+              {months.map(month => (
+                <SelectItem key={month} value={month}>{month}</SelectItem>
               ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-                <TableRow>
-                    <TableCell colSpan={headers.length + 1} className="h-24 text-center">
-                        Loading...
-                    </TableCell>
-                </TableRow>
-            ) : (
-                reports.map((report, index) => (
-                  <TableRow
-                    key={report.id}
-                    onClick={() => handleRowClick(report)}
-                    className="cursor-pointer"
-                  >
-                    <TableCell>{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
-                    {headers.map((header) => (
-                      <TableCell key={`${report.id}-${header}`}>
-                        {formatValue(report[header], header)}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-       <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePrevPage}
-            disabled={page === 1 || loading}
-          >
-            <ChevronLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">Page {page}</span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={reports.length < PAGE_SIZE || loading}
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-2" />
-          </Button>
+            </SelectContent>
+          </Select>
         </div>
+      )}
+      
+      {(!loading && reports.length === 0) ? (
+         <p className="text-center text-muted-foreground py-8">
+            No reports found for the selected criteria.
+        </p>
+      ) : !project.reportHeaders || project.reportHeaders.length === 0 ? (
+        <p className="text-center text-muted-foreground py-8">
+            Report headers are not configured for this project. Please configure them in the project settings.
+        </p>
+      ) : (
+        <>
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">No.</TableHead>
+                  {headers.map((header) => (
+                    <TableHead key={header} className="capitalize whitespace-nowrap">
+                      {header.replace(/_/g, " ")}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                    <TableRow>
+                        <TableCell colSpan={headers.length + 1} className="h-24 text-center">
+                            Loading...
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                    reports.map((report, index) => (
+                      <TableRow
+                        key={report.id}
+                        onClick={() => handleRowClick(report)}
+                        className="cursor-pointer"
+                      >
+                        <TableCell>{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
+                        {headers.map((header) => (
+                          <TableCell key={`${report.id}-${header}`}>
+                            {formatValue(report[header] ?? report[header.replace(/ /g, '_')], header)}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+
+          <div className="flex items-center justify-end space-x-2 py-4">
+              <span className="text-sm text-muted-foreground">Page {page}</span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePrevPage}
+                disabled={page === 1 || loading}
+              >
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={reports.length < PAGE_SIZE || loading}
+              >
+                Next
+                <ChevronRight className="h-4 w-4 ml-2" />
+              </Button>
+            </div>
+        </>
+      )}
 
 
       <Dialog
