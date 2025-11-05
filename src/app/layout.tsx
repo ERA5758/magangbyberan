@@ -173,6 +173,8 @@ export default function RootLayout({
       <head>
         <title>Magang By BERAN</title>
         <meta name="description" content="Platform Agregasi Data Penjualan" />
+        <meta name="theme-color" content="#FF0000" />
+        <link rel="manifest" href="/manifest.json" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
