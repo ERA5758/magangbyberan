@@ -103,7 +103,6 @@ export function ProjectsTable() {
                         <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Project Name</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Assigned Sales</TableHead>
                         <TableHead className="hidden lg:table-cell">Report Headers</TableHead>
                         <TableHead>
                         <span className="sr-only">Actions</span>
@@ -118,7 +117,6 @@ export function ProjectsTable() {
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">{project.assignedSalesCodes?.join(', ') || 'N/A'}</TableCell>
                             <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                     {project.reportHeaders && project.reportHeaders.length > 0 ? (
