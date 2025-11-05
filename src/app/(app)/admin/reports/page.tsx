@@ -19,6 +19,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project, Report } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,10 +100,10 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
-    // This query now correctly targets the root 'reports' collection
     return query(
       collection(firestore, "reports"),
       where("projectId", "==", projectId)
@@ -113,8 +120,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   }, [fetchedReports, reportsLoading]);
 
   const handleRowClick = (report: Report) => {
-    console.log("Report clicked:", report);
-    // Placeholder for navigation or modal
+    setSelectedReport(report);
   };
 
   const headers = useMemo(() => {
@@ -149,34 +155,59 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   }
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {headers.map((header) => (
-              <TableHead key={header} className="capitalize whitespace-nowrap">
-                {header.replace(/_/g, " ")}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {reports.map((report) => (
-            <TableRow
-              key={report.id}
-              onClick={() => handleRowClick(report)}
-              className="cursor-pointer"
-            >
+    <>
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
               {headers.map((header) => (
-                <TableCell key={`${report.id}-${header}`}>
-                  {formatValue(report[header], header)}
-                </TableCell>
+                <TableHead key={header} className="capitalize whitespace-nowrap">
+                  {header.replace(/_/g, " ")}
+                </TableHead>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+          </TableHeader>
+          <TableBody>
+            {reports.map((report) => (
+              <TableRow
+                key={report.id}
+                onClick={() => handleRowClick(report)}
+                className="cursor-pointer"
+              >
+                {headers.map((header) => (
+                  <TableCell key={`${report.id}-${header}`}>
+                    {formatValue(report[header], header)}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={!!selectedReport} onOpenChange={(isOpen) => !isOpen && setSelectedReport(null)}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Report Detail</DialogTitle>
+            <DialogDescription>
+              Details for report ID: {selectedReport?.['ID UNIK'] || selectedReport?.id}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedReport && (
+            <div className="space-y-2 text-sm">
+              {Object.entries(selectedReport).map(([key, value]) => (
+                <div key={key} className="grid grid-cols-2 gap-2 border-b pb-1">
+                  <strong className="capitalize font-medium break-words">
+                    {key.replace(/_/g, " ")}
+                  </strong>
+                  <span className="break-words">{formatValue(value, key)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
