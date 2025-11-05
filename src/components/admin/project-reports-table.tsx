@@ -14,7 +14,7 @@ import { useFirestore } from "@/firebase";
 import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
 import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, parse } from 'date-fns';
+import { format } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -34,17 +34,20 @@ const formatValue = (value: any): string => {
     }
 
     if (typeof value === 'string') {
-        // Attempt to parse various string date formats
+        // Attempt to parse various string date formats that might appear
         try {
-            // Try M/d/yyyy (e.g., 9/15/2025)
-            const parsedDate1 = parse(value, 'M/d/yyyy', new Date());
-            if (!isNaN(parsedDate1.getTime())) return format(parsedDate1, 'dd/MM/yyyy');
-
-            // Try d/M/yyyy
-            const parsedDate2 = parse(value, 'd/M/yyyy', new Date());
-            if (!isNaN(parsedDate2.getTime())) return format(parsedDate2, 'dd/MM/yyyy');
+            // This will handle ISO strings, and some other common formats.
+            const parsedDate = new Date(value);
+            // Check if the parsed date is valid before formatting
+            if (!isNaN(parsedDate.getTime())) {
+                // A simple check to avoid formatting random strings as dates
+                // e.g., "Approved" doesn't contain numbers that look like a date part
+                if (/\d/.test(value)) {
+                    return format(parsedDate, 'dd/MM/yyyy');
+                }
+            }
         } catch (e) {
-            // Not a valid date string, return original string
+            // Not a date string, return original string
         }
     }
 
@@ -73,14 +76,13 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // 1. Fetch project document to get headers
                 const projectRef = doc(firestore, "projects", projectId);
                 const projectSnap = await getDoc(projectRef);
 
-                let projectData: Project | null = null;
+                let fetchedProject: Project | null = null;
                 if (projectSnap.exists()) {
-                    projectData = { id: projectSnap.id, ...projectSnap.data() } as Project;
-                    setProject(projectData);
+                    fetchedProject = { id: projectSnap.id, ...projectSnap.data() } as Project;
+                    setProject(fetchedProject);
                 } else {
                     setProject(null);
                     setReports([]);
@@ -88,8 +90,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                     return;
                 }
 
-                // 2. Fetch reports subcollection using the correct path
-                const reportsRef = collection(projectRef, "reports");
+                const reportsRef = collection(firestore, "projects", projectId, "reports");
                 const reportsQuery = query(reportsRef);
                 const reportsSnap = await getDocs(reportsQuery);
                 
