@@ -25,6 +25,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format, parseISO } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -37,7 +38,7 @@ const formatValue = (value: any): string => {
     
     if (isFirestoreTimestamp(value)) {
         try {
-            return format(value.toDate(), 'dd/MM/yyyy');
+            return format(value.toDate(), 'dd-MM-yyyy');
         } catch (e) {
             return 'Invalid Date';
         }
@@ -46,18 +47,17 @@ const formatValue = (value: any): string => {
     if (typeof value === 'string') {
         try {
             if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
-                return format(parseISO(value), 'dd/MM/yyyy');
+                return format(parseISO(value), 'dd-MM-yyyy');
             }
             const dateWithSlashes = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
             if (dateWithSlashes) {
-                // Attempt to parse M/d/yyyy or d/M/yyyy
                 const d = new Date(value);
                 if (!isNaN(d.getTime())) {
-                    return format(d, 'dd/MM/yyyy');
+                    return format(d, 'dd-MM-yyyy');
                 }
             }
         } catch (e) {
-            // Not a date string, return original string
+           // Not a date string, return original string
         }
     }
 
@@ -71,11 +71,11 @@ const formatValue = (value: any): string => {
     return String(value);
 };
 
-
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
   
   useEffect(() => {
     if (!firestore || !projectId) {
@@ -106,6 +106,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
 
   const handleRowClick = (report: Report) => {
     console.log("Report clicked:", report);
+    // Placeholder for navigation or modal
   };
   
   const headers = useMemo(() => {
@@ -113,7 +114,7 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
       const allHeaders = new Set<string>();
       reports.forEach(report => {
           Object.keys(report).forEach(key => {
-              if (key !== 'id' && key !== 'projectId') {
+              if (key !== 'id' && key !== 'projectId' && key !== 'lastSyncTimestamp') {
                   allHeaders.add(key);
               }
           });
@@ -232,7 +233,7 @@ export default function ReportsPage() {
         <TabsList>
           {projects.map((project) => (
             <TabsTrigger key={project.id} value={formatNameToId(project.name)}>
-              {project.name}
+              {project.name.toUpperCase()}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -240,9 +241,9 @@ export default function ReportsPage() {
           <TabsContent key={project.id} value={formatNameToId(project.name)}>
             <Card>
               <CardHeader>
-                <CardTitle>Reports for {project.name}</CardTitle>
+                <CardTitle>Reports for {project.name.toUpperCase()}</CardTitle>
                 <CardDescription>
-                  Displaying reports for {project.name}
+                  Displaying reports for {project.name.toUpperCase()}
                 </CardDescription>
               </CardHeader>
               <CardContent>
