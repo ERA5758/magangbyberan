@@ -4,7 +4,7 @@
 import { PageHeader } from "@/components/shared/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { TeamPerformanceTable } from "@/components/spv/team-performance-table";
-import { UsersRound, DollarSign, Percent } from "lucide-react";
+import { UsersRound, DollarSign, ClipboardList } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -32,8 +32,16 @@ export default function SpvDashboard() {
 
   const teamSalesCodes = useMemo(() => {
     if (!teamMembers) return [];
-    return teamMembers.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode) || []);
+    const codes = teamMembers.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode) || []);
+    // Also include legacy salesCode if present
+    teamMembers.forEach(m => {
+      if(m.salesCode && !codes.includes(m.salesCode)) {
+        codes.push(m.salesCode);
+      }
+    });
+    return codes.filter(Boolean); // remove any empty or null codes
   }, [teamMembers]);
+
 
   const teamReportsQuery = useMemo(() => 
     firestore && teamSalesCodes && teamSalesCodes.length > 0
@@ -72,12 +80,12 @@ export default function SpvDashboard() {
 
     return { totalCommission, teamSalesForChart };
   }, [teamReports, projects]);
+  
+  const totalTeamSalesCount = teamReports?.length || 0;
 
   if (loading || !user) {
     return <div>Memuat...</div>
   }
-  
-  const conversionRate = 35.5; // Placeholder
 
   return (
     <div className="space-y-8">
@@ -97,10 +105,10 @@ export default function SpvDashboard() {
           description="Total komisi yang dihasilkan tim Anda bulan ini"
         />
         <StatCard
-          title="Tingkat Konversi"
-          value={`${conversionRate}%`}
-          icon={Percent}
-          description="Tingkat konversi prospek menjadi penjualan untuk tim"
+          title="Total Penjualan Tim"
+          value={totalTeamSalesCount.toLocaleString()}
+          icon={ClipboardList}
+          description="Total transaksi yang berhasil dicatat oleh tim"
         />
       </div>
 
