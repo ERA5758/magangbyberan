@@ -1,28 +1,15 @@
 
 import admin from 'firebase-admin';
-import * as fs from 'fs';
-import * as path from 'path';
 
 let serviceAccount: admin.ServiceAccount | undefined;
 
-// Prefer reading from a file path specified in an environment variable
-if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+// The primary method for server-side environments is to parse the JSON key
+// from an environment variable.
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
   try {
-    const serviceAccountPath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT);
-    if (fs.existsSync(serviceAccountPath)) {
-      serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-    }
+    serviceAccount = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
   } catch (e) {
-    console.error(`Error reading service account file from path: ${process.env.FIREBASE_SERVICE_ACCOUNT}`, e);
-  }
-}
-
-// Fallback to parsing the JSON directly from an environment variable
-if (!serviceAccount && process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON) {
-  try {
-    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY_JSON);
-  } catch (e) {
-    console.error('Error parsing FIREBASE_SERVICE_ACCOUNT_KEY_JSON:', e);
+    console.error('Error parsing GOOGLE_APPLICATION_CREDENTIALS_JSON:', e);
   }
 }
 
