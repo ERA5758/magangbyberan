@@ -45,7 +45,6 @@ const formSchema = z.object({
   email: z.string().email('Format email tidak valid.'),
   password: z.string().min(6, 'Kata sandi minimal 6 karakter.'),
   role: z.enum(['Admin', 'SPV', 'Sales']),
-  supervisorId: z.string().optional(),
   nik: z.string().min(1, 'NIK harus diisi.'),
   address: z.string().min(1, 'Alamat harus diisi.'),
   phone: z.string().min(1, 'No. HP harus diisi.'),
@@ -65,11 +64,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-
-  const supervisorsQuery = useMemo(() => 
-    firestore ? query(collection(firestore, 'users'), where('role', '==', 'SPV')) : null
-  , [firestore]);
-  const { data: supervisors } = useCollectionOnce<AppUser>(supervisorsQuery);
   
   const projectsQuery = useMemo(() => 
     firestore ? collection(firestore, 'projects') : null
@@ -160,10 +154,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
         createdAt: new Date().toISOString(),
         projectAssignments: values.role === 'Sales' ? assignedProjects : [],
       };
-
-      if (values.supervisorId) {
-        userData.supervisorId = values.supervisorId;
-      }
       
       const response = await fetch('/api/create-user', {
         method: 'POST',
@@ -283,28 +273,6 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
                     <SelectItem value="Admin">Admin</SelectItem>
                     <SelectItem value="SPV">SPV</SelectItem>
                     <SelectItem value="Sales">Sales</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-           <FormField
-            control={form.control}
-            name="supervisorId"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Pilih Supervisor</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!supervisors || supervisors.length === 0}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih supervisor..." />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {supervisors?.map(spv => (
-                         <SelectItem key={spv.id} value={spv.id}>{spv.name}</SelectItem>
-                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -450,4 +418,3 @@ export function AddUserForm({ onSuccess }: AddUserFormProps) {
     </Form>
   );
 }
-    
