@@ -4,11 +4,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import type { Project } from '@/lib/types';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -36,11 +37,12 @@ const formSchema = z.object({
   reportHeaders: z.string().optional(),
 });
 
-type AddProjectFormProps = {
+type EditProjectFormProps = {
+  project: Project;
   onSuccess?: () => void;
 };
 
-export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
+export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
   const firestore = useFirestore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -53,6 +55,16 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       reportHeaders: '',
     },
   });
+  
+  useEffect(() => {
+    if (project) {
+        form.reset({
+            name: project.name,
+            status: project.status,
+            reportHeaders: project.reportHeaders ? project.reportHeaders.join(', ') : '',
+        });
+    }
+  }, [project, form])
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -60,41 +72,38 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       toast({
         variant: 'destructive',
         title: 'Firebase not initialized',
-        description: 'Firestore is not ready, please try again later.',
       });
       setIsLoading(false);
       return;
     }
 
     try {
-      const projectsCollection = collection(firestore, 'projects');
+      const projectRef = doc(firestore, 'projects', project.id);
       
       const headers = values.reportHeaders
         ? values.reportHeaders.split(',').map(h => h.trim()).filter(h => h)
         : [];
 
-      await addDoc(projectsCollection, {
+      await updateDoc(projectRef, {
         name: values.name,
         status: values.status,
-        assignedSalesCodes: [],
         reportHeaders: headers,
-        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
       });
 
       toast({
-        title: 'Project Created',
-        description: `Project "${values.name}" has been successfully created.`,
+        title: 'Project Updated',
+        description: `Project "${values.name}" has been successfully updated.`,
       });
 
-      form.reset();
       if (onSuccess) {
         onSuccess();
       }
     } catch (error) {
-      console.error('Error creating project:', error);
+      console.error('Error updating project:', error);
       toast({
         variant: 'destructive',
-        title: 'Failed to Create Project',
+        title: 'Failed to Update Project',
         description: 'An unexpected error occurred. Please try again.',
       });
     } finally {
@@ -162,7 +171,7 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create Project
+            Save Changes
           </Button>
         </div>
       </form>

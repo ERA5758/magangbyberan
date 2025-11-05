@@ -34,14 +34,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { AddProjectForm } from "./add-project-form"
+import { EditProjectForm } from "./edit-project-form"
 
 
 export function ProjectsTable() {
     const firestore = useFirestore();
     const [isAddProjectOpen, setIsAddProjectOpen] = useState(false);
+    const [isEditProjectOpen, setIsEditProjectOpen] = useState(false);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
     const projectsQuery = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
-    const { data: projects, loading } = useCollectionOnce<Project>(projectsQuery);
+    const { data: projects, loading, error } = useCollectionOnce<Project>(projectsQuery);
     
     const router = useRouter();
     
@@ -57,9 +60,19 @@ export function ProjectsTable() {
     const handleRowClick = (projectId: string) => {
         router.push(`/admin/projects/${projectId}`);
     };
+    
+    const handleEditClick = (e: React.MouseEvent, project: Project) => {
+        e.stopPropagation();
+        setSelectedProject(project);
+        setIsEditProjectOpen(true);
+    }
 
     if (loading) {
         return <div>Loading projects...</div>
+    }
+
+    if (error) {
+        return <div>Error loading projects: {error.message}</div>
     }
 
     return (
@@ -72,7 +85,7 @@ export function ProjectsTable() {
                             Add Project
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-[425px]">
+                    <DialogContent className="sm:max-w-md">
                         <DialogHeader>
                             <DialogTitle>Add New Project</DialogTitle>
                             <DialogDescription>
@@ -108,9 +121,13 @@ export function ProjectsTable() {
                             <TableCell className="hidden md:table-cell">{project.assignedSalesCodes?.join(', ') || 'N/A'}</TableCell>
                             <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
-                                    {project.reportHeaders?.map(header => (
-                                        <Badge key={header} variant="outline" className="text-xs">{header}</Badge>
-                                    )) || <span className="text-muted-foreground text-xs">Not Configured</span>}
+                                    {project.reportHeaders && project.reportHeaders.length > 0 ? (
+                                        project.reportHeaders.map(header => (
+                                            <Badge key={header} variant="outline" className="text-xs">{header}</Badge>
+                                        ))
+                                    ) : (
+                                         <span className="text-muted-foreground text-xs">Not Configured</span>
+                                    )}
                                 </div>
                             </TableCell>
                             <TableCell onClick={(e) => e.stopPropagation()}>
@@ -123,8 +140,9 @@ export function ProjectsTable() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                    <DropdownMenuItem>Edit Headers</DropdownMenuItem>
-                                    <DropdownMenuItem>Edit Project</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
+                                        Edit Project
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem>Assign Sales</DropdownMenuItem>
                                     <DropdownMenuItem>Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -135,6 +153,22 @@ export function ProjectsTable() {
                     </TableBody>
                 </Table>
             </div>
+            {selectedProject && (
+                 <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
+                    <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                            <DialogTitle>Edit Project: {selectedProject.name}</DialogTitle>
+                            <DialogDescription>
+                                Update the details for this project.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <EditProjectForm project={selectedProject} onSuccess={() => {
+                            setIsEditProjectOpen(false);
+                            setSelectedProject(null);
+                        }} />
+                    </DialogContent>
+                </Dialog>
+            )}
         </div>
     )
 }
