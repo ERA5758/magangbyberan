@@ -17,7 +17,6 @@ import type { AppUser, Project } from '@/lib/types';
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ProjectSalesSummary } from "@/components/admin/project-sales-summary";
-import { UserApprovalCard } from "@/components/admin/user-approval-card";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
@@ -49,7 +48,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle>Ringkasan Penjualan Proyek</CardTitle>
@@ -59,7 +58,6 @@ export default function AdminDashboard() {
             <ProjectSalesSummary />
           </CardContent>
         </Card>
-        <UserApprovalCard />
       </div>
     </div>
   );
