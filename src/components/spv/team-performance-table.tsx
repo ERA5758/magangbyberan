@@ -45,10 +45,10 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
     , [firestore, supervisorId]);
     const { data: teamMembers, loading: membersLoading } = useCollection<AppUser>(teamMembersQuery);
     
-    const teamSalesCodes = useMemo(() => teamMembers?.map(m => m.salesCode) || [], [teamMembers]);
+    const teamSalesCodes = useMemo(() => teamMembers?.flatMap(m => m.projectAssignments?.map(pa => pa.salesCode)).filter(Boolean) || [], [teamMembers]);
 
     const salesQuery = useMemo(() => 
-        firestore && teamSalesCodes.length > 0 
+        firestore && teamSalesCodes && teamSalesCodes.length > 0 
             ? query(collection(firestore, "sales"), where("salesCode", "in", teamSalesCodes)) 
             : null
     , [firestore, teamSalesCodes]);
@@ -58,7 +58,8 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         if (!teamMembers) return [];
 
         return teamMembers.map(member => {
-            const memberSales = sales?.filter(s => s.salesCode === member.salesCode) || [];
+            const memberSalesCodes = member.projectAssignments?.map(pa => pa.salesCode) || [];
+            const memberSales = sales?.filter(s => memberSalesCodes.includes(s.salesCode)) || [];
             const totalSales = memberSales.reduce((acc, sale) => acc + sale.amount, 0);
             return {
                 id: member.id,
@@ -78,6 +79,14 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
 
     if (membersLoading || salesLoading) {
         return <div>Memuat kinerja tim...</div>
+    }
+
+    if (!teamMembers || teamMembers.length === 0) {
+        return (
+            <div className="text-center text-muted-foreground p-8">
+                Anda belum memiliki anggota tim.
+            </div>
+        );
     }
 
     return (
