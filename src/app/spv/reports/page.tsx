@@ -43,6 +43,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Project, Report, AppUser } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,7 +58,7 @@ import {
 } from "@/components/ui/table";
 import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import AppLogo from "@/components/shared/app-logo";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
@@ -113,9 +114,10 @@ const formatValue = (value: any, key?: string): string => {
 
 const PAGE_SIZE = 50;
 
-function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { project: Project, teamMembers: AppUser[], selectedSalesId?: string }) {
+function FilteredReportsTable({ project, teamMembers, selectedSalesId, searchQuery }: { project: Project, teamMembers: AppUser[], selectedSalesId?: string, searchQuery: string }) {
   const firestore = useFirestore();
-  const [reports, setReports] = useState<Report[]>([]);
+  const [allReports, setAllReports] = useState<Report[]>([]);
+  const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   
@@ -170,7 +172,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
   ) => {
     if (!firestore || projectRelevantSalesCodes.length === 0) {
         if (isMountedRef.current) {
-            setReports([]);
+            setAllReports([]);
             setLoading(false);
         }
         return;
@@ -207,14 +209,14 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
       
       if (isMountedRef.current) {
         if (documentSnapshots.docs.length > 0) {
-          setReports(newReports);
+          setAllReports(newReports);
           setFirstVisible(documentSnapshots.docs[0]);
           setLastVisible(
             documentSnapshots.docs[documentSnapshots.docs.length - 1]
           );
         } else {
           if (direction === 'first') {
-            setReports([]);
+            setAllReports([]);
           }
           if(direction !== 'first') {
             // If we are on a page and there are no more results (e.g. page 2 had 1 item, now it has 0)
@@ -225,7 +227,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
     } catch (error) {
       console.error("Error fetching reports:", error);
       if (isMountedRef.current) {
-        setReports([]);
+        setAllReports([]);
       }
     } finally {
       if (isMountedRef.current) {
@@ -236,7 +238,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
   
   useEffect(() => {
     isMountedRef.current = true;
-    setReports([]);
+    setAllReports([]);
     setLoading(true);
     setLastVisible(null);
     setFirstVisible(null);
@@ -248,6 +250,20 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [project, firestore, projectRelevantSalesCodes]);
+
+  useEffect(() => {
+    if (!searchQuery) {
+        setFilteredReports(allReports);
+        return;
+    }
+    const lowercasedQuery = searchQuery.toLowerCase();
+    const filtered = allReports.filter(report => {
+        return Object.values(report).some(value => 
+            String(value).toLowerCase().includes(lowercasedQuery)
+        );
+    });
+    setFilteredReports(filtered);
+  }, [searchQuery, allReports]);
   
   const handleNextPage = () => {
     if (lastVisible) {
@@ -271,7 +287,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
     ? project.reportHeaders 
     : [];
 
-  if (loading && reports.length === 0) {
+  if (loading && allReports.length === 0) {
     return (
       <div className="space-y-2 mt-4">
         <Skeleton className="h-8 w-full" />
@@ -283,7 +299,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
   
   return (
     <>
-      {(!loading && reports.length === 0) ? (
+      {(!loading && filteredReports.length === 0) ? (
          <p className="text-center text-muted-foreground py-8">
             Tidak ada laporan yang ditemukan untuk filter yang dipilih.
         </p>
@@ -313,7 +329,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
                         </TableCell>
                     </TableRow>
                 ) : (
-                    reports.map((report, index) => (
+                    filteredReports.map((report, index) => (
                       <TableRow
                         key={report.id}
                         onClick={() => handleRowClick(report)}
@@ -350,7 +366,7 @@ function FilteredReportsTable({ project, teamMembers, selectedSalesId }: { proje
                     variant="outline"
                     size="sm"
                     onClick={handleNextPage}
-                    disabled={reports.length < PAGE_SIZE || page * PAGE_SIZE >= totalCount || loading}
+                    disabled={allReports.length < PAGE_SIZE || page * PAGE_SIZE >= totalCount || loading}
                 >
                     Berikutnya
                     <ChevronRight className="h-4 w-4 ml-2" />
@@ -426,6 +442,7 @@ export default function SpvReportsPage() {
   
   const [activeTab, setActiveTab] = useState<string | undefined>();
   const [selectedSalesId, setSelectedSalesId] = useState<string | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (projects && projects.length > 0 && !activeTab) {
@@ -494,14 +511,27 @@ export default function SpvReportsPage() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>
-                  Laporan untuk {project.name.toUpperCase().replace(/_/g, " ")}
-                </CardTitle>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>
+                      Laporan untuk {project.name.toUpperCase().replace(/_/g, " ")}
+                    </CardTitle>
                     <CardDescription>
-                    Menampilkan laporan untuk tim Anda pada proyek {project.name.toUpperCase().replace(/_/g, " ")}
+                      Menampilkan laporan untuk tim Anda pada proyek {project.name.toUpperCase().replace(/_/g, " ")}
                     </CardDescription>
-                    <div className="w-full sm:w-auto sm:min-w-[200px]">
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <div className="relative w-full sm:max-w-xs">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Cari laporan..."
+                            className="pl-8"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+                    <div className="w-full sm:min-w-[200px]">
                       <Select
                         value={selectedSalesId}
                         onValueChange={(value) => setSelectedSalesId(value === 'all' ? undefined : value)}
@@ -519,6 +549,7 @@ export default function SpvReportsPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -526,6 +557,7 @@ export default function SpvReportsPage() {
                   project={project}
                   teamMembers={teamMembers || []}
                   selectedSalesId={selectedSalesId}
+                  searchQuery={searchQuery}
                 />
               </CardContent>
             </Card>
@@ -535,6 +567,5 @@ export default function SpvReportsPage() {
     </div>
   );
 }
-    
 
     
