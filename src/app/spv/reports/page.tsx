@@ -456,7 +456,7 @@ export default function SpvReportsPage() {
     return (
       <div className="flex h-[80vh] w-full items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4 text-center">
-            <div className="mb-4 flex flex-col items-center gap-2">
+            <div className="mb-8 flex flex-col items-center gap-2">
               <AppLogo />
               <p className="text-sm text-muted-foreground font-semibold">Bangun Karier, Mulai Dari Magang</p>
             </div>
