@@ -123,18 +123,25 @@ function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, t
   const projectId = project.name.toLowerCase().replace(/ /g, "_");
 
   const projectRelevantSalesCodes = useMemo(() => {
-    // This is not perfectly mapping sales codes to *this specific project*
-    // but for an SPV, it's a good enough approximation to filter reports.
+    // For an SPV, it's a good enough approximation to filter reports by all their team's sales codes.
     return teamSalesCodes;
   }, [teamSalesCodes]);
 
 
   useEffect(() => {
     isMountedRef.current = true;
-    if (!firestore || projectRelevantSalesCodes.length === 0) return;
+    if (!firestore || projectRelevantSalesCodes.length === 0) {
+      if (isMountedRef.current) {
+        setTotalCount(0);
+      }
+      return;
+    };
 
     const fetchCount = async () => {
-      const countQuery = query(collection(firestore, "reports"), where("projectId", "==", projectId), where("salesCode", "in", projectRelevantSalesCodes));
+      const countQuery = query(collection(firestore, "reports"), 
+        where("projectId", "==", projectId), 
+        where("Sales Code", "in", projectRelevantSalesCodes)
+      );
       const snapshot = await getCountFromServer(countQuery);
       if (isMountedRef.current) {
         setTotalCount(snapshot.data().count);
@@ -161,9 +168,10 @@ function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, t
     if (isMountedRef.current) setLoading(true);
 
     try {
+      // NOTE: The user has specified that the sales code field is *always* "Sales Code".
       const queryConstraints = [
         where("projectId", "==", projectId),
-        where("salesCode", "in", projectRelevantSalesCodes)
+        where("Sales Code", "in", projectRelevantSalesCodes)
       ];
 
       let reportsQuery;
@@ -199,7 +207,8 @@ function FilteredReportsTable({ project, teamSalesCodes }: { project: Project, t
             setReports([]);
           }
           if(direction !== 'first') {
-            setPage(page);
+            // If we are on a page and there are no more results (e.g. page 2 had 1 item, now it has 0)
+            // we don't want to change the page number back. The user can go back manually.
           }
         }
       }
@@ -496,5 +505,6 @@ export default function SpvReportsPage() {
     </div>
   );
 }
+    
 
     
