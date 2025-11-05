@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,10 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Project name is required.'),
   status: z.enum(['Active', 'Completed', 'On Hold']),
+  reportHeaders: z.string().optional(),
 });
 
 type AddProjectFormProps = {
@@ -47,6 +50,7 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
     defaultValues: {
       name: '',
       status: 'Active',
+      reportHeaders: '',
     },
   });
 
@@ -64,11 +68,16 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
 
     try {
       const projectsCollection = collection(firestore, 'projects');
+      
+      const headers = values.reportHeaders
+        ? values.reportHeaders.split(',').map(h => h.trim()).filter(h => h)
+        : [];
+
       await addDoc(projectsCollection, {
         name: values.name,
         status: values.status,
         assignedSalesCodes: [],
-        reportHeaders: [],
+        reportHeaders: headers,
         createdAt: new Date().toISOString(),
       });
 
@@ -127,6 +136,25 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
                   <SelectItem value="On Hold">On Hold</SelectItem>
                 </SelectContent>
               </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="reportHeaders"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Report Headers</FormLabel>
+              <FormControl>
+                <Textarea
+                  placeholder="ID UNIK, Merchant Name, STATUS_PROCESS, PIC..."
+                  {...field}
+                />
+              </FormControl>
+              <FormDescription>
+                Enter the column headers you want to display, separated by commas.
+              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
