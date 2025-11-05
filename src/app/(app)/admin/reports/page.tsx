@@ -67,7 +67,7 @@ const formatValue = (value: any, key?: string): string => {
 
   if (typeof value === "string") {
     try {
-      if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+      if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value)) {
         return format(parseISO(value), "dd-MM-yyyy");
       }
       const dateWithSlashes = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -192,22 +192,14 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     setSelectedReport(report);
   };
 
-  const headers = useMemo(() => {
-    if (reports.length === 0) return [];
-    const allHeaders = new Set<string>();
-    reports.forEach((report) => {
-      Object.keys(report).forEach((key) => {
-        if (
-          key !== "id" &&
-          key !== "projectId" &&
-          key !== "lastSyncTimestamp"
-        ) {
-          allHeaders.add(key);
-        }
-      });
-    });
-    return Array.from(allHeaders).sort();
-  }, [reports]);
+  const headers = [
+    'Merchant Name',
+    'Octo Register Date',
+    'Period untuk Claim',
+    'Refferal Code',
+    'STATUS_PROCESS',
+    'TL'
+  ];
 
   if (loading && reports.length === 0) {
     return (
@@ -420,7 +412,7 @@ export default function ReportsPage() {
                 <CardDescription>
                   Displaying reports for{" "}
                   {project.name.toUpperCase().replace(/_/g, " ")}
-                </CardDescription>
+                </dCardDescription>
               </CardHeader>
               <CardContent>
                 <FilteredReportsTable
@@ -434,7 +426,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    
-
-    
