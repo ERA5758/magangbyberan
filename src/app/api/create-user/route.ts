@@ -1,16 +1,22 @@
 
-import 'dotenv/config'; // Ensure environment variables are loaded
+import 'dotenv/config';
 import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
 
+// Initialize Firebase Admin SDK immediately to catch any errors early.
+let auth, db;
+try {
+  ({ auth, db } = getFirebaseAdmin());
+} catch (error: any) {
+  console.error('API Route Initialization Error: Firebase Admin init failed:', error);
+  // We can't respond to requests if the admin SDK fails, but this logs the error.
+}
+
 export async function POST(req: NextRequest) {
-  let auth, db;
-  try {
-    ({ auth, db } = getFirebaseAdmin());
-  } catch (error: any) {
-    console.error('API Error during Firebase Admin init:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  // Check if initialization failed during startup
+  if (!auth || !db) {
+    return NextResponse.json({ error: 'Firebase Admin SDK not initialized. Check server logs.' }, { status: 500 });
   }
 
   try {

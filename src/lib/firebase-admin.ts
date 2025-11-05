@@ -23,10 +23,8 @@ function initializeFirebaseAdmin() {
       'base64'
     ).toString('utf-8');
     
-    // The key issue is that `\n` characters in the private key get escaped to `\\n`.
-    // We need to replace them back to `\n` for the JSON to be parsed correctly.
-    const correctedServiceAccountJson = serviceAccountJson.replace(/\\n/g, '\n');
-    const serviceAccount = JSON.parse(correctedServiceAccountJson);
+    // Directly parse the decoded JSON. String replacements can be brittle.
+    const serviceAccount = JSON.parse(serviceAccountJson);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
