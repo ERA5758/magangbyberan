@@ -1,8 +1,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
+import 'dotenv/config'; // Ensure environment variables are loaded
 import { db, auth } from '@/lib/firebase-admin';
 import type { AppUser } from '@/lib/types';
-import 'dotenv/config';
 
 export async function POST(req: NextRequest) {
   try {
