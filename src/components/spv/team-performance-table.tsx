@@ -23,14 +23,17 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, User, Mail, Landmark, CreditCard, Phone, Home } from "lucide-react"
+import { MoreHorizontal, User, Mail, Landmark, CreditCard, Phone, Home, Loader2 } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
-import { useCollection, useFirestore } from "@/firebase"
-import { collection, query, where } from "firebase/firestore"
+import { useFirestore } from "@/firebase"
+import { collection, query, where, doc, updateDoc } from "firebase/firestore"
+import { useCollection } from "@/firebase/firestore/use-collection"
 import type { Sale, AppUser } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast"
 
 type TeamPerformanceData = AppUser & {
     totalSales: number;
@@ -39,7 +42,9 @@ type TeamPerformanceData = AppUser & {
 
 export function TeamPerformanceTable({ supervisorId }: { supervisorId: string }) {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
     const [selectedMember, setSelectedMember] = useState<TeamPerformanceData | null>(null);
 
     const teamMembersQuery = useMemo(() => 
@@ -82,9 +87,37 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
         switch (status) {
             case 'Aktif': return 'secondary';
             case 'Menunggu Persetujuan': return 'default';
+            case 'Non Aktif': return 'destructive';
             default: return 'outline';
         }
     };
+
+    const handleToggleStatus = async () => {
+        if (!selectedMember || !firestore) return;
+        
+        setIsUpdating(true);
+        const newStatus = selectedMember.status === 'Aktif' ? 'Non Aktif' : 'Aktif';
+        const userRef = doc(firestore, 'users', selectedMember.id);
+
+        try {
+            await updateDoc(userRef, { status: newStatus });
+            toast({
+                title: "Status Diperbarui",
+                description: `Status untuk ${selectedMember.name} telah diubah menjadi ${newStatus}.`,
+            });
+            // Update local state to reflect change instantly
+            setSelectedMember(prev => prev ? { ...prev, status: newStatus } : null);
+        } catch (error) {
+            console.error("Error updating status:", error);
+            toast({
+                variant: 'destructive',
+                title: "Gagal Memperbarui Status",
+                description: "Terjadi kesalahan. Silakan coba lagi."
+            });
+        } finally {
+            setIsUpdating(false);
+        }
+    }
 
     if (membersLoading || salesLoading) {
         return <div>Memuat kinerja tim...</div>
@@ -216,6 +249,18 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                 </div>
                              </div>
                         </div>
+                    )}
+                    {selectedMember && selectedMember.status !== 'Menunggu Persetujuan' && (
+                        <DialogFooter>
+                            <Button
+                                variant={selectedMember.status === 'Aktif' ? 'destructive' : 'default'}
+                                onClick={handleToggleStatus}
+                                disabled={isUpdating}
+                            >
+                                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {selectedMember.status === 'Aktif' ? 'Nonaktifkan Sales' : 'Aktifkan Sales'}
+                            </Button>
+                        </DialogFooter>
                     )}
                 </DialogContent>
             </Dialog>

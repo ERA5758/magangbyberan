@@ -13,7 +13,7 @@ export type AppUser = {
   name: string;
   email: string | null;
   role: 'Admin' | 'SPV' | 'Sales';
-  status: 'Aktif' | 'Menunggu Persetujuan';
+  status: 'Aktif' | 'Non Aktif' | 'Menunggu Persetujuan';
   avatar: string;
   projectAssignments?: ProjectAssignment[];
   salesCode?: string; // for backward compatibility if needed, but should be deprecated

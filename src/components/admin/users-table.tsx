@@ -56,6 +56,7 @@ export function UsersTable() {
         switch (status) {
             case 'Aktif': return 'secondary';
             case 'Menunggu Persetujuan': return 'default';
+            case 'Non Aktif': return 'destructive';
             default: return 'outline';
         }
     };

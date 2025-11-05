@@ -15,7 +15,7 @@ export type AppUser = {
   avatar: string;
   supervisorId?: string;
   projectAssignments?: ProjectAssignment[];
-  status: 'Aktif' | 'Menunggu Persetujuan';
+  status: 'Aktif' | 'Non Aktif' | 'Menunggu Persetujuan';
   [key: string]: any; 
 };
 
