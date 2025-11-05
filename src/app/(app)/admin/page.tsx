@@ -7,7 +7,7 @@ import { UsersTable } from "@/components/admin/users-table";
 import { ProjectsTable } from "@/components/admin/projects-table";
 import { useCollection, useFirestore } from "@/firebase";
 import { collection } from "firebase/firestore";
-import { Users, Briefcase, DollarSign } from "lucide-react";
+import { Users, Briefcase } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -15,31 +15,29 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import type { AppUser, Project, Sale } from '@/lib/types';
+import type { AppUser, Project } from '@/lib/types';
 import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { ProjectSalesSummary } from "@/components/admin/project-sales-summary";
 
 export default function AdminDashboard() {
   const firestore = useFirestore();
 
   const usersCollection = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
   const projectsCollection = useMemo(() => firestore ? collection(firestore, "projects") : null, [firestore]);
-  const salesCollection = useMemo(() => firestore ? collection(firestore, "sales") : null, [firestore]);
 
   const { data: users, loading: usersLoading } = useCollection<AppUser>(usersCollection);
   const { data: projects, loading: projectsLoading } = useCollection<Project>(projectsCollection);
-  const { data: sales, loading: salesLoading } = useCollection<Sale>(salesCollection);
 
-  const totalSales = sales?.reduce((acc, sale) => acc + sale.amount, 0) || 0;
-  const isLoading = usersLoading || projectsLoading || salesLoading;
+  const isLoading = usersLoading || projectsLoading;
 
   return (
     <div className="space-y-6">
       <PageHeader title="Dasbor Admin" description="Selamat datang kembali! Berikut adalah ringkasan platform Anda." />
       
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <StatCard
           title="Total Pengguna"
           value={isLoading ? <Skeleton className="h-6 w-20" /> : users?.length.toString() || '0'}
@@ -52,13 +50,18 @@ export default function AdminDashboard() {
           icon={Briefcase}
           description="Semua proyek aktif dan selesai"
         />
-        <StatCard
-          title="Total Penjualan"
-          value={isLoading ? <Skeleton className="h-6 w-28" /> : `$${totalSales.toLocaleString()}`}
-          icon={DollarSign}
-          description="Total pendapatan dari semua proyek"
-        />
       </div>
+
+       <Card>
+        <CardHeader>
+          <CardTitle>Ringkasan Penjualan Proyek</CardTitle>
+          <CardDescription>Jumlah total laporan (penjualan) yang tercatat untuk setiap proyek.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ProjectSalesSummary />
+        </CardContent>
+      </Card>
+
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
