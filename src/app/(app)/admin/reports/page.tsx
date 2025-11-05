@@ -110,8 +110,8 @@ function FilteredReportsTable({ project }: { project: Project }) {
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   
-  const [tlFilterInput, setTlFilterInput] = useState("");
-  const [activeTlFilter, setActiveTlFilter] = useState("");
+  const [filterInput, setFilterInput] = useState("");
+  const [activeFilter, setActiveFilter] = useState("");
 
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -133,8 +133,8 @@ function FilteredReportsTable({ project }: { project: Project }) {
         where("projectId", "==", projectId),
       ];
 
-      if (projectId === 'btn' && activeTlFilter) {
-        queryConstraints.push(where("team_leader", "==", activeTlFilter));
+      if (projectId === 'btn' && activeFilter) {
+        queryConstraints.push(where("input_laporan", "==", activeFilter));
       }
       
       let reportsQuery;
@@ -195,8 +195,8 @@ function FilteredReportsTable({ project }: { project: Project }) {
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
-    setTlFilterInput("");
-    setActiveTlFilter("");
+    setFilterInput("");
+    setActiveFilter("");
     fetchReports("first");
     
     return () => {
@@ -209,15 +209,15 @@ function FilteredReportsTable({ project }: { project: Project }) {
     setLastVisible(null);
     setFirstVisible(null);
     fetchReports("first");
-  }, [activeTlFilter]);
+  }, [activeFilter]);
 
   const handleApplyFilter = () => {
-    setActiveTlFilter(tlFilterInput);
+    setActiveFilter(filterInput);
   };
   
   const handleResetFilter = () => {
-    setTlFilterInput("");
-    setActiveTlFilter("");
+    setFilterInput("");
+    setActiveFilter("");
   };
   
   const handleNextPage = () => {
@@ -257,9 +257,9 @@ function FilteredReportsTable({ project }: { project: Project }) {
       {projectId === 'btn' && (
         <div className="flex items-center gap-2 mb-4">
           <Input 
-            placeholder="Filter by Team Leader..."
-            value={tlFilterInput}
-            onChange={(e) => setTlFilterInput(e.target.value)}
+            placeholder="Filter by Input Laporan..."
+            value={filterInput}
+            onChange={(e) => setFilterInput(e.target.value)}
             className="w-[240px]"
           />
           <Button onClick={handleApplyFilter}>Filter</Button>
@@ -484,5 +484,3 @@ export default function ReportsPage() {
     </div>
   );
 }
-
-    
