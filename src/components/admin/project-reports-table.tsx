@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -11,9 +12,9 @@ import {
 } from "@/components/ui/table";
 import { useFirestore } from "@/firebase";
 import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
-import type { Project, Report } from "@/lib/types";
+import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
@@ -21,10 +22,7 @@ const isFirestoreTimestamp = (value: any): value is Timestamp => {
 
 const formatDate = (date: Date): string => {
     try {
-        const d = date.getDate().toString().padStart(2, '0');
-        const m = (date.getMonth() + 1).toString().padStart(2, '0');
-        const y = date.getFullYear();
-        return `${d}/${m}/${y}`;
+        return format(date, 'dd/MM/yyyy');
     } catch (e) {
         return 'Invalid Date';
     }
@@ -37,13 +35,20 @@ const formatValue = (value: any): string => {
     if (isFirestoreTimestamp(value)) {
         return formatDate(value.toDate());
     }
-    if (typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+     if (typeof value === 'string') {
+        // Attempt to parse "M/d/yyyy" or "d/M/yyyy" formats
         try {
-            const parts = value.split('/');
-            const date = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
-            return formatDate(date);
-        } catch (e) {
-            return value;
+            if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+                let parsedDate = parse(value, 'M/d/yyyy', new Date());
+                if(isNaN(parsedDate.getTime())) {
+                    parsedDate = parse(value, 'd/M/yyyy', new Date());
+                }
+                 if(!isNaN(parsedDate.getTime())) {
+                    return formatDate(parsedDate);
+                }
+            }
+        } catch(e) {
+             // Not a date string, return original string below
         }
     }
     if (typeof value === 'number') {
@@ -58,11 +63,14 @@ const formatValue = (value: any): string => {
 export function ProjectReportsTable({ projectId }: { projectId: string }) {
     const firestore = useFirestore();
     const [project, setProject] = useState<Project | null>(null);
-    const [reports, setReports] = useState<Report[]>([]);
+    const [reports, setReports] = useState<{[key: string]: any}[]>([]);
     const [loading, setLoading] = useState(true);
     
     useEffect(() => {
-        if (!firestore || !projectId) return;
+        if (!firestore || !projectId) {
+            setLoading(false);
+            return;
+        };
 
         const fetchData = async () => {
             setLoading(true);
@@ -71,21 +79,23 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                 const projectRef = doc(firestore, "projects", projectId);
                 const projectSnap = await getDoc(projectRef);
 
-                if (!projectSnap.exists()) {
+                let projectData: Project | null = null;
+                if (projectSnap.exists()) {
+                    projectData = { id: projectSnap.id, ...projectSnap.data() } as Project;
+                    setProject(projectData);
+                } else {
                     setProject(null);
                     setReports([]);
+                    setLoading(false);
                     return;
                 }
-                
-                const projectData = { id: projectSnap.id, ...projectSnap.data() } as Project;
-                setProject(projectData);
 
                 // 2. Fetch reports subcollection
                 const reportsRef = collection(firestore, "projects", projectId, "reports");
                 const reportsQuery = query(reportsRef);
                 const reportsSnap = await getDocs(reportsQuery);
                 
-                const reportsData = reportsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Report[];
+                const reportsData = reportsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 setReports(reportsData);
 
             } catch (error) {
@@ -100,23 +110,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         fetchData();
     }, [firestore, projectId]);
 
-    const headers = useMemo(() => {
-        if (project?.reportHeaders && project.reportHeaders.length > 0) {
-            return project.reportHeaders;
-        }
-        if(reports && reports.length > 0) {
-            const dynamicHeaders = new Set<string>();
-            reports.forEach(report => {
-                Object.keys(report).forEach(key => {
-                    if(key !== 'id' && key !== 'lastSyncTimestamp') { 
-                        dynamicHeaders.add(key);
-                    }
-                });
-            });
-            return Array.from(dynamicHeaders).sort();
-        }
-        return [];
-    }, [project, reports]);
+    const headers = project?.reportHeaders && project.reportHeaders.length > 0 ? project.reportHeaders : [];
 
     if (loading) {
         return (
