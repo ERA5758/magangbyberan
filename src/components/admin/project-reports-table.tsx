@@ -14,52 +14,21 @@ import { useFirestore } from "@/firebase";
 import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
 import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format, parse } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
 };
 
-const formatDate = (date: Date): string => {
-    try {
-        return format(date, 'dd/MM/yyyy');
-    } catch (e) {
-        return 'Invalid Date';
-    }
-};
-
+// Simplified for debugging: Just convert value to string.
 const formatValue = (value: any): string => {
     if (value === undefined || value === null) {
       return 'N/A';
     }
     if (isFirestoreTimestamp(value)) {
-        return formatDate(value.toDate());
+        // Temporarily just show it's a timestamp object
+        return value.toDate().toISOString(); 
     }
-     if (typeof value === 'string') {
-        // Attempt to parse "M/d/yyyy" or "d/M/yyyy" formats, which are common in CSV/Excel imports.
-        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
-            try {
-                // First, try M/d/yyyy (e.g., 9/15/2025)
-                let parsedDate = parse(value, 'M/d/yyyy', new Date());
-                // If invalid, try d/M/yyyy (e.g., 15/9/2025)
-                if (isNaN(parsedDate.getTime())) {
-                    parsedDate = parse(value, 'd/M/yyyy', new Date());
-                }
-                // If we have a valid date, format it
-                 if(!isNaN(parsedDate.getTime())) {
-                    return formatDate(parsedDate);
-                }
-            } catch(e) {
-                 // Ignore parsing errors, return original string below
-            }
-        }
-    }
-    if (typeof value === 'number') {
-        return value.toLocaleString('id-ID');
-    }
-    if (typeof value === 'boolean') {
-      return value ? 'Yes' : 'No';
-    }
+    // Convert everything else to a simple string
     return String(value);
 };
 
