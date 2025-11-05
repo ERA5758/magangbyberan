@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -74,15 +75,15 @@ const formatValue = (value: any): string => {
 function FilteredReportsTable({ projectId }: { projectId: string }) {
   const firestore = useFirestore();
 
-  // Simple, robust query on the root 'reports' collection
   const reportsQuery = useMemo(() => {
     if (!firestore || !projectId) return null;
+    // Simple, reliable query on the root 'reports' collection
     return query(collection(firestore, 'reports'), where('projectId', '==', projectId));
   }, [firestore, projectId]);
 
   const { data: reports, loading } = useCollectionOnce<Report>(reportsQuery);
   
-  // We still need the project doc to get the headers
+  // We get headers from the project document itself for consistency
   const { data: projectData, loading: projectLoading } = useCollectionOnce<Project>(
       useMemo(() => firestore ? query(collection(firestore, 'projects'), where('id', '==', projectId)) : null, [firestore, projectId])
   );
@@ -103,36 +104,33 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
     );
   }
   
-  if (headers.length === 0) {
-      return <p className="text-center text-muted-foreground py-8">No report headers configured for this project.</p>;
+  if (!reports || reports.length === 0) {
+      return <p className="text-center text-muted-foreground py-8">No reports found for this project.</p>;
   }
+
+  // If headers are not configured on the project, we can create them dynamically from the first report as a fallback
+  const dynamicHeaders = headers.length > 0 ? headers : Object.keys(reports[0]).filter(key => key !== 'id' && key !== 'projectId');
 
   return (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
-            {headers.map(header => (
+            {dynamicHeaders.map(header => (
               <TableHead key={header} className="capitalize whitespace-nowrap">{header.replace(/_/g, ' ')}</TableHead>
             ))}
           </TableRow>
         </TableHeader>
         <TableBody>
-          {reports && reports.length > 0 ? reports.map((report) => (
+          {reports.map((report) => (
             <TableRow key={report.id}>
-              {headers.map(header => (
+              {dynamicHeaders.map(header => (
                 <TableCell key={`${report.id}-${header}`}>
                   {formatValue(report[header])}
                 </TableCell>
               ))}
             </TableRow>
-          )) : (
-            <TableRow>
-              <TableCell colSpan={headers.length || 1} className="text-center h-24">
-                No reports found for this project.
-              </TableCell>
-            </TableRow>
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>
