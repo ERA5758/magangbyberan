@@ -46,7 +46,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
 import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -110,9 +109,6 @@ function FilteredReportsTable({ project }: { project: Project }) {
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   
-  const [filterInput, setFilterInput] = useState("");
-  const [activeFilter, setActiveFilter] = useState("");
-
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [firstVisible, setFirstVisible] =
@@ -129,14 +125,10 @@ function FilteredReportsTable({ project }: { project: Project }) {
     if (isMountedRef.current) setLoading(true);
 
     try {
-      let queryConstraints = [
+      const queryConstraints = [
         where("projectId", "==", projectId),
       ];
 
-      if (projectId === 'btn' && activeFilter) {
-        queryConstraints.push(where("input_laporan", "==", activeFilter));
-      }
-      
       let reportsQuery;
       const baseQuery = query(
         collection(firestore, "reports"),
@@ -169,8 +161,6 @@ function FilteredReportsTable({ project }: { project: Project }) {
           if (direction === 'first') {
             setReports([]);
           }
-          // If we are on a page > 1 and there are no results, it means we went past the end.
-          // We could auto-navigate back, but for now we just show no results.
           if(direction !== 'first') {
             setReports([]);
           }
@@ -195,30 +185,12 @@ function FilteredReportsTable({ project }: { project: Project }) {
     setLastVisible(null);
     setFirstVisible(null);
     setPage(1);
-    setFilterInput("");
-    setActiveFilter("");
     fetchReports("first");
     
     return () => {
       isMountedRef.current = false;
     };
   }, [project, firestore]);
-  
-  useEffect(() => {
-    setPage(1);
-    setLastVisible(null);
-    setFirstVisible(null);
-    fetchReports("first");
-  }, [activeFilter]);
-
-  const handleApplyFilter = () => {
-    setActiveFilter(filterInput);
-  };
-  
-  const handleResetFilter = () => {
-    setFilterInput("");
-    setActiveFilter("");
-  };
   
   const handleNextPage = () => {
     if (lastVisible) {
@@ -254,19 +226,6 @@ function FilteredReportsTable({ project }: { project: Project }) {
   
   return (
     <>
-      {projectId === 'btn' && (
-        <div className="flex items-center gap-2 mb-4">
-          <Input 
-            placeholder="Filter by Input Laporan..."
-            value={filterInput}
-            onChange={(e) => setFilterInput(e.target.value)}
-            className="w-[240px]"
-          />
-          <Button onClick={handleApplyFilter}>Filter</Button>
-          <Button onClick={handleResetFilter} variant="outline">Reset</Button>
-        </div>
-      )}
-      
       {(!loading && reports.length === 0) ? (
          <p className="text-center text-muted-foreground py-8">
             No reports found for the selected criteria.
