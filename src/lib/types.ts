@@ -28,19 +28,3 @@ export type Sale = {
   amount: number;
   date: string; // ISO 8601 format
 };
-
-export type Report = {
-  id: string; 
-  "ID UNIK": string;
-  Tanggal: Timestamp;
-  name_alias: string;
-  ID: string;
-  "REFERRAL BY": string;
-  TRANSAKSI: string;
-  "Jumlah Transaksi": number;
-  "Input Laporan": Timestamp;
-  "cek digit": number;
-  "TEAM LEADER": string;
-  lastSyncTimestamp?: Timestamp;
-  [key: string]: any;
-}

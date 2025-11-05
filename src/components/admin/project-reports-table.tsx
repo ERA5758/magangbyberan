@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { useCollection, useDoc, useFirestore } from "@/firebase";
 import { collection, doc, Timestamp, query } from "firebase/firestore";
-import type { Report, Project } from "@/lib/types";
+import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
@@ -21,35 +21,37 @@ const isFirestoreTimestamp = (value: any): value is Timestamp => {
 
 const formatDate = (date: Date): string => {
     try {
-        return date.toLocaleDateString('id-ID', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-        });
+        const d = date.getDate().toString().padStart(2, '0');
+        const m = (date.getMonth() + 1).toString().padStart(2, '0');
+        const y = date.getFullYear();
+        return `${d}/${m}/${y}`;
     } catch (e) {
         return 'Invalid Date';
     }
 };
 
 const formatValue = (value: any): string => {
+    if (value === undefined || value === null) {
+      return 'N/A';
+    }
     if (isFirestoreTimestamp(value)) {
         return formatDate(value.toDate());
     }
-    // Attempt to parse string dates like "9/15/2025"
-    if (typeof value === 'string' && /^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
-        try {
-            const date = new Date(value);
-            return formatDate(date);
-        } catch (e) {
-            // Not a valid date string, return as is
-            return value;
+    if (typeof value === 'string') {
+        // Test for 'M/D/YYYY' or 'MM/DD/YYYY' format
+        if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value)) {
+            try {
+                // Firestore timestamps from strings are often weird, parse manually
+                const parts = value.split('/');
+                const date = new Date(parseInt(parts[2]), parseInt(parts[0]) - 1, parseInt(parts[1]));
+                return formatDate(date);
+            } catch (e) {
+                return value; // if parsing fails, return original string
+            }
         }
     }
     if (typeof value === 'number') {
         return value.toLocaleString('id-ID');
-    }
-    if (value === undefined || value === null) {
-      return 'N/A';
     }
     return String(value);
 }
@@ -64,19 +66,24 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
 
     const reportsQuery = useMemo(() => {
         if (!firestore) return null;
-        // Correctly query the sub-collection 'reports' inside the specific project document.
         const reportsCollectionRef = collection(firestore, "projects", projectId, "reports");
         return query(reportsCollectionRef); 
     }, [firestore, projectId]);
     
-    const { data: reports, loading: reportsLoading } = useCollection<Report>(reportsQuery);
+    // Explicitly type reports as an array of objects with any properties
+    const { data: reports, loading: reportsLoading } = useCollection<{[key: string]: any}>(reportsQuery);
 
     const headers = useMemo(() => {
         if (project?.reportHeaders && project.reportHeaders.length > 0) {
             return project.reportHeaders;
         }
+        // If no headers are configured, try to dynamically generate from the first report
+        if(reports && reports.length > 0) {
+            // Get all keys, but exclude ones we probably don't want to show
+            return Object.keys(reports[0]).filter(key => key !== 'id' && key !== 'lastSyncTimestamp');
+        }
         return [];
-    }, [project]);
+    }, [project, reports]);
 
     const isLoading = projectLoading || reportsLoading;
 
@@ -94,9 +101,14 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
         return <p className="text-center text-muted-foreground py-8">Project configuration not found.</p>;
     }
     
-    if (headers.length === 0) {
-        return <p className="text-center text-muted-foreground py-8">No report headers configured for this project. Please set them in the 'Projects' page.</p>;
+    if (headers.length === 0 && reports?.length === 0) {
+        return <p className="text-center text-muted-foreground py-8">No reports found and no headers configured for this project.</p>;
     }
+    
+    if (headers.length === 0) {
+         return <p className="text-center text-muted-foreground py-8">No report headers configured for this project. Please set them in the 'Projects' page.</p>;
+    }
+
 
     return (
         <div className="rounded-md border">
@@ -119,7 +131,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                     </TableRow>
                 )) : (
                     <TableRow>
-                        <TableCell colSpan={headers.length} className="text-center">
+                        <TableCell colSpan={headers.length} className="text-center h-24">
                             No reports found for this project.
                         </TableCell>
                     </TableRow>
