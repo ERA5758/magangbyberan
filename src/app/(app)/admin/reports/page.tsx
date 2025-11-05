@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
@@ -45,14 +44,15 @@ const formatValue = (value: any): string => {
 
     if (typeof value === 'string') {
         try {
-            // This will handle ISO strings, and some other common formats.
-            const parsedDate = new Date(value);
-            // Check if the parsed date is valid before formatting
-            if (!isNaN(parsedDate.getTime())) {
-                // A simple check to avoid formatting random strings as dates
-                // e.g., "Approved" doesn't contain numbers that look like a date part
-                if (/\d/.test(value)) {
-                    return format(parsedDate, 'dd/MM/yyyy');
+            if (/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/.test(value)) {
+                return format(parseISO(value), 'dd/MM/yyyy');
+            }
+            const dateWithSlashes = value.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+            if (dateWithSlashes) {
+                // Attempt to parse M/d/yyyy or d/M/yyyy
+                const d = new Date(value);
+                if (!isNaN(d.getTime())) {
+                    return format(d, 'dd/MM/yyyy');
                 }
             }
         } catch (e) {
@@ -156,6 +156,10 @@ function FilteredReportsTable({ projectId }: { projectId: string }) {
   );
 }
 
+const formatNameToId = (name: string) => {
+  return name.toLowerCase().replace(/ /g, '_');
+}
+
 export default function ReportsPage() {
   const firestore = useFirestore();
   const projectsQuery = useMemo(
@@ -210,6 +214,8 @@ export default function ReportsPage() {
       </div>
     );
   }
+  
+  const defaultTabValue = projects[0]?.name ? formatNameToId(projects[0].name) : '';
 
   return (
     <div className="space-y-8">
@@ -217,16 +223,16 @@ export default function ReportsPage() {
         title="Project Reports"
         description="View reports filtered by project."
       />
-      <Tabs defaultValue={projects[0].id} className="space-y-4">
+      <Tabs defaultValue={defaultTabValue} className="space-y-4">
         <TabsList>
           {projects.map((project) => (
-            <TabsTrigger key={project.id} value={project.id}>
-              {project.name || project.id}
+            <TabsTrigger key={project.id} value={formatNameToId(project.name)}>
+              {project.name}
             </TabsTrigger>
           ))}
         </TabsList>
         {projects.map((project) => (
-          <TabsContent key={project.id} value={project.id}>
+          <TabsContent key={project.id} value={formatNameToId(project.name)}>
             <Card>
               <CardHeader>
                 <CardTitle>Reports for {project.name}</CardTitle>
@@ -235,7 +241,7 @@ export default function ReportsPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <FilteredReportsTable projectId={project.id} />
+                <FilteredReportsTable projectId={formatNameToId(project.name)} />
               </CardContent>
             </Card>
           </TabsContent>
