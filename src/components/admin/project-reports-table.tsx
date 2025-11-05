@@ -14,21 +14,47 @@ import { useFirestore } from "@/firebase";
 import { collection, doc, getDoc, getDocs, Timestamp, query } from "firebase/firestore";
 import type { Project } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { format, parse } from 'date-fns';
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === 'function';
 };
 
-// Simplified for debugging: Just convert value to string.
 const formatValue = (value: any): string => {
     if (value === undefined || value === null) {
       return 'N/A';
     }
+    
     if (isFirestoreTimestamp(value)) {
-        // Temporarily just show it's a timestamp object
-        return value.toDate().toISOString(); 
+        try {
+            return format(value.toDate(), 'dd/MM/yyyy');
+        } catch (e) {
+            return 'Invalid Date';
+        }
     }
-    // Convert everything else to a simple string
+
+    if (typeof value === 'string') {
+        // Attempt to parse various string date formats
+        try {
+            // Try M/d/yyyy (e.g., 9/15/2025)
+            const parsedDate1 = parse(value, 'M/d/yyyy', new Date());
+            if (!isNaN(parsedDate1.getTime())) return format(parsedDate1, 'dd/MM/yyyy');
+
+            // Try d/M/yyyy
+            const parsedDate2 = parse(value, 'd/M/yyyy', new Date());
+            if (!isNaN(parsedDate2.getTime())) return format(parsedDate2, 'dd/MM/yyyy');
+        } catch (e) {
+            // Not a valid date string, return original string
+        }
+    }
+
+    if (typeof value === 'number') {
+        return value.toLocaleString('id-ID');
+    }
+    if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+    }
+    
     return String(value);
 };
 
@@ -62,8 +88,8 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                     return;
                 }
 
-                // 2. Fetch reports subcollection
-                const reportsRef = collection(firestore, "projects", projectId, "reports");
+                // 2. Fetch reports subcollection using the correct path
+                const reportsRef = collection(projectRef, "reports");
                 const reportsQuery = query(reportsRef);
                 const reportsSnap = await getDocs(reportsQuery);
                 
@@ -108,7 +134,7 @@ export function ProjectReportsTable({ projectId }: { projectId: string }) {
                 <TableHeader>
                     <TableRow>
                         {headers.map(header => (
-                            <TableHead key={header} className="capitalize">{header.replace(/_/g, ' ')}</TableHead>
+                            <TableHead key={header} className="capitalize whitespace-nowrap">{header.replace(/_/g, ' ')}</TableHead>
                         ))}
                     </TableRow>
                 </TableHeader>
