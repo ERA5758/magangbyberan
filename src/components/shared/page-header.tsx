@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 
 type PageHeaderProps = {
@@ -9,7 +10,7 @@ type PageHeaderProps = {
 
 export function PageHeader({ title, description, children, className }: PageHeaderProps) {
   return (
-    <div className={cn("flex flex-col gap-4 md:flex-row md:items-center md:justify-between", className)}>
+    <div className={cn("flex flex-col gap-4 md:flex-row md:items-start md:justify-between", className)}>
       <div>
         <h1 className="text-2xl font-bold tracking-tight md:text-3xl font-headline">{title}</h1>
         {description && (
