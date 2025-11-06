@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useMemo } from "react";
@@ -40,6 +39,7 @@ import type { AppUser, Project } from "@/lib/types";
 import { AddUserForm } from "./add-user-form";
 import { useToast } from "@/hooks/use-toast";
 import { BulkImportUsersForm } from "./bulk-import-users-form";
+import { EditUserForm } from "./edit-user-form";
 
 type UsersTableProps = {
     users: AppUser[] | null;
@@ -69,6 +69,7 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
@@ -145,6 +146,11 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
         setSelectedUser(user);
         setIsDetailOpen(true);
     };
+
+    const handleEditClick = () => {
+        setIsDetailOpen(false);
+        setIsEditOpen(true);
+    }
 
      const handleToggleStatus = async () => {
         if (!selectedUser || !firestore) return;
@@ -315,8 +321,8 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                              </div>
                         </div>
                     )}
-                     <DialogFooter className="gap-2 sm:justify-between">
-                        {selectedUser?.status === 'Menunggu Persetujuan' && (
+                     <DialogFooter className="gap-2 sm:flex-col md:flex-row md:justify-between">
+                        {selectedUser?.status === 'Menunggu Persetujuan' ? (
                             <div className="flex-1 flex gap-2">
                                 <Button variant="destructive" onClick={openDeleteDialog} disabled={isUpdating} className="w-full">
                                     {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Tolak
@@ -325,25 +331,49 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                                     {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Setujui
                                 </Button>
                             </div>
-                        )}
-                        {selectedUser?.status !== 'Menunggu Persetujuan' && (
+                        ) : (
                             <>
                                 <Button variant="destructive" onClick={openDeleteDialog} disabled={isUpdating}>
                                     Hapus Pengguna
                                 </Button>
-                                <Button
-                                    variant={selectedUser?.status === 'Aktif' ? 'secondary' : 'default'}
-                                    onClick={handleToggleStatus}
-                                    disabled={isUpdating}
-                                >
-                                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {selectedUser?.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
-                                </Button>
+                                <div className="flex gap-2">
+                                     <Button variant="outline" onClick={handleEditClick}>
+                                        Ubah Data
+                                    </Button>
+                                    <Button
+                                        variant={selectedUser?.status === 'Aktif' ? 'secondary' : 'default'}
+                                        onClick={handleToggleStatus}
+                                        disabled={isUpdating}
+                                    >
+                                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                        {selectedUser?.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
+                                    </Button>
+                                </div>
                             </>
                         )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {selectedUser && (
+                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                    <DialogContent className="sm:max-w-[425px] md:max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <DialogHeader>
+                            <DialogTitle>Ubah Data Pengguna</DialogTitle>
+                            <DialogDescription>
+                                Perbarui detail untuk {selectedUser.name}.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <EditUserForm
+                            user={selectedUser}
+                            onSuccess={() => {
+                                setIsEditOpen(false);
+                                mutate();
+                            }}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
 
              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <AlertDialogContent>
@@ -366,9 +396,3 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
             </AlertDialog>
         </div>
     )
-
-    
-
-    
-
-    
