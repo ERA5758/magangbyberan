@@ -136,7 +136,7 @@ export function ProjectsTable() {
                             Tambah Proyek
                         </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Tambah Proyek Baru</DialogTitle>
                             <DialogDescription>
@@ -218,7 +218,7 @@ export function ProjectsTable() {
             </div>
             {selectedProject && (
                  <Dialog open={isEditProjectOpen} onOpenChange={setIsEditProjectOpen}>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Ubah Proyek: {selectedProject.name}</DialogTitle>
                             <DialogDescription>

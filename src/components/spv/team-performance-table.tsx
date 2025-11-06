@@ -183,7 +183,7 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 </Table>
             </div>
             <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Detail Anggota Tim</DialogTitle>
                         <DialogDescription>

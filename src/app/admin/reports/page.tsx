@@ -347,7 +347,7 @@ function FilteredReportsTable({ project, searchQuery }: { project: Project, sear
         open={!!selectedReport}
         onOpenChange={(isOpen) => !isOpen && setSelectedReport(null)}
       >
-        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Detail Laporan</DialogTitle>
             <DialogDescription>
