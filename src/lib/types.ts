@@ -28,6 +28,9 @@ export type Project = {
   feeSpv?: number;
   feeSales?: number;
   appsScriptUrl?: string;
+  lastSyncTime?: Timestamp;
+  lastSyncStatus?: 'success' | 'error';
+  lastSyncMessage?: string;
 };
 
 export type Sale = {

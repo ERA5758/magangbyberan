@@ -88,6 +88,9 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         feeSales: values.feeSales || 0,
         appsScriptUrl: values.appsScriptUrl || '',
         createdAt: serverTimestamp(),
+        lastSyncTime: null,
+        lastSyncStatus: null,
+        lastSyncMessage: null,
       });
 
       toast({
