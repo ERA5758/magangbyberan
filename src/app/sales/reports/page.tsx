@@ -51,6 +51,7 @@ import { format, parse, parseISO } from "date-fns";
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once";
 import { ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
 import AppLogo from "@/components/shared/app-logo";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const isFirestoreTimestamp = (value: any): value is Timestamp => {
   return value && typeof value.toDate === "function";
@@ -111,6 +112,7 @@ function FilteredReportsTable({ project, salesCode, searchQuery }: { project: Pr
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const isMobile = useIsMobile();
   
   const [lastVisible, setLastVisible] =
     useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -263,6 +265,8 @@ function FilteredReportsTable({ project, salesCode, searchQuery }: { project: Pr
     ? project.reportHeaders 
     : [];
 
+  const visibleHeaders = isMobile ? headers.slice(0, 2) : headers;
+
   if (loading && allReports.length === 0) {
     return (
       <div className="space-y-2 mt-4">
@@ -290,11 +294,12 @@ function FilteredReportsTable({ project, salesCode, searchQuery }: { project: Pr
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">No.</TableHead>
-                  {headers.map((header) => (
+                  {visibleHeaders.map((header) => (
                     <TableHead key={header} className="capitalize whitespace-nowrap">
                       {header.replace(/_/g, " ")}
                     </TableHead>
                   ))}
+                   {isMobile && headers.length > 2 && <TableHead></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -312,11 +317,12 @@ function FilteredReportsTable({ project, salesCode, searchQuery }: { project: Pr
                         className="cursor-pointer"
                       >
                         <TableCell>{(page - 1) * PAGE_SIZE + index + 1}</TableCell>
-                        {headers.map((header) => (
+                        {visibleHeaders.map((header) => (
                           <TableCell key={`${report.id}-${header}`}>
                             {formatValue(report[header] ?? report[header.replace(/ /g, '_')], header)}
                           </TableCell>
                         ))}
+                         {isMobile && headers.length > 2 && <TableCell>...</TableCell>}
                       </TableRow>
                     ))
                 )}
@@ -514,5 +520,8 @@ export default function SalesReportsPage() {
 }
 
     
+
+    
+
 
     
