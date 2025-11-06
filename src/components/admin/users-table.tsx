@@ -17,7 +17,6 @@ import {
     DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog"
 import {
@@ -31,7 +30,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, User, Mail, Landmark, Phone, Home, Loader2, Upload } from "lucide-react"
+import { PlusCircle, User, Mail, Landmark, Phone, Home, Loader2, Upload, UserCog, UserSquare, Hash } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
@@ -46,6 +45,18 @@ type UsersTableProps = {
     loading: boolean;
     mutate: () => void;
 };
+
+function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value?: string | null }) {
+    return (
+        <div className="flex items-start gap-3">
+            <Icon className="h-4 w-4 mt-1 flex-shrink-0 text-muted-foreground" />
+            <div className="flex-1">
+                <p className="font-medium text-sm">{label}</p>
+                <p className="text-sm text-muted-foreground break-words">{value || 'N/A'}</p>
+            </div>
+        </div>
+    )
+}
 
 export function UsersTable({ users, loading, mutate }: UsersTableProps) {
     const firestore = useFirestore();
@@ -66,6 +77,13 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
         return new Map(projects.map(p => [p.id, p.name]));
     }, [projects]);
     
+    const supervisorsMap = useMemo(() => {
+        if (!users) return new Map();
+        const spvs = users.filter(u => u.role === 'SPV');
+        return new Map(spvs.map(s => [s.id, s.name]));
+    }, [users]);
+
+
     const getRoleBadgeVariant = (role: AppUser['role']) => {
         switch (role) {
             case 'Admin': return 'default';
@@ -250,56 +268,38 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
              <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Detail Pengguna</DialogTitle>
-                        <DialogDescription>
-                            Informasi lengkap untuk {selectedUser?.name}.
-                        </DialogDescription>
+                        <div className="flex items-center gap-4">
+                            <Avatar className="h-14 w-14">
+                                <AvatarImage src={selectedUser?.avatar} alt={selectedUser?.name} />
+                                <AvatarFallback className="text-2xl">{selectedUser?.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="space-y-1">
+                                <DialogTitle>{selectedUser?.name}</DialogTitle>
+                                <DialogDescription>{selectedUser?.email}</DialogDescription>
+                            </div>
+                        </div>
                     </DialogHeader>
                     {selectedUser && (
                         <div className="space-y-4 py-4">
-                            <div className="flex items-center gap-4">
-                                <Avatar className="h-20 w-20">
-                                    <AvatarImage src={selectedUser.avatar} alt={selectedUser.name} />
-                                    <AvatarFallback className="text-3xl">{selectedUser.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="space-y-1">
-                                    <h3 className="text-lg font-semibold">{selectedUser.name}</h3>
-                                    <p className="text-sm text-muted-foreground flex items-center gap-2"><Mail className="h-3 w-3" />{selectedUser.email}</p>
-                                    <Badge variant={getStatusBadgeVariant(selectedUser.status)}>{selectedUser.status || 'Aktif'}</Badge>
-                                </div>
-                            </div>
-                             <div className="grid grid-cols-1 gap-2 text-sm">
-                                <div className="flex items-start gap-3">
-                                    <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium">NIK</p>
-                                        <p className="text-muted-foreground">{selectedUser.nik}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Phone className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium">No. HP</p>
-                                        <p className="text-muted-foreground">{selectedUser.phone}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Home className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium">Alamat</p>
-                                        <p className="text-muted-foreground">{selectedUser.address}</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-start gap-3">
-                                    <Landmark className="h-4 w-4 mt-0.5 text-muted-foreground" />
-                                    <div>
-                                        <p className="font-medium">Informasi Bank</p>
-                                        <p className="text-muted-foreground">{selectedUser.bankName} - {selectedUser.accountNumber} (a.n. {selectedUser.accountHolder})</p>
-                                    </div>
-                                </div>
+                             <div className="space-y-3 rounded-md border border-dashed p-3">
+                                 <InfoRow icon={UserCog} label="Peran" value={selectedUser.role} />
+                                 <InfoRow icon={UserSquare} label="Status" value={selectedUser.status} />
+                                 {selectedUser.role === 'Sales' && (
+                                     <InfoRow icon={User} label="Supervisor" value={supervisorsMap.get(selectedUser.supervisorId || '')} />
+                                 )}
+                             </div>
+                             <div className="space-y-3">
+                                <h4 className="font-medium text-sm text-muted-foreground">Informasi Pribadi</h4>
+                                <InfoRow icon={Hash} label="NIK" value={selectedUser.nik} />
+                                <InfoRow icon={Phone} label="No. HP" value={selectedUser.phone} />
+                                <InfoRow icon={Home} label="Alamat" value={selectedUser.address} />
+                             </div>
+                             <div className="space-y-3">
+                                <h4 className="font-medium text-sm text-muted-foreground">Informasi Bank</h4>
+                                <InfoRow icon={Landmark} label="Bank" value={`${selectedUser.bankName} - ${selectedUser.accountNumber} (a.n. ${selectedUser.accountHolder})`} />
                              </div>
                              <div>
-                                <h4 className="font-medium mb-2">Penugasan Proyek</h4>
+                                <h4 className="font-medium text-sm text-muted-foreground mb-2">Penugasan Proyek</h4>
                                 <div className="space-y-2">
                                     {selectedUser.projectAssignments?.map(pa => (
                                         <div key={pa.projectId} className="flex justify-between items-center text-sm p-2 bg-muted/50 rounded-md">
@@ -308,7 +308,7 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                                         </div>
                                     ))}
                                     {(!selectedUser.projectAssignments || selectedUser.projectAssignments.length === 0) && (
-                                        <p className="text-xs text-muted-foreground text-center">Tidak ada penugasan proyek.</p>
+                                        <p className="text-xs text-muted-foreground text-center py-2">Tidak ada penugasan proyek.</p>
                                     )}
                                 </div>
                              </div>
@@ -365,4 +365,5 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
             </AlertDialog>
         </div>
     )
-}
+
+    
