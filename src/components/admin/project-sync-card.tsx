@@ -72,13 +72,17 @@ export function ProjectSyncCard() {
     firestore 
       ? query(
           collection(firestore, 'projects'), 
-          where('status', '==', 'Aktif'), 
-          where('appsScriptUrl', '!=', '')
+          where('status', '==', 'Aktif')
         ) 
       : null, 
     [firestore]
   );
-  const { data: projects, loading } = useCollectionOnce<Project>(projectsQuery);
+  const { data: activeProjects, loading } = useCollectionOnce<Project>(projectsQuery);
+
+  const projectsWithUrl = useMemo(() => {
+    if (!activeProjects) return [];
+    return activeProjects.filter(p => p.appsScriptUrl && p.appsScriptUrl.trim() !== '');
+  }, [activeProjects]);
 
   return (
     <Card>
@@ -93,8 +97,8 @@ export function ProjectSyncCard() {
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </>
-          ) : projects && projects.length > 0 ? (
-            projects.map(project => (
+          ) : projectsWithUrl && projectsWithUrl.length > 0 ? (
+            projectsWithUrl.map(project => (
               <SyncItem key={project.id} project={project} />
             ))
           ) : (
