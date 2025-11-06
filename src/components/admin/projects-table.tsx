@@ -153,11 +153,10 @@ export function ProjectsTable() {
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Nama Proyek</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Fee SPV</TableHead>
-                        <TableHead>Fee Sales</TableHead>
+                        <TableHead className="hidden md:table-cell">Fee SPV</TableHead>
+                        <TableHead className="hidden md:table-cell">Fee Sales</TableHead>
                         <TableHead className="hidden lg:table-cell">Header Laporan</TableHead>
                         <TableHead>
                             <span className="sr-only">Aksi</span>
@@ -165,17 +164,16 @@ export function ProjectsTable() {
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {projects && projects.map((project, index) => (
+                    {projects && projects.map((project) => (
                         <TableRow key={project.id} onClick={() => handleRowClick(project.id)} className="cursor-pointer">
-                            <TableCell>{index + 1}</TableCell>
                             <TableCell className="font-medium">
                                 {project.name}
                             </TableCell>
                             <TableCell>
                                 <Badge variant={getBadgeVariant(project.status)}>{project.status}</Badge>
                             </TableCell>
-                            <TableCell>{formatCurrency(project.feeSpv)}</TableCell>
-                            <TableCell>{formatCurrency(project.feeSales)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{formatCurrency(project.feeSpv)}</TableCell>
+                            <TableCell className="hidden md:table-cell">{formatCurrency(project.feeSales)}</TableCell>
                             <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                     {project.reportHeaders && project.reportHeaders.length > 0 ? (

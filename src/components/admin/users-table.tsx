@@ -195,20 +195,18 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Pengguna</TableHead>
-                        <TableHead>Peran</TableHead>
+                        <TableHead className="hidden sm:table-cell">Peran</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead className="hidden md:table-cell">Proyek & Kode Sales</TableHead>
+                        <TableHead className="hidden lg:table-cell">Proyek & Kode Sales</TableHead>
                         <TableHead>
                         <span className="sr-only">Aksi</span>
                         </TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {users && users.map((user, index) => (
+                    {users && users.map((user) => (
                         <TableRow key={user.id} onClick={() => handleRowClick(user)} className="cursor-pointer">
-                            <TableCell>{index + 1}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>
@@ -221,13 +219,13 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell">
                                 <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
                             </TableCell>
                              <TableCell>
                                 <Badge variant={getStatusBadgeVariant(user.status)}>{user.status || 'Aktif'}</Badge>
                             </TableCell>
-                            <TableCell className="hidden md:table-cell">
+                            <TableCell className="hidden lg:table-cell">
                                 <div className="flex flex-wrap gap-1 max-w-xs">
                                     {user.projectAssignments && user.projectAssignments.map((pa) => (
                                         <Badge key={pa.projectId} variant="outline" title={projectsMap.get(pa.projectId) || pa.projectId}>{pa.salesCode}</Badge>

@@ -151,17 +151,15 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead className="w-[50px]">No.</TableHead>
                         <TableHead>Tenaga Penjualan</TableHead>
-                        <TableHead>Status</TableHead>
+                        <TableHead className="hidden sm:table-cell">Status</TableHead>
                         <TableHead>Jumlah Laporan</TableHead>
                         <TableHead>Total Pendapatan</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
-                    {performanceData.map((data, index) => (
+                    {performanceData.map((data) => (
                         <TableRow key={data.id} onClick={() => handleRowClick(data)} className="cursor-pointer">
-                            <TableCell>{index + 1}</TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-3">
                                     <Avatar>
@@ -170,11 +168,11 @@ export function TeamPerformanceTable({ supervisorId }: { supervisorId: string })
                                     </Avatar>
                                     <div>
                                         <div className="font-medium">{data.name}</div>
-                                        <div className="text-sm text-muted-foreground">{data.email}</div>
+                                        <div className="text-sm text-muted-foreground hidden md:block">{data.email}</div>
                                     </div>
                                 </div>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="hidden sm:table-cell">
                                 <Badge variant={getStatusBadgeVariant(data.status)}>{data.status || 'Aktif'}</Badge>
                             </TableCell>
                             <TableCell className="text-center">{data.salesCount}</TableCell>
