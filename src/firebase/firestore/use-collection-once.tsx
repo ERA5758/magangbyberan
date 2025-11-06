@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getDocs, Query, CollectionReference } from 'firebase/firestore';
 
 export function useCollectionOnce<T>(q: Query | CollectionReference | null) {
@@ -8,41 +9,29 @@ export function useCollectionOnce<T>(q: Query | CollectionReference | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
+  const fetchData = useCallback(async () => {
     if (!q) {
       setLoading(false);
       setData([]); // Return empty array instead of null
       return;
     }
 
-    let isMounted = true;
     setLoading(true);
-
-    const fetchData = async () => {
-      try {
-        const snapshot = await getDocs(q);
-        if (isMounted) {
-          const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-          setData(data);
-        }
-      } catch (e) {
-        if (isMounted) {
-          setError(e as Error);
-          setData([]); // Return empty array on error
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    return () => {
-      isMounted = false;
-    };
+    try {
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+      setData(data);
+    } catch (e) {
+      setError(e as Error);
+      setData([]); // Return empty array on error
+    } finally {
+      setLoading(false);
+    }
   }, [q]);
 
-  return { data, loading, error };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { data, loading, error, mutate: fetchData };
 }
