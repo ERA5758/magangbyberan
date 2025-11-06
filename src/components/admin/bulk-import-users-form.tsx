@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useState } from 'react';
 import { Loader2, Download, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { useAuth, useFirestore } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import {
@@ -118,7 +118,7 @@ export function BulkImportUsersForm({ onSuccess }: { onSuccess?: () => void }) {
              <Download className="h-4 w-4" />
             <AlertTitle>Unduh Template</AlertTitle>
             <AlertDescription>
-                Unduh dan isi template CSV untuk memastikan format data yang benar. Kolom `supervisorId` hanya wajib untuk peran 'Sales'. Kolom `projectAssignments` diisi dengan format `projectId:salesCode` dan dipisahkan dengan titik koma (`;`) jika lebih dari satu.
+                Unduh dan isi template CSV. `supervisorId` hanya wajib untuk peran 'Sales'. Untuk `projectAssignments`, gunakan format `projectId:salesCode`. Pisahkan beberapa penugasan dengan titik koma (`;`), contoh: `proj_1:CODE_A;proj_2:CODE_B`.
                 <Button variant="link" type="button" onClick={handleDownloadTemplate} className="p-0 h-auto ml-1">Unduh di sini.</Button>
             </AlertDescription>
           </Alert>
