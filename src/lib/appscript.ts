@@ -7,20 +7,19 @@ import type { Auth } from "firebase/auth";
  * Memanggil endpoint Google Apps Script yang telah di-deploy sebagai Web App.
  *
  * @param auth Instance Firebase Auth untuk mendapatkan ID token pengguna.
+ * @param appsScriptUrl URL dari Web App Google Apps Script yang akan dipanggil.
  * @param payload Data yang akan dikirim ke Apps Script dalam body permintaan.
  * @returns Promise yang resolve dengan respons JSON dari Apps Script.
  */
-export async function callAppsScriptEndpoint(auth: Auth, payload: Record<string, any> = {}): Promise<any> {
+export async function callAppsScriptEndpoint(auth: Auth, appsScriptUrl: string, payload: Record<string, any> = {}): Promise<any> {
   const currentUser = auth.currentUser;
   
   if (!currentUser) {
     throw new Error("Pengguna tidak terautentikasi. Harap login terlebih dahulu.");
   }
 
-  const appsScriptUrl = process.env.NEXT_PUBLIC_APPS_SCRIPT_URL;
-
   if (!appsScriptUrl) {
-    throw new Error("URL Apps Script tidak dikonfigurasi. Harap atur NEXT_PUBLIC_APPS_SCRIPT_URL.");
+    throw new Error("URL Apps Script tidak disediakan.");
   }
 
   try {
@@ -30,10 +29,13 @@ export async function callAppsScriptEndpoint(auth: Auth, payload: Record<string,
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${idToken}`,
       },
-      body: JSON.stringify(payload),
-      mode: 'cors', // Penting untuk permintaan lintas domain
+       // Body sekarang berisi token dan payload, karena Apps Script tidak bisa membaca header Auth dengan mudah
+      body: JSON.stringify({
+        idToken: idToken,
+        payload: payload,
+      }),
+      mode: 'cors',
     });
 
     if (!response.ok) {

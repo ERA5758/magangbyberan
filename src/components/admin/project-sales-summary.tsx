@@ -9,6 +9,7 @@ import type { Project, Report } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { FileText, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../ui/card';
 
 export function ProjectSalesSummary() {
   const firestore = useFirestore();
@@ -39,42 +40,46 @@ export function ProjectSalesSummary() {
     router.push(`/admin/projects/${projectId}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
-
-  if (salesByProject.length === 0) {
-    return <p className="text-muted-foreground text-sm text-center py-4">Belum ada data penjualan proyek.</p>;
-  }
-
   return (
-    <div className="space-y-3">
-      {salesByProject.map(project => (
-        <div
-          key={project.id}
-          onClick={() => handleProjectClick(project.id)}
-          className="flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-all hover:bg-muted/50"
-        >
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 text-primary p-2 rounded-md">
-              <FileText className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="font-semibold">{project.name}</p>
-              <p className="text-xs text-muted-foreground">
-                <span className="font-medium text-foreground">{project.salesCount.toLocaleString()}</span> laporan penjualan tercatat
-              </p>
-            </div>
-          </div>
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-        </div>
-      ))}
-    </div>
+     <Card>
+        <CardHeader>
+            <CardTitle>Ringkasan Penjualan Proyek</CardTitle>
+            <CardDescription>Jumlah total laporan (penjualan) yang tercatat untuk setiap proyek.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <div className="space-y-3">
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                    <Skeleton className="h-10 w-full" />
+                </div>
+            ) : salesByProject.length === 0 ? (
+                 <p className="text-muted-foreground text-sm text-center py-4">Belum ada data penjualan proyek.</p>
+            ) : (
+                <div className="space-y-3">
+                {salesByProject.map(project => (
+                    <div
+                    key={project.id}
+                    onClick={() => handleProjectClick(project.id)}
+                    className="flex items-center justify-between rounded-lg border p-3 cursor-pointer transition-all hover:bg-muted/50"
+                    >
+                    <div className="flex items-center gap-3">
+                        <div className="bg-primary/10 text-primary p-2 rounded-md">
+                        <FileText className="h-5 w-5" />
+                        </div>
+                        <div>
+                        <p className="font-semibold">{project.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                            <span className="font-medium text-foreground">{project.salesCount.toLocaleString()}</span> laporan penjualan tercatat
+                        </p>
+                        </div>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                ))}
+                </div>
+            )}
+        </CardContent>
+    </Card>
   );
 }

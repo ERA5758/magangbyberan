@@ -27,6 +27,7 @@ export type Project = {
   reportHeaders?: string[];
   feeSpv?: number;
   feeSales?: number;
+  appsScriptUrl?: string;
 };
 
 export type Sale = {
