@@ -198,6 +198,9 @@ export function ProjectsTable() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleRowClick(project.id)}>
+                                            Lihat Detail
+                                        </DropdownMenuItem>
                                         <DropdownMenuItem onClick={(e) => handleEditClick(e, project)}>
                                             Ubah Proyek
                                         </DropdownMenuItem>
