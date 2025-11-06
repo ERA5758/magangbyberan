@@ -51,6 +51,13 @@ export function EditProjectForm({ project, onSuccess }: EditProjectFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: project.name || '',
+      status: project.status || 'Non Aktif',
+      reportHeaders: project.reportHeaders ? project.reportHeaders.join(', ') : '',
+      feeSpv: project.feeSpv || 0,
+      feeSales: project.feeSales || 0,
+    },
   });
   
   useEffect(() => {
