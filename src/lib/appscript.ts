@@ -25,12 +25,13 @@ export async function callAppsScriptEndpoint(auth: Auth, appsScriptUrl: string, 
   try {
     const idToken = await currentUser.getIdToken(true);
 
+    // IMPORTANT: Change Content-Type to 'text/plain' to avoid CORS preflight issues with Google Apps Script.
+    // The Apps Script side will need to JSON.parse(e.postData.contents).
     const response = await fetch(appsScriptUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        "Content-Type": "text/plain;charset=utf-8",
       },
-       // Body sekarang berisi token dan payload, karena Apps Script tidak bisa membaca header Auth dengan mudah
       body: JSON.stringify({
         idToken: idToken,
         payload: payload,
