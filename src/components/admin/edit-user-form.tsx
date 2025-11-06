@@ -77,10 +77,7 @@ export function EditUserForm({ user, onSuccess }: EditUserFormProps) {
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      ...user,
-      projectAssignments: [],
-    },
+    defaultValues: user,
   });
 
   const { fields, replace } = useFieldArray({
@@ -89,27 +86,26 @@ export function EditUserForm({ user, onSuccess }: EditUserFormProps) {
   });
 
   useEffect(() => {
-    if (projects && user) {
-        const userProjectIds = new Set(user.projectAssignments?.map(p => p.projectId));
-        const assignments = projects.map(p => {
-            const existingAssignment = user.projectAssignments?.find(up => up.projectId === p.id);
-            return {
-                projectId: p.id,
-                projectName: p.name,
-                assigned: userProjectIds.has(p.id),
-                salesCode: existingAssignment?.salesCode || ''
-            }
-        });
-      replace(assignments);
+    if (user && projects) {
+      // Create project assignments based on all available projects
+      const allProjectAssignments = projects.map(p => {
+        const existingAssignment = user.projectAssignments?.find(up => up.projectId === p.id);
+        return {
+          projectId: p.id,
+          projectName: p.name,
+          assigned: !!existingAssignment,
+          salesCode: existingAssignment?.salesCode || ''
+        };
+      });
+
+      // Reset the form with all user data and the computed project assignments
+      form.reset({
+        ...user,
+        projectAssignments: allProjectAssignments
+      });
     }
-  }, [projects, user, replace]);
-  
-  useEffect(() => {
-    form.reset({
-      ...user,
-      projectAssignments: fields,
-    });
-  }, [user, fields, form]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, projects]);
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
