@@ -36,7 +36,6 @@ const formSchema = z.object({
   reportHeaders: z.string().optional(),
   feeSpv: z.coerce.number().optional(),
   feeSales: z.coerce.number().optional(),
-  appsScriptUrl: z.string().url({ message: "Harap masukkan URL yang valid." }).optional().or(z.literal('')),
 });
 
 type AddProjectFormProps = {
@@ -56,7 +55,6 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
       reportHeaders: '',
       feeSpv: 0,
       feeSales: 0,
-      appsScriptUrl: '',
     },
   });
 
@@ -86,7 +84,6 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
         reportHeaders: headers,
         feeSpv: values.feeSpv || 0,
         feeSales: values.feeSales || 0,
-        appsScriptUrl: values.appsScriptUrl || '',
         createdAt: serverTimestamp(),
         lastSyncTime: null,
         lastSyncStatus: null,
@@ -179,22 +176,6 @@ export function AddProjectForm({ onSuccess }: AddProjectFormProps) {
               )}
             />
         </div>
-        <FormField
-          control={form.control}
-          name="appsScriptUrl"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>URL Google Apps Script</FormLabel>
-              <FormControl>
-                <Input placeholder="https://script.google.com/macros/s/..." {...field} />
-              </FormControl>
-               <FormDescription>
-                URL Web App dari Google Apps Script untuk sinkronisasi data.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
         <FormField
           control={form.control}
           name="reportHeaders"
