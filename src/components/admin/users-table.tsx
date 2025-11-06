@@ -12,14 +12,6 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu"
-import {
     Dialog,
     DialogContent,
     DialogDescription,
@@ -28,8 +20,18 @@ import {
     DialogTrigger,
     DialogFooter,
 } from "@/components/ui/dialog"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, PlusCircle, User, Mail, Landmark, Phone, Home, Loader2, Upload } from "lucide-react"
+import { PlusCircle, User, Mail, Landmark, Phone, Home, Loader2, Upload } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useFirestore } from "@/firebase"
 import { useCollectionOnce } from "@/firebase/firestore/use-collection-once"
@@ -55,6 +57,7 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
     const [isAddUserOpen, setIsAddUserOpen] = useState(false);
     const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
     const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<AppUser | null>(null);
     const [isUpdating, setIsUpdating] = useState(false);
     
@@ -81,31 +84,41 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
         }
     };
 
-    const handleApprove = async (e: React.MouseEvent, user: AppUser) => {
-        e.stopPropagation();
-        if (!firestore) return;
-        const userRef = doc(firestore, 'users', user.id);
+    const handleApprove = async () => {
+        if (!selectedUser || !firestore) return;
+        setIsUpdating(true);
+        const userRef = doc(firestore, 'users', selectedUser.id);
         try {
             await updateDoc(userRef, { status: 'Aktif' });
-            toast({ title: 'Pengguna Disetujui', description: `${user.name} sekarang aktif.` });
+            toast({ title: 'Pengguna Disetujui', description: `${selectedUser.name} sekarang aktif.` });
             mutate();
+            setIsDetailOpen(false);
         } catch (err) {
             toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menyetujui pengguna.' });
+        } finally {
+            setIsUpdating(false);
         }
     };
 
-    const handleDelete = async (e: React.MouseEvent, user: AppUser) => {
-        e.stopPropagation();
-        if (!firestore) return;
-        // Ideally, this should also call a serverless function to delete the Auth user.
-        // For now, it just deletes the Firestore document.
-        const userRef = doc(firestore, 'users', user.id);
+    const openDeleteDialog = () => {
+        setIsDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = async () => {
+        if (!selectedUser || !firestore) return;
+        setIsUpdating(true);
+        const userRef = doc(firestore, 'users', selectedUser.id);
         try {
             await deleteDoc(userRef);
-            toast({ title: 'Pengguna Ditolak/Dihapus', description: `Data untuk ${user.name} telah dihapus.` });
+            toast({ title: 'Pengguna Dihapus', description: `Data untuk ${selectedUser.name} telah dihapus.` });
             mutate();
+            setIsDetailOpen(false);
         } catch (err) {
             toast({ variant: 'destructive', title: 'Gagal', description: 'Gagal menghapus pengguna.' });
+        } finally {
+            setIsUpdating(false);
+            setIsDeleteDialogOpen(false);
+            setSelectedUser(null);
         }
     };
 
@@ -199,9 +212,6 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                         <TableHead className="hidden sm:table-cell">Peran</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="hidden lg:table-cell">Proyek & Kode Sales</TableHead>
-                        <TableHead>
-                        <span className="sr-only">Aksi</span>
-                        </TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -231,38 +241,6 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                                         <Badge key={pa.projectId} variant="outline" title={projectsMap.get(pa.projectId) || pa.projectId}>{pa.salesCode}</Badge>
                                     ))}
                                 </div>
-                            </TableCell>
-                            <TableCell>
-                                <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button aria-haspopup="true" size="icon" variant="ghost" onClick={(e) => e.stopPropagation()}>
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Buka menu</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuLabel>Aksi</DropdownMenuLabel>
-                                    <DropdownMenuItem onClick={(e) => {e.stopPropagation(); handleRowClick(user);}}>Lihat Detail</DropdownMenuItem>
-                                    {user.status === 'Menunggu Persetujuan' && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={(e) => handleApprove(e, user)}>Setujui Pengguna</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Tolak Pengguna</DropdownMenuItem>
-                                        </>
-                                    )}
-                                    {user.status !== 'Menunggu Persetujuan' && (
-                                        <>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem onClick={(e) => {
-                                                e.stopPropagation();
-                                                // logic for editing user
-                                                toast({title: "Fitur Dalam Pengembangan", description: "Mengubah pengguna akan segera tersedia."})
-                                            }}>Ubah</DropdownMenuItem>
-                                            <DropdownMenuItem onClick={(e) => handleDelete(e, user)} className="text-destructive">Hapus</DropdownMenuItem>
-                                        </>
-                                    )}
-                                </DropdownMenuContent>
-                                </DropdownMenu>
                             </TableCell>
                         </TableRow>
                     ))}
@@ -336,20 +314,55 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                              </div>
                         </div>
                     )}
-                    {selectedUser && selectedUser.status !== 'Menunggu Persetujuan' && (
-                        <DialogFooter>
-                            <Button
-                                variant={selectedUser.status === 'Aktif' ? 'destructive' : 'default'}
-                                onClick={handleToggleStatus}
-                                disabled={isUpdating}
-                            >
-                                {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {selectedUser.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
-                            </Button>
-                        </DialogFooter>
-                    )}
+                     <DialogFooter className="gap-2 sm:justify-between">
+                        {selectedUser?.status === 'Menunggu Persetujuan' && (
+                            <div className="flex-1 flex gap-2">
+                                <Button variant="destructive" onClick={openDeleteDialog} disabled={isUpdating} className="w-full">
+                                    {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Tolak
+                                </Button>
+                                <Button variant="default" onClick={handleApprove} disabled={isUpdating} className="w-full">
+                                    {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null} Setujui
+                                </Button>
+                            </div>
+                        )}
+                        {selectedUser?.status !== 'Menunggu Persetujuan' && (
+                            <>
+                                <Button variant="destructive" onClick={openDeleteDialog} disabled={isUpdating}>
+                                    Hapus Pengguna
+                                </Button>
+                                <Button
+                                    variant={selectedUser?.status === 'Aktif' ? 'secondary' : 'default'}
+                                    onClick={handleToggleStatus}
+                                    disabled={isUpdating}
+                                >
+                                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {selectedUser?.status === 'Aktif' ? 'Nonaktifkan' : 'Aktifkan'}
+                                </Button>
+                            </>
+                        )}
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+             <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen pengguna 
+                        <span className="font-semibold"> {selectedUser?.name} </span> 
+                        dan semua data terkaitnya.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setSelectedUser(null)}>Batal</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive hover:bg-destructive/90">
+                        {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Hapus
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     )
 }
