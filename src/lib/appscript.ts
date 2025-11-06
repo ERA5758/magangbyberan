@@ -33,7 +33,7 @@ export async function callAppsScriptEndpoint(auth: Auth, appsScriptUrl: string, 
         "Content-Type": "text/plain;charset=utf-8",
       },
       body: JSON.stringify({
-        idToken: idToken,
+        authToken: idToken,
         payload: payload,
       }),
       mode: 'cors',
