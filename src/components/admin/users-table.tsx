@@ -396,3 +396,4 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
             </AlertDialog>
         </div>
     )
+}
