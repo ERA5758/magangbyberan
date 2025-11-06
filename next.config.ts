@@ -1,7 +1,13 @@
 
 import type { NextConfig } from "next";
 import "dotenv/config";
-import withPWA from "next-pwa";
+
+const withPWA = require("next-pwa")({
+    dest: "public",
+    register: true,
+    skipWaiting: true,
+    // disable: process.env.NODE_ENV === "development", // Disabled for testing. Re-enable for production.
+});
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -41,11 +47,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withPWAConfig = withPWA({
-  dest: "public",
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-});
-
-export default withPWAConfig(nextConfig);
+export default withPWA(nextConfig);

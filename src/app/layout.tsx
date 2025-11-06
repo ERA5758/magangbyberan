@@ -35,6 +35,7 @@ import { useAuth } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import InstallPWAButton from '@/components/shared/install-pwa-button';
 
 type NavItem = {
   href: string;
@@ -148,6 +149,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="flex-1">
              {/* Can be used for breadcrumbs or page title */}
           </div>
+          <InstallPWAButton />
           <UserNav />
         </header>
         <main className="flex-1 p-4 sm:p-6">
@@ -172,12 +174,43 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Magang By BERAN</title>
+        <meta name="application-name" content="Magang By BERAN" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Magang" />
         <meta name="description" content="Platform Agregasi Data Penjualan" />
+        <meta name="format-detection" content="telephone=no" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="msapplication-config" content="/icons/browserconfig.xml" />
+        <meta name="msapplication-TileColor" content="#FF0000" />
+        <meta name="msapplication-tap-highlight" content="no" />
         <meta name="theme-color" content="#FF0000" />
+
+        <link rel="apple-touch-icon" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/icon.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/icon.png" />
+
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/icon.png" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+        <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#5bbad5" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:url" content="https://your-domain.com" />
+        <meta name="twitter:title" content="Magang By BERAN" />
+        <meta name="twitter:description" content="Platform Agregasi Data Penjualan" />
+        <meta name="twitter:image" content="https://your-domain.com/icons/android-chrome-192x192.png" />
+        <meta name="twitter:creator" content="@your-twitter-handle" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Magang By BERAN" />
+        <meta property="og:description" content="Platform Agregasi Data Penjualan" />
+        <meta property="og:site_name" content="Magang By BERAN" />
+        <meta property="og:url" content="https://your-domain.com" />
+        <meta property="og:image" content="https://your-domain.com/icons/apple-touch-icon.png" />
+
       </head>
       <body className="font-body antialiased">
         <ThemeProvider>
