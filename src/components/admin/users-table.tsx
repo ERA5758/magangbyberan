@@ -39,11 +39,15 @@ import { AddUserForm } from "./add-user-form";
 import { useToast } from "@/hooks/use-toast";
 import { BulkImportUsersForm } from "./bulk-import-users-form";
 
-export function UsersTable() {
+type UsersTableProps = {
+    users: AppUser[] | null;
+    loading: boolean;
+    mutate: () => void;
+};
+
+export function UsersTable({ users, loading, mutate }: UsersTableProps) {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const usersQuery = useMemo(() => firestore ? collection(firestore, "users") : null, [firestore]);
-    const { data: users, loading, mutate } = useCollectionOnce<AppUser>(usersQuery);
     
     const projectsQuery = useMemo(() => firestore ? collection(firestore, 'projects') : null, [firestore]);
     const { data: projects, loading: projectsLoading } = useCollectionOnce<Project>(projectsQuery);

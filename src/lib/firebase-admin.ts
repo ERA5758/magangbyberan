@@ -9,22 +9,17 @@ function initializeFirebaseAdmin() {
     return;
   }
 
-  const serviceAccountKeyBase64 = process.env.FIREBASE_SERVICE_ACCOUNT_KEY_BASE64;
+  const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
-  if (!serviceAccountKeyBase64) {
+  if (!serviceAccountKey) {
     throw new Error(
-      'Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY_BASE64 environment variable is not set.'
+      'Firebase Admin SDK initialization failed: FIREBASE_SERVICE_ACCOUNT_KEY environment variable is not set.'
     );
   }
 
   try {
-    const serviceAccountJson = Buffer.from(
-      serviceAccountKeyBase64,
-      'base64'
-    ).toString('utf-8');
-    
-    // Directly parse the decoded JSON. String replacements can be brittle.
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    // Directly parse the JSON from the environment variable.
+    const serviceAccount = JSON.parse(serviceAccountKey);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
