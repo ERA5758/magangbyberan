@@ -18,6 +18,7 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 import {
     AlertDialog,
@@ -365,5 +366,7 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
             </AlertDialog>
         </div>
     )
+
+    
 
     
