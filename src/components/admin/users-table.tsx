@@ -267,7 +267,7 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
                 </Table>
             </div>
              <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <div className="flex items-center gap-4">
                             <Avatar className="h-14 w-14">
@@ -366,6 +366,8 @@ export function UsersTable({ users, loading, mutate }: UsersTableProps) {
             </AlertDialog>
         </div>
     )
+
+    
 
     
 
